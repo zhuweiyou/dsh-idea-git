@@ -340,23 +340,14 @@ export function ChangesView() {
         <span className="dig-toolbar__hint">{t('{n} changes', { n: s.files.length })}</span>
       </div>
       <div className="dig-treewrap">
-        {s.files.length === 0 ? null : (
-          <>
-            {(() => {
-              const cl = s.changelists
-              const lists = cl && cl.lists.length ? cl.lists : [{ id: 'default', name: t('Changes'), comment: '' }]
-              const active = cl?.active || 'default'
-              const assign = cl?.files || {}
-              const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
-              const multi = lists.length > 1
-              return lists.map((l) => {
-                const fs2 = forList(l.id)
-                if (!fs2.length) return null
-                return <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={fs2} groupByDir={groupByDir} listId={l.id} active={l.id === active} />
-              })
-            })()}
-          </>
-        )}
+        {(() => {
+          const cl = s.changelists
+          const lists = cl && cl.lists.length ? cl.lists : [{ id: 'default', name: t('Changes'), comment: '' }]
+          const active = cl?.active || 'default'
+          const assign = cl?.files || {}
+          const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
+          return lists.map((l) => <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={forList(l.id)} groupByDir={groupByDir} listId={l.id} active={l.id === active} />)
+        })()}
       </div>
     </div>
   )
