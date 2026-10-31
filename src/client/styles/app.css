@@ -2718,3 +2718,20 @@ body.dig-docked #root {
   background: var(--bg-input);
   color: var(--fg);
 }
+
+/* Settings selects keep their border in every state (native select + DSH overrides). */
+.dig-settings__select,
+.dig-settings__select:hover,
+.dig-settings__select:focus,
+.dig-settings__select:focus-visible,
+.dig-settings__select:active,
+.dig-settings__select:disabled {
+  border: 1px solid var(--border-strong) !important;
+  border-radius: 6px !important;
+  background: var(--bg-input) !important;
+  color: var(--fg) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  height: 26px;
+  padding: 0 8px;
+}
