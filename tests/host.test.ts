@@ -922,7 +922,20 @@ test("host integration", async () => {
           ok("abortOperation", (await call("abortOperation", D(repo))).ok)
           ok("merge aborted", !fs.existsSync(path.join(repo, ".git", "MERGE_HEAD")))
         }
-      } finally {
+      
+  /* ---------------- revert hunk ---------------- */
+  console.log("\n[revert-hunk]")
+  {
+    const { repo, g } = makeRepo()
+    const lines = Array.from({ length: 20 }, (_, i) => "line" + (i + 1))
+    fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
+    lines[1] = "CHANGED-2"; lines[17] = "CHANGED-18"
+    fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n")
+    ok("revertHunks", (await call("revertHunks", { ...D(repo), file: "a.txt", indexes: [0] })).ok)
+    const work = g(["diff", "--unified=0"])
+    ok("first hunk reverted, second kept", !work.includes("CHANGED-2") && work.includes("CHANGED-18"))
+  }
+} finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })
         } catch {}

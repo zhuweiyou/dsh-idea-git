@@ -475,10 +475,20 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
                 if (!items.length) return
                 openContextMenu(
                   ev as any,
-                  items.map((h) => ({
-                    label: h.header + "  " + t(d.staged ? "Unstage Hunk" : "Stage Hunk"),
-                    run: () => void store.applyHunks(d.file!, [h.index], d.staged ? "unstage" : "stage"),
-                  })),
+                  items.flatMap((h) => [
+                    {
+                      label: h.header + "  " + t(d.staged ? "Unstage Hunk" : "Stage Hunk"),
+                      run: () => void store.applyHunks(d.file!, [h.index], d.staged ? "unstage" : "stage"),
+                    },
+                    ...(d.staged
+                      ? []
+                      : [
+                          {
+                            label: h.header + "  " + t("Revert Hunk"),
+                            run: () => void store.revertHunk(d.file!, h.index),
+                          },
+                        ]),
+                  ]),
                 )
               }}
             >

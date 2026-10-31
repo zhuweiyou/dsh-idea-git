@@ -478,6 +478,8 @@ const zh: Record<string, string> = {
   'Accept All Theirs': '全部采用对方',
   'No conflicts': '没有冲突',
   'Merge…': '合并…',
+  'Revert Hunk': '回滚此块',
+  'Reverting hunk…': '回滚此块中…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

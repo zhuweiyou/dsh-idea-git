@@ -240,6 +240,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case "listHunks":
         return withRepo(ctx, payload, signal, (info) => svc.listHunks(info, payload, signal))
 
+      case "revertHunks":
+        return withRepo(ctx, payload, signal, (info) => svc.revertHunks(info, payload, signal))
+
       case "applyHunks":
         return withRepo(ctx, payload, signal, (info) => svc.applyHunks(info, payload, signal))
 

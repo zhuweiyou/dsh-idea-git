@@ -668,6 +668,31 @@ export async function listHunks(info: RepoInfo, payload: any, signal?: AbortSign
   return hunks.map((h, i) => ({ index: i, header: h.header, patch: preamble + "\n" + h.text })).filter((h) => h.header)
 }
 
+export async function revertHunks(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const file = String(payload?.file ?? "")
+  const indexes: number[] = Array.isArray(payload?.indexes) ? payload.indexes.map(Number) : []
+  if (!file || !indexes.length) throw new RepoError("git/bad-request", "Missing file/indexes")
+  const r = await runGit(info.gitPath, {
+    cwd: info.root,
+    signal,
+    args: ["diff", "-U3", "--no-color", "--", file],
+    maxBuffer: 8 * 1024 * 1024,
+  })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || "diff failed")
+  const { preamble, hunks } = splitDiffHunks(r.stdout)
+  const chosen = indexes.map((i) => hunks[i]).filter(Boolean)
+  if (!chosen.length) throw new RepoError("git/bad-range", "No such hunk")
+  const patch = preamble + "\n" + chosen.map((h) => h.text).join("")
+  const ap = await runGit(info.gitPath, {
+    cwd: info.root,
+    signal,
+    args: ["apply", "--reverse", "--recount", "--whitespace=nowarn", "-"],
+    input: patch,
+  })
+  if (ap.code !== 0) throw new Error(ap.stderr.trim() || "git apply --reverse failed")
+  return { ok: true }
+}
+
 export async function applyHunks(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const file = String(payload?.file ?? "")
   const indexes: number[] = Array.isArray(payload?.indexes) ? payload.indexes.map(Number) : []

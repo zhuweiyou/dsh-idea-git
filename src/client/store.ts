@@ -1633,3 +1633,12 @@ export function openMergeDialog() {
 export function closeMergeDialog() {
   set({ mergeDialog: false })
 }
+
+export function revertHunk(file: string, index: number) {
+  return withBusy("Reverting hunk…", async () => {
+    await api.rpc("revertHunks", { ...targetPayload(), file, indexes: [index] })
+    await refreshStatus()
+    const d = state.diff
+    if (d && d.file === file) await openDiff({ title: d.title, path: d.file, staged: d.staged })
+  })
+}
