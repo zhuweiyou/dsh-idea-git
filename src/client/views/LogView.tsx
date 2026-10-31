@@ -120,6 +120,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const [favTick, setFavTick] = React.useState(0)
   React.useEffect(() => {}, [favTick])
   const [selectedName, setSelectedName] = React.useState('')
+  const [localRefreshing, setLocalRefreshing] = React.useState(false)
   const [query, setQuery] = React.useState('')
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set())
   const q = query.trim().toLowerCase()
@@ -180,7 +181,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
             {favBranches.map((b) => <div key={'fav:' + b.ref} style={{ paddingLeft: 8 }}><BranchRow b={b} t={t} label={b.name.split('/').pop()} onSelect={setSelectedName} /></div>)}
           </>
         ) : null}
-        <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={() => void store.refreshAll()} /></div>
+        <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><span className={localRefreshing ? 'dig-spin' : undefined} style={{ display: 'inline-flex' }}><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={async () => { setLocalRefreshing(true); try { await store.refreshAll() } finally { setTimeout(() => setLocalRefreshing(false), 350) } }} /></span></div>
         <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} onSelect={setSelectedName} />
         {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span><span style={{ flex: 1 }} /><IconButton icon="plus" title={t('Add Remote…')} size={13} onClick={async () => { const n = await askText(t('Remote name')); if (!n) return; const u = await askText(t('Remote URL')); if (u) void store.addRemote(n, u) }} /></div> : null}
         {[...remoteGroups.entries()].map(([remote, list]) => (

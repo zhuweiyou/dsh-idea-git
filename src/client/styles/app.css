@@ -2012,3 +2012,6 @@ body.dig-docked #root { height: 100% !important; }
 .dig-branches .dig-branchrow { padding-right: 10px; }
 .dig-branches__section { padding-right: 10px; }
 .dig-branchrow__sync { display: inline-flex; align-items: center; justify-content: flex-end; height: 100%; line-height: 22px; min-width: 32px; }
+
+@keyframes dig-spin { to { transform: rotate(360deg); } }
+.dig-spin { animation: dig-spin .8s linear infinite; }
