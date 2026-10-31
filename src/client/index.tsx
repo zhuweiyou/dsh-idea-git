@@ -14,8 +14,7 @@ import { installServices, syncAll, syncTheme, syncLocale } from './services'
 import * as store from './store'
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from './window'
 import { switchWorkspace } from './workspaceState'
-import { setRepoRoots } from './roots'
-import { Panel } from './Panel'
+import { Panel, ViewBoundary } from './Panel'
 import { SettingsSection } from './SettingsSection'
 import { Icon } from './lib/ui'
 
@@ -69,19 +68,12 @@ function PanelSpacer() {
 function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
-  const wsSnap = props.useWorkspaces ? props.useWorkspaces((v: any) => v) : null
   React.useEffect(() => { syncAll(); const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d)); return () => ts.forEach(clearTimeout) }, [])
 
   React.useEffect(() => {
     switchWorkspace(directory)
   }, [directory])
 
-  React.useEffect(() => {
-    try {
-      const items = (wsSnap?.items || []) as any[]
-      setRepoRoots(items.filter((x) => x?.path).map((x) => ({ id: String(x.id || x.path), label: String(x.name || x.path.split('/').pop() || x.path), path: String(x.path) })))
-    } catch {}
-  }, [wsSnap])
 
   React.useEffect(() => {
     if (!w.open) return
@@ -146,8 +138,9 @@ export function apply(ctx: any) {
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register({ name: 'conversation.input.left', id: 'idea-git-entry', order: 41 }, GitEntryButton),
   )
+  const PanelSlot = () => <ViewBoundary><Panel /></ViewBoundary>
   ctx.slots.inject('shell.overlay', () =>
-    ctx.slots.register({ name: 'shell.overlay', id: 'idea-git-window', order: 41 }, Panel),
+    ctx.slots.register({ name: 'shell.overlay', id: 'idea-git-window', order: 41 }, PanelSlot),
   )
   ctx.slots.inject('settings.section', () =>
     ctx.slots.register({ name: 'settings.section', id: 'idea-git-settings', order: 60, label: () => 'IDEA Git' }, SettingsSection),
