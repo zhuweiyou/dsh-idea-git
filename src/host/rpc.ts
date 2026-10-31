@@ -73,6 +73,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'dropCommit':
         return withRepo(ctx, payload, signal, (info) => svc.dropCommit(info, payload, signal))
 
+      case 'interactiveRebase':
+        return withRepo(ctx, payload, signal, (info) => svc.interactiveRebase(info, payload, signal))
+
       case 'squashHead':
         return withRepo(ctx, payload, signal, (info) => svc.squashHead(info, payload, signal))
 

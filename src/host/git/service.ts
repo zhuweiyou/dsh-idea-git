@@ -1177,6 +1177,13 @@ export async function dropCommit(info: RepoInfo, payload: any, signal?: AbortSig
   return runRebasePlan(info, base, entries, signal)
 }
 
+export async function interactiveRebase(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const base = payload?.base ? String(payload.base) : null
+  const raw = Array.isArray(payload?.entries) ? payload.entries : []
+  const entries: PlanEntry[] = raw.map((e: any) => ({ commit: String(e.commit), action: e.action, message: e.message ? String(e.message) : undefined }))
+  return runRebasePlan(info, base, entries, signal)
+}
+
 export async function squashHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const log = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '-2', '--pretty=format:%B%x1e'], maxBuffer: 4 * 1024 * 1024 })
   const recs = log.stdout.split('\x1e').map((x) => x.replace(/^\n+/, '').trim()).filter(Boolean)

@@ -11,6 +11,7 @@ import { StashView } from './views/StashView'
 import { WorktreeView } from './views/WorktreeView'
 import { SubmoduleView } from './views/SubmoduleView'
 import { ShelfView } from './views/ShelfView'
+import { RebasePlanDialog } from './views/RebasePlanDialog'
 import { DiffView } from './views/DiffView'
 import { ConflictView } from './views/ConflictView'
 import { CompareView } from './views/CompareView'
@@ -197,6 +198,7 @@ export function Panel() {
     </div>
       <ContextMenuHost />
       <PromptHost theme={w.theme} />
+      <RebasePlanDialog theme={w.theme} />
     </>
   )
 }

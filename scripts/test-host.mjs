@@ -433,6 +433,23 @@ try {
     ok('changelist persisted active', back.active === 'f' && back.lists.length === 2)
     ok('changelist not in repo', !fs.existsSync(path.join(repo, '.dsh-idea-git')))
   }
+
+  /* ---------------- interactive rebase plan ---------------- */
+  console.log('\n[interactive-rebase]')
+  {
+    const { repo, g } = makeRepo()
+    for (const [f, c] of [['a', 'c1'], ['b', 'c2'], ['c', 'c3']]) { fs.writeFileSync(path.join(repo, f), 'x\n'); g(['add', '.']); g(['commit', '-qm', c]) }
+    const ids = (await call('log', D(repo))).value.commits.map((c) => c.id) // c3,c2,c1
+    const base = ids[2] // c1
+    const r = await call('interactiveRebase', { ...D(repo), base, entries: [
+      { commit: ids[1], action: 'reword', message: 'c2-reworded' }, // c2
+      { commit: ids[0], action: 'drop' }, // c3
+    ] })
+    ok('interactiveRebase ok', r.ok && r.value.ok === true)
+    const log = (await call('log', D(repo))).value.commits
+    ok('reword applied', log.some((c) => c.subject === 'c2-reworded'))
+    ok('drop applied', !log.some((c) => c.subject === 'c3') && log.length === 2)
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

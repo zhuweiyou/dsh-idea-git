@@ -1856,3 +1856,13 @@ button.dig-filterbtn,
 .dig-cmd__item { height: 30px; display: flex; align-items: center; padding: 0 10px; border-radius: 6px; color: var(--dsw-alias-label-primary); cursor: pointer; font-size: 13px; }
 .dig-cmd__item[data-active='true'] { background: var(--dsw-alias-bg-layer-2); }
 .dig-cmd__empty { padding: 12px; color: var(--dsw-alias-label-secondary); font-size: 13px; }
+
+/* interactive rebase plan dialog */
+.dig-rebase-dialog { width: 760px; max-width: 92vw; }
+.dig-rebase-dialog__hint { color: var(--fg-subtle); font-size: var(--fs-tiny); margin: 2px 0 8px; }
+.dig-rebase-dialog__list { max-height: 52vh; overflow: auto; border-top: 1px solid var(--border); }
+.dig-rebase-row { display: flex; align-items: center; gap: 8px; height: 32px; border-bottom: 1px solid var(--border); font-size: var(--fs-small); }
+.dig-rebase-row__action { height: 24px; }
+.dig-rebase-row__sha { font-family: var(--font-mono); color: var(--fg-subtle); width: 64px; flex: none; }
+.dig-rebase-row__summary { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dig-rebase-row__msg { flex: 1; height: 24px; }

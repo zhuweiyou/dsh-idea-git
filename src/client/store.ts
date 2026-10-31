@@ -43,6 +43,7 @@ export interface GitState {
   worktrees: WorktreeItem[]
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   changelists: { lists: Array<{ id: string; name: string; comment: string }>; active: string; files: Record<string, string> } | null
+  rebasePlan: { base: string | null; rows: Array<{ commit: string; short: string; summary: string; action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message: string }> } | null
   blame: { title: string; lines: BlameLine[]; loading: boolean } | null
   aiBusy: boolean
   logFilterFile: string | null
@@ -99,6 +100,7 @@ const initial: GitState = {
   worktrees: [],
   submodules: [],
   changelists: null,
+  rebasePlan: null,
   blame: null,
   aiBusy: false,
   logFilterFile: null,
@@ -956,4 +958,31 @@ export function moveToChangelist(paths: string[], id: string) {
   const cur = currentCL(); const files = { ...cur.files }
   for (const p of paths) { if (id === 'default') delete files[p]; else files[p] = id }
   void saveChangelists({ ...cur, files })
+}
+
+
+/* Interactive rebase plan (port of OpenIDEA rebasePlan) */
+export function openRebasePlan(commitId: string) {
+  const cs = state.commits
+  const idx = cs.findIndex((c) => c.id === commitId)
+  if (idx < 0) return
+  const target = cs[idx]
+  const rows = cs.slice(0, idx + 1).reverse().map((c) => ({ commit: c.id, short: c.shortId, summary: c.subject, action: 'pick' as const, message: c.subject }))
+  set({ rebasePlan: { base: target.parents[0] ?? null, rows } })
+}
+export function setRebaseRow(i: number, patch: Partial<{ action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message: string }>) {
+  const p = state.rebasePlan; if (!p) return
+  const rows = p.rows.map((r, k) => (k === i ? { ...r, ...patch } : r))
+  set({ rebasePlan: { ...p, rows } })
+}
+export function closeRebasePlan() { set({ rebasePlan: null }) }
+export function runRebasePlan() {
+  const p = state.rebasePlan; if (!p) return
+  return withBusy('Rebasing…', async () => {
+    const entries = p.rows.map((r) => ({ commit: r.commit, action: r.action, message: r.action === 'reword' ? r.message : undefined }))
+    const r = await api.rpc<{ ok: boolean; output: string }>('interactiveRebase', { ...targetPayload(), base: p.base, entries })
+    if (!r || !r.ok) throw new Error(r?.output || 'rebase failed')
+    set({ rebasePlan: null })
+    await refreshAll()
+  })
 }
