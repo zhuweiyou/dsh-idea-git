@@ -131,11 +131,11 @@ export function Panel() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [w.open, s.diff, s.blame, s.conflict, s.compare])
+  const roots = useRepoRoots()
   if (!w.open) return null
 
   const height = w.maximized ? '100vh' : w.minimized ? 40 : w.height
   const bottom = w.minimized ? 40 : w.height
-  const roots = useRepoRoots()
   const branch = s.info?.branch?.head
   const locals = s.branches.filter((b) => !b.remote)
   const content = (
