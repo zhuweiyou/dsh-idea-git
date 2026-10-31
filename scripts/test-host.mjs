@@ -239,6 +239,22 @@ try {
     const en = await dispatch(ctxAI, 'aiCommit', { directory: repo, locale: 'en' })
     ok('ai en system English', /English/.test(captured[captured.length - 1].system))
   }
+
+  /* ---------------- apply patch / lfs track ---------------- */
+  console.log('\n[patch/lfs-track]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'one\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'one\ntwo\n')
+    const cp = await call('createPatch', { ...D(repo), paths: ['a.txt'] })
+    ok('createPatch path', cp.ok && fs.existsSync(cp.value.path))
+    g(['checkout', '--', 'a.txt'])
+    ok('applyPatch', (await call('applyPatch', { ...D(repo), path: cp.value.path })).ok)
+    ok('applyPatch restored content', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'one\ntwo\n')
+    ok('lfsTrack', (await call('lfsTrack', { ...D(repo), pattern: '*.psd' })).ok)
+    ok('.gitattributes has pattern', fs.existsSync(path.join(repo, '.gitattributes')) && fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8').includes('*.psd'))
+    ok('lfsUntrack', (await call('lfsUntrack', { ...D(repo), pattern: '*.psd' })).ok)
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

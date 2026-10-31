@@ -770,3 +770,11 @@ export async function openRangeDiff(from: string, to: string, file: string, titl
     set({ diff: { title, loading: false, kind: 'text' }, error: e?.message || String(e) })
   }
 }
+
+
+export function applyPatchFromPath(path: string) {
+  return withBusy('Applying patch…', async () => { await api.rpc('applyPatch', { ...targetPayload(), path }); await refreshAll() })
+}
+export function lfsTrack(pattern: string) {
+  return withBusy('Updating LFS…', async () => { await api.rpc('lfsTrack', { ...targetPayload(), pattern }); await refreshStatus() })
+}

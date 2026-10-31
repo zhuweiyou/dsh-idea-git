@@ -1025,6 +1025,31 @@ export async function tagDelete(info: RepoInfo, payload: any, signal?: AbortSign
   return { ok: true }
 }
 
+export async function applyPatch(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  let text = typeof payload?.text === 'string' ? payload.text : ''
+  if (!text && payload?.path) { try { text = fs.readFileSync(String(payload.path), 'utf8') } catch {} }
+  if (!text.trim()) throw new RepoError('git/empty-patch', 'No patch content')
+  const check = await runGit(info.gitPath, { cwd: info.root, signal, args: ['apply', '--check', '-'], input: text })
+  if (check.code !== 0) throw new Error(check.stderr.trim() || 'Patch does not apply')
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['apply', '-'], input: text })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || 'Patch apply failed')
+  return { ok: true }
+}
+
+export async function lfsTrack(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const patterns: string[] = Array.isArray(payload?.patterns) ? payload.patterns.map(String) : payload?.pattern ? [String(payload.pattern)] : []
+  if (!patterns.length) throw new RepoError('git/bad-pattern', 'Missing patterns')
+  await runWrite(info, ['lfs', 'track', ...patterns], signal)
+  return { ok: true }
+}
+
+export async function lfsUntrack(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const patterns: string[] = Array.isArray(payload?.patterns) ? payload.patterns.map(String) : payload?.pattern ? [String(payload.pattern)] : []
+  if (!patterns.length) throw new RepoError('git/bad-pattern', 'Missing patterns')
+  await runWrite(info, ['lfs', 'untrack', ...patterns], signal)
+  return { ok: true }
+}
+
 /* ------------------------------------------------------------------ */
 /* Diagnostics                                                         */
 /* ------------------------------------------------------------------ */

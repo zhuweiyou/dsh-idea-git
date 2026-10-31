@@ -67,6 +67,15 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'dropHead':
         return withRepo(ctx, payload, signal, (info) => svc.dropHead(info, payload, signal))
 
+      case 'applyPatch':
+        return withRepo(ctx, payload, signal, (info) => svc.applyPatch(info, payload, signal))
+
+      case 'lfsTrack':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsTrack(info, payload, signal))
+
+      case 'lfsUntrack':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsUntrack(info, payload, signal))
+
       case 'createPatch':
         return withRepo(ctx, payload, signal, (info) => svc.createPatch(info, payload, signal))
 

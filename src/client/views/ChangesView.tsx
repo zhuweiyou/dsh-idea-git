@@ -2,6 +2,7 @@
 import React from 'react'
 import { useGit, Icon, IconButton, Button, Checkbox, Dropdown, MenuItem, baseName, dirName, kindColor, kindLetter, fileIconColor } from '../lib/ui'
 import { useT, getActiveLocale } from '../lib/i18n'
+import { askText } from '../lib/prompt'
 import { openContextMenu, copyText } from '../lib/contextMenu'
 import * as store from '../store'
 import type { FileEntry } from '../types'
@@ -266,6 +267,13 @@ export function ChangesView() {
         <IconButton icon={groupByDir ? 'folder' : 'list'} title={groupByDir ? t('Directory Tree (click for flat)') : t('Flat List (click for directories)')} active={!groupByDir} onClick={() => { const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }} />
         <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('View Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="eye" size={14} /></span>}>
           {(close) => (<MenuItem checked={groupByDir} onClick={() => { close(); const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }}>{t('Group by Directory')}</MenuItem>)}
+        </Dropdown>
+        <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('More')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="more" size={14} /></span>}>
+          {(close) => (<>
+            <MenuItem onClick={async () => { close(); const p = await askText(t('Patch file path')); if (p) void store.applyPatchFromPath(p) }}>{t('Apply Patch…')}</MenuItem>
+            <MenuItem onClick={() => { close(); void store.createPatch({ paths: s.files.map((f) => f.path) }) }}>{t('Create Patch…')}</MenuItem>
+            <MenuItem onClick={async () => { close(); const pat = await askText(t('LFS pattern (e.g. *.psd)')); if (pat) void store.lfsTrack(pat) }}>{t('LFS Track…')}</MenuItem>
+          </>)}
         </Dropdown>
         <span className="dig-toolbar__sep" />
         <span className="dig-toolbar__hint">{t('{n} changes', { n: s.files.length })}</span>
