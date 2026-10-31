@@ -922,46 +922,59 @@ test("host integration", async () => {
           ok("abortOperation", (await call("abortOperation", D(repo))).ok)
           ok("merge aborted", !fs.existsSync(path.join(repo, ".git", "MERGE_HEAD")))
         }
-      
-  /* ---------------- revert hunk ---------------- */
-  console.log("\n[revert-hunk]")
-  {
-    const { repo, g } = makeRepo()
-    const lines = Array.from({ length: 20 }, (_, i) => "line" + (i + 1))
-    fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
-    lines[1] = "CHANGED-2"; lines[17] = "CHANGED-18"
-    fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n")
-    ok("revertHunks", (await call("revertHunks", { ...D(repo), file: "a.txt", indexes: [0] })).ok)
-    const work = g(["diff", "--unified=0"])
-    ok("first hunk reverted, second kept", !work.includes("CHANGED-2") && work.includes("CHANGED-18"))
-  }
 
-  /* ---------------- patch preview ---------------- */
-  console.log("\n[patch-preview]")
-  {
-    const { repo, g } = makeRepo()
-    fs.writeFileSync(path.join(repo, "a.txt"), "A\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
-    fs.writeFileSync(path.join(repo, "a.txt"), "A\nB\n")
-    const cp = await call("createPatch", { ...D(repo), paths: ["a.txt"] })
-    const pv = await call("previewPatch", { ...D(repo), path: cp.value.path })
-    ok("previewPatch files", pv.ok && pv.value.files.some((f) => f.path === "a.txt") && pv.value.stat.length > 0)
-    g(["checkout", "--", "a.txt"])
-    ok("applyPatch after preview", (await call("applyPatch", { ...D(repo), path: cp.value.path })).ok)
-  }
+        /* ---------------- revert hunk ---------------- */
+        console.log("\n[revert-hunk]")
+        {
+          const { repo, g } = makeRepo()
+          const lines = Array.from({ length: 20 }, (_, i) => "line" + (i + 1))
+          fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          lines[1] = "CHANGED-2"
+          lines[17] = "CHANGED-18"
+          fs.writeFileSync(path.join(repo, "a.txt"), lines.join("\n") + "\n")
+          ok("revertHunks", (await call("revertHunks", { ...D(repo), file: "a.txt", indexes: [0] })).ok)
+          const work = g(["diff", "--unified=0"])
+          ok("first hunk reverted, second kept", !work.includes("CHANGED-2") && work.includes("CHANGED-18"))
+        }
 
-  /* ---------------- incoming / compare commits ---------------- */
-  console.log("\n[incoming-compare]")
-  {
-    const { repo, g } = makeRepo()
-    fs.writeFileSync(path.join(repo, "a.txt"), "A\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
-    const noUp = await call("incomingOutgoing", D(repo))
-    ok("incoming no upstream", noUp.ok && noUp.value.upstream === null)
-    g(["checkout", "-q", "-b", "feat"]); fs.writeFileSync(path.join(repo, "b.txt"), "B\n"); g(["add", "."]); g(["commit", "-qm", "feat1"])
-    g(["checkout", "-q", "main"])
-    const cmp = await call("compareCommits", { ...D(repo), from: "feat", to: "main" })
-    ok("compareCommits left", cmp.ok && cmp.value.left.some((c) => c.subject === "feat1") && cmp.value.right.length === 0)
-  }
-} finally {
+        /* ---------------- patch preview ---------------- */
+        console.log("\n[patch-preview]")
+        {
+          const { repo, g } = makeRepo()
+          fs.writeFileSync(path.join(repo, "a.txt"), "A\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          fs.writeFileSync(path.join(repo, "a.txt"), "A\nB\n")
+          const cp = await call("createPatch", { ...D(repo), paths: ["a.txt"] })
+          const pv = await call("previewPatch", { ...D(repo), path: cp.value.path })
+          ok("previewPatch files", pv.ok && pv.value.files.some((f) => f.path === "a.txt") && pv.value.stat.length > 0)
+          g(["checkout", "--", "a.txt"])
+          ok("applyPatch after preview", (await call("applyPatch", { ...D(repo), path: cp.value.path })).ok)
+        }
+
+        /* ---------------- incoming / compare commits ---------------- */
+        console.log("\n[incoming-compare]")
+        {
+          const { repo, g } = makeRepo()
+          fs.writeFileSync(path.join(repo, "a.txt"), "A\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          const noUp = await call("incomingOutgoing", D(repo))
+          ok("incoming no upstream", noUp.ok && noUp.value.upstream === null)
+          g(["checkout", "-q", "-b", "feat"])
+          fs.writeFileSync(path.join(repo, "b.txt"), "B\n")
+          g(["add", "."])
+          g(["commit", "-qm", "feat1"])
+          g(["checkout", "-q", "main"])
+          const cmp = await call("compareCommits", { ...D(repo), from: "feat", to: "main" })
+          ok(
+            "compareCommits left",
+            cmp.ok && cmp.value.left.some((c) => c.subject === "feat1") && cmp.value.right.length === 0,
+          )
+        }
+      } finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })
         } catch {}
