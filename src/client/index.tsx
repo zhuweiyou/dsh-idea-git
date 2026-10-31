@@ -10,6 +10,7 @@ import './theme/tokens.css'
 import './styles/app.css'
 import { setConnection, setUiWorkspace } from './api'
 import { setActiveLocale } from './lib/i18n'
+import { installServices, syncAll, syncTheme, syncLocale } from './services'
 import * as store from './store'
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from './window'
 import { Panel } from './Panel'
@@ -60,6 +61,7 @@ function registerTarget(sessionId: string | undefined, directory: string) {
 function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
+  React.useEffect(() => { syncAll(); const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d)); return () => ts.forEach(clearTimeout) }, [])
 
   React.useEffect(() => {
     if (!w.open) return
@@ -106,34 +108,20 @@ export function apply(ctx: any) {
 
   ctx.effect(() => injectStyle(collectedCss()), 'idea-git: styles')
 
+  installServices(ctx)
+  syncAll()
+  // Services may not be ready at activation on a cold start; retry briefly.
+  for (const delay of [0, 150, 500, 1500, 3000]) setTimeout(syncAll, delay)
+
   const theme = (() => { try { return ctx.get('theme') } catch { return undefined } })()
-  const applyTheme = (snap: any) => {
-    const scheme = snap?.active?.colorScheme
-    if (scheme === 'light' || scheme === 'dark') setTheme(scheme)
-  }
+  const applyTheme = (snap: any) => { const scheme = snap?.active?.colorScheme; if (scheme === 'light' || scheme === 'dark') setTheme(scheme) }
   try { applyTheme(theme?.getTheme?.()) } catch {}
-  ctx.effect(() => {
-    try {
-      const off = ctx.on?.('theme/change', (snap: any) => applyTheme(snap))
-      return () => { try { off?.() } catch {} }
-    } catch {
-      return () => {}
-    }
-  }, 'idea-git: theme')
+  ctx.effect(() => { try { const off = ctx.on?.('theme/change', (snap: any) => applyTheme(snap)); return () => { try { off?.() } catch {} } } catch { return () => {} } }, 'idea-git: theme')
 
   const locale = (() => { try { return ctx.get('locale') } catch { return undefined } })()
   const applyLocale = (id: string | undefined) => { try { setActiveLocale(id) } catch {} }
   try { applyLocale(locale?.getSnapshot?.().active ?? locale?.getLocale?.().active) } catch {}
-  ctx.effect(() => {
-    try {
-      const off = locale?.subscribe?.(() => {
-        try { applyLocale(locale.getSnapshot().active) } catch {}
-      })
-      return () => { try { off?.() } catch {} }
-    } catch {
-      return () => {}
-    }
-  }, 'idea-git: locale')
+  ctx.effect(() => { try { const off = locale?.subscribe?.(() => { try { applyLocale(locale.getSnapshot().active) } catch {} }); return () => { try { off?.() } catch {} } } catch { return () => {} } }, 'idea-git: locale')
 
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register({ name: 'conversation.input.left', id: 'idea-git-entry', order: 41 }, GitEntryButton),

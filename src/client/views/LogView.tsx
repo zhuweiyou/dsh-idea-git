@@ -252,12 +252,15 @@ function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t, range, 
         const sel = selected.has(f.path)
         const letter = f.kind === 'added' ? 'A' : f.kind === 'deleted' ? 'D' : f.kind === 'renamed' ? 'R' : 'M'
         const color = f.kind === 'added' ? 'var(--vcs-added)' : f.kind === 'deleted' ? 'var(--vcs-deleted)' : 'var(--vcs-modified)'
-        const pathsForMenu = () => (selected.size ? [...selected] : [f.path])
         return (
           <div key={'f:' + n.path} className="dig-dfile" data-selected={sel ? 'true' : undefined} style={{ paddingLeft: 22 + depth * 14 }} title={f.path}
             onClick={(e) => onSelectFile(f.path, e)}
             onDoubleClick={() => openDiff(f.path)}
-            onContextMenu={(e) => { const paths = pathsForMenu(); openContextMenu(e, [
+            onContextMenu={(e) => {
+              const wasSelected = selected.has(f.path)
+              if (!wasSelected) onSelectFile(f.path, { shiftKey: false, metaKey: false, ctrlKey: false } as unknown as React.MouseEvent)
+              const paths = wasSelected && selected.size ? [...selected] : [f.path]
+              openContextMenu(e, [
               { label: t('Show Diff'), run: () => openDiff(f.path) },
               { label: t('Show History'), run: () => store.openHistory(f.path) },
               { label: t('Annotate with Git Blame'), run: () => void store.openBlame(f.path, f.path) },

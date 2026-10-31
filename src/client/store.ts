@@ -265,7 +265,8 @@ async function withBusy(label: string, fn: () => Promise<void>) {
   try {
     await fn()
   } catch (e: any) {
-    set({ error: e?.message || String(e), errorCode: e?.code || null })
+    const unknown = e?.code === 'idea-git/unknown-method' || /unknown-method|未知方法/.test(String(e?.message || ''))
+    set({ error: (e?.message || String(e)) + (unknown ? '（Host 未加载最新代码，请完全退出并重新打开 DSH）' : ''), errorCode: e?.code || null })
   } finally {
     set({ busy: false, busyLabel: null })
   }

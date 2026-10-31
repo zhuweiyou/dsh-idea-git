@@ -1102,7 +1102,11 @@ export async function cherryPickPaths(info: RepoInfo, payload: any, signal?: Abo
   const commit = String(payload?.commit ?? '')
   const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
   if (!commit || !paths.length) throw new RepoError('git/bad-ref', 'Missing commit/paths')
-  const diff = await runGit(info.gitPath, { cwd: info.root, signal, args: ['diff', '--no-color', `${commit}^`, commit, '--', ...paths], maxBuffer: 32 * 1024 * 1024 })
+  // Base is the first parent; a root commit has none, so diff against the empty tree.
+  const parents = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', commit] })
+  const fields = parents.stdout.trim().split(/\s+/)
+  const base = fields.length > 1 ? fields[1] : '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+  const diff = await runGit(info.gitPath, { cwd: info.root, signal, args: ['diff', '--no-color', base, commit, '--', ...paths], maxBuffer: 32 * 1024 * 1024 })
   if (diff.code !== 0 || !diff.stdout.trim()) throw new Error('No changes to cherry-pick for the selected files')
   const check = await runGit(info.gitPath, { cwd: info.root, signal, args: ['apply', '--check', '--index', '-'], input: diff.stdout })
   if (check.code !== 0) throw new Error(check.stderr.trim() || 'Selected changes do not apply cleanly')

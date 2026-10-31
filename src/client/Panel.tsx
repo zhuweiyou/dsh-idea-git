@@ -13,6 +13,7 @@ import { DiffView } from './views/DiffView'
 import { ConflictView } from './views/ConflictView'
 import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
+import { syncAll } from './services'
 import { PromptHost, askText } from './lib/prompt'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
@@ -79,6 +80,7 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
+  React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
     if (!w.open) return
     const timer = setInterval(() => { try { void store.refreshSummary() } catch {} }, 5000)
