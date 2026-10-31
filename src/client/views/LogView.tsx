@@ -418,10 +418,10 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     { label: t('Show Diff with Working Tree'), run: () => void store.openCompare(b.name, 'WORKTREE', b.name) },
     { separator: true },
     { label: t('Show History'), run: () => store.openBranchHistory(b.name) },
-    { label: t('Compare with Current'), disabled: b.current || b.remote, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
+    { label: t('Compare with Current'), disabled: b.current, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
     { label: t('Copy Branch Name'), run: () => copyText(b.name) },
     { separator: true },
-    { label: t("Merge '{name}' into Current", { name: b.name }), disabled: b.remote, run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },
+    { label: t("Merge '{name}' into Current", { name: b.name }), run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },
     ...(b.remote ? [
       { label: t("Pull into '{cur}' Using Rebase", { cur }), run: () => { const i = b.name.indexOf('/'); if (i > 0) void store.pullInto(b.name.slice(0, i), b.name.slice(i + 1), true) } },
       { label: t("Pull into '{cur}' Using Merge", { cur }), run: () => { const i = b.name.indexOf('/'); if (i > 0) void store.pullInto(b.name.slice(0, i), b.name.slice(i + 1), false) } },
