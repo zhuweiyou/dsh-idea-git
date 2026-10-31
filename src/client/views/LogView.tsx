@@ -157,7 +157,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
         <IconButton icon="download" size={13} title={t('Update Selected')} onClick={() => void store.remoteOp('pull')} />
         <IconButton icon="trash" size={13} title={t('Delete Branch')} onClick={() => { const r = selectedRef(); if (r && !isRemoteRef() && window.confirm(t('Delete branch {name}?', { name: r }))) void store.deleteBranch(r) }} />
         <IconButton icon="target" size={13} title={t('Navigate Log to Selected Branch')} onClick={() => { const r = selectedRef(); if (r) store.openBranchHistory(r) }} />
-        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={13} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { toggleFavorite(r); refreshFav() } }} />
+        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={16} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { toggleFavorite(r); refreshFav() } }} />
         <IconButton icon="cloud" size={13} title={t('Fetch')} onClick={() => void store.remoteOp('fetch')} />
         <IconButton icon="refresh" size={13} title={t('Refresh')} onClick={() => void store.refreshAll()} />
       </div>
