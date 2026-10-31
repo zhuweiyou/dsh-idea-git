@@ -424,6 +424,7 @@ const zh: Record<string, string> = {
   'New Tag (Force)…': '新建标签（强制覆盖）…',
   'Edit Comment…': '编辑备注…',
   'Changelist comment': '变更列表备注',
+  'Include in commit': '包含在提交中',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

@@ -110,7 +110,7 @@ function FoldButton({ count, onExpand }: { count: number; onExpand: () => void }
   return <button type="button" className="dig-difffold" onClick={onExpand}>⋯ {t('{n} unchanged lines — click to expand', { n: count })}</button>
 }
 
-function SplitView({ rows, highlight, collapse, expanded, onExpand, lang }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string }) {
+function SplitView({ rows, highlight, collapse, expanded, onExpand, lang, hunkStart, excluded, onToggleHunk, hunkLabel }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string; hunkStart?: Map<number, number>; excluded?: Set<number>; onToggleHunk?: (i: number) => void; hunkLabel?: string }) {
   const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   return (
     <div className="dig-diff__split">
@@ -123,7 +123,7 @@ function SplitView({ rows, highlight, collapse, expanded, onExpand, lang }: { ro
             <span className="dig-dsrow__cell dig-dsrow__cell--old">
               {it.row.oldNo != null ? <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === 'words'} lang={lang} /> : null}
             </span>
-            <span className="dig-dsrow__no">{it.row.newNo ?? ''}</span>
+            <span className="dig-dsrow__no">{it.row.newNo ?? ''}{hunkStart && it.row.newNo != null && hunkStart.has(it.row.newNo) ? <input type="checkbox" className="dig-hunkcheck" title={hunkLabel} checked={!excluded?.has(hunkStart.get(it.row.newNo)!)} onChange={() => onToggleHunk?.(hunkStart.get(it.row.newNo!)!)} /> : null}</span>
             <span className="dig-dsrow__cell dig-dsrow__cell--new">
               {it.row.newNo != null ? <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === 'words'} lang={lang} /> : null}
             </span>
@@ -134,7 +134,7 @@ function SplitView({ rows, highlight, collapse, expanded, onExpand, lang }: { ro
   )
 }
 
-function UnifiedView({ rows, highlight, collapse, expanded, onExpand, lang }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string }) {
+function UnifiedView({ rows, highlight, collapse, expanded, onExpand, lang, hunkStart, excluded, onToggleHunk, hunkLabel }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string; hunkStart?: Map<number, number>; excluded?: Set<number>; onToggleHunk?: (i: number) => void; hunkLabel?: string }) {
   const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   const lines: React.ReactNode[] = []
   for (const it of items) {
@@ -147,7 +147,7 @@ function UnifiedView({ rows, highlight, collapse, expanded, onExpand, lang }: { 
       lines.push(
         <div key={lines.length} className="dig-durow">
           <span className="dig-durow__no">{r.oldNo}</span>
-          <span className="dig-durow__no">{r.newNo}</span>
+          <span className="dig-durow__no">{r.newNo}{hunkStart && r.newNo != null && hunkStart.has(r.newNo) ? <input type="checkbox" className="dig-hunkcheck" title={hunkLabel} checked={!excluded?.has(hunkStart.get(r.newNo)!)} onChange={() => onToggleHunk?.(hunkStart.get(r.newNo!)!)} /> : null}</span>
           <span className="dig-durow__sign" />
           <span className="dig-durow__text">{r.oldText || '\u00a0'}</span>
         </div>,
@@ -164,7 +164,7 @@ function UnifiedView({ rows, highlight, collapse, expanded, onExpand, lang }: { 
       if (r.newNo != null) lines.push(
         <div key={lines.length} className="dig-durow dig-durow--add">
           <span className="dig-durow__no" />
-          <span className="dig-durow__no">{r.newNo}</span>
+          <span className="dig-durow__no">{r.newNo}{hunkStart && r.newNo != null && hunkStart.has(r.newNo) ? <input type="checkbox" className="dig-hunkcheck" title={hunkLabel} checked={!excluded?.has(hunkStart.get(r.newNo)!)} onChange={() => onToggleHunk?.(hunkStart.get(r.newNo!)!)} /> : null}</span>
           <span className="dig-durow__sign">＋</span>
           <span className="dig-durow__text"><Fragments text={r.newText} other={r.oldText} enabled={highlight === 'words'} lang={lang} /></span>
         </div>,
@@ -204,6 +204,14 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const d = s.diff
   const b = s.blame
+  const [hunks, setHunks] = React.useState<Array<{ index: number; header: string }>>([])
+  React.useEffect(() => {
+    let live = true
+    const file = d?.file
+    if (file && !d?.commit) store.listHunks(file, !!d?.staged).then((hs) => { if (live) setHunks(hs) }).catch(() => { if (live) setHunks([]) })
+    else setHunks([])
+    return () => { live = false }
+  }, [d?.file, d?.commit, d?.staged])
 
   const update = (patch: Partial<Opts>) => setOpts((o) => { const n = { ...o, ...patch }; saveOpts(n); return n })
 
@@ -228,6 +236,9 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
 
   if (!d && !b) return null
   const lang = (d?.file || '').split('.').pop()?.toLowerCase() || ''
+  const hunkStart = new Map<number, number>()
+  for (const h of hunks) { const m = /\+(\d+)/.exec(h.header); if (m) hunkStart.set(Number(m[1]), h.index) }
+  const excluded = new Set<number>(d?.file ? (s.excludedHunks?.[d.file] || []) : [])
   const title = b ? b.title : d!.title
 
   return (
@@ -322,9 +333,9 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
         ) : rows.length === 0 ? (
           <div className="dig-empty">{t('No differences')}</div>
         ) : opts.mode === 'split' ? (
-          <SplitView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} />
+          <SplitView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} hunkStart={hunkStart} excluded={excluded} onToggleHunk={(i) => d?.file && store.toggleHunkExcluded(d.file, i)} hunkLabel={t('Include in commit')} />
         ) : (
-          <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} />
+          <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} hunkStart={hunkStart} excluded={excluded} onToggleHunk={(i) => d?.file && store.toggleHunkExcluded(d.file, i)} hunkLabel={t('Include in commit')} />
         )}
       </div>
       {editing && d && d.file ? (

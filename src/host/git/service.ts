@@ -735,6 +735,22 @@ export async function stashPush(info: RepoInfo, payload: any, signal?: AbortSign
   return { ok: true }
 }
 
+export async function stashFiles(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<Array<{ path: string; kind: string }>> {
+  const ref = String(payload?.ref ?? (payload?.index != null ? `stash@{${Number(payload.index)}}` : 'stash@{0}'))
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['diff', '--name-status', '--no-renames', `${ref}^`, ref] })
+  if (r.code !== 0) return []
+  const out: Array<{ path: string; kind: string }> = []
+  for (const line of r.stdout.split('\n')) {
+    if (!line.trim()) continue
+    const f = line.split('\t')
+    const st = (f[0] || 'M')[0]
+    const file = f[1]
+    if (!file) continue
+    out.push({ path: file, kind: st === 'A' ? 'added' : st === 'D' ? 'deleted' : 'modified' })
+  }
+  return out
+}
+
 export async function stashApply(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const index = Number(payload?.index ?? 0)
   const verb = payload?.pop === true ? 'pop' : 'apply'

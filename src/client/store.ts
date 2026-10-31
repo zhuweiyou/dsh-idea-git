@@ -44,6 +44,7 @@ export interface GitState {
   shelves: Array<{ index: number; ref: string; name: string; date: number }>
   worktrees: WorktreeItem[]
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
+  excludedHunks: Record<string, number[]>
   changelists: { lists: Array<{ id: string; name: string; comment: string }>; active: string; files: Record<string, string> } | null
   rebasePlan: { base: string | null; rows: Array<{ commit: string; short: string; summary: string; action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message: string }> } | null
   blame: { title: string; lines: BlameLine[]; loading: boolean } | null
@@ -103,6 +104,7 @@ const initial: GitState = {
   shelves: [],
   worktrees: [],
   submodules: [],
+  excludedHunks: {},
   changelists: null,
   rebasePlan: null,
   blame: null,
@@ -325,17 +327,31 @@ export function stageAll() {
 export function commitNow(push: boolean) {
   return withBusy(push ? 'Committing and pushing…' : 'Committing…', async () => {
     const checked = state.files.filter((f) => state.include[f.path] !== false).map((f) => f.path)
+    const stagedPaths: string[] = []
     if (!state.amend) {
       if (checked.length === 0) throw new Error('没有勾选要提交的文件')
-      await api.rpc('stage', { ...targetPayload(), paths: checked })
+      for (const p of checked) {
+        const ex = state.excludedHunks[p] || []
+        if (ex.length) {
+          const hunks = await api.rpc<Array<{ index: number }>>('listHunks', { ...targetPayload(), file: p, staged: false })
+          const idx = hunks.map((h) => h.index).filter((i) => !ex.includes(i))
+          if (!idx.length) continue
+          await api.rpc('applyHunks', { ...targetPayload(), file: p, indexes: idx, staged: false })
+          stagedPaths.push(p)
+        } else {
+          await api.rpc('stage', { ...targetPayload(), paths: [p] })
+          stagedPaths.push(p)
+        }
+      }
+      if (!stagedPaths.length) throw new Error('没有勾选要提交的改动')
     }
-    await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, signoff: state.commitSignoff, author: state.commitAuthor || undefined, paths: state.amend ? undefined : checked })
+    await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, signoff: state.commitSignoff, author: state.commitAuthor || undefined, paths: state.amend ? undefined : stagedPaths })
     try {
       const h: string[] = JSON.parse(localStorage.getItem('dig.msgHistory') || '[]')
       const msg = state.message.trim()
       if (msg && h[0] !== msg) { h.unshift(msg); localStorage.setItem('dig.msgHistory', JSON.stringify(h.slice(0, 20))) }
     } catch {}
-    set({ message: '', amend: false, selectedCommit: null, commitFiles: [] })
+    set({ message: '', amend: false, selectedCommit: null, commitFiles: [], excludedHunks: {} })
     if (push) {
       try { await api.rpc('remote', { ...targetPayload(), op: 'push', setUpstream: true }) } catch {}
     }
@@ -1087,4 +1103,21 @@ export function selectRoot(directory: string) {
   const target = { ...state.target, directory }
   set({ target, ready: false })
   return refreshAll()
+}
+
+
+export async function listStashFiles(index: number, ref: string) {
+  return api.rpc<Array<{ path: string; kind: string }>>('stashFiles', { ...targetPayload(), index, ref })
+}
+export function openStashFileDiff(ref: string, path: string) {
+  return openDiff({ title: `${ref}: ${path}`, path, commit: ref })
+}
+
+
+export function toggleHunkExcluded(file: string, index: number) {
+  const cur = new Set(state.excludedHunks[file] || [])
+  if (cur.has(index)) cur.delete(index); else cur.add(index)
+  const next = { ...state.excludedHunks }
+  if (cur.size) next[file] = [...cur]; else delete next[file]
+  set({ excludedHunks: next })
 }

@@ -514,6 +514,16 @@ try {
     ok('tagCreate force overwrite', (await call('tagCreate', { ...D(repo), name: 'v1', commit: 'HEAD', force: true })).ok)
     ok('tag points to HEAD', g(['rev-parse', 'v1^{commit}']).trim() === g(['rev-parse', 'HEAD']).trim())
   }
+
+  /* ---------------- stash files ---------------- */
+  console.log('\n[stash-files]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    fs.appendFileSync(path.join(repo, 'a.txt'), 'B\n'); fs.writeFileSync(path.join(repo, 'b.txt'), 'B2\n'); g(['add', '.']); g(['stash', 'push', '-q', '-u', '-m', 's1'])
+    const files = (await call('stashFiles', { ...D(repo), index: 0 })).value
+    ok('stashFiles lists changes', files.some((f) => f.path === 'a.txt') && files.some((f) => f.path === 'b.txt'))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

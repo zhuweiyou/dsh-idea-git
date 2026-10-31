@@ -3,6 +3,7 @@ import React from 'react'
 import { useGit, Icon, IconButton, Button, formatDate } from '../lib/ui'
 import { useT } from '../lib/i18n'
 import * as store from '../store'
+import { openContextMenu } from '../lib/contextMenu'
 
 export function StashView() {
   const s = useGit()
@@ -29,6 +30,12 @@ export function StashView() {
               <div className="dig-stashrow__meta">{formatDate(st.date)} · {st.author}</div>
             </div>
             <div className="dig-stashrow__actions">
+              <button type="button" className="dig-btn" onClick={async (ev) => {
+                const files = await store.listStashFiles(st.index, st.ref)
+                if (!files.length) return
+                if (files.length === 1) { void store.openStashFileDiff(st.ref, files[0].path); return }
+                openContextMenu(ev as any, files.map((f) => ({ label: f.path, run: () => void store.openStashFileDiff(st.ref, f.path) })))
+              }}>{t('Diff')}</button>
               <Button onClick={() => void store.stashApply(st.index, false)}>{t('Apply')}</Button>
               <Button onClick={() => void store.stashApply(st.index, true)}>{t('Pop')}</Button>
               <IconButton icon="trash" title={t('Drop')} onClick={() => { if (window.confirm(t('Drop this stash?'))) void store.stashDrop(st.index) }} />
