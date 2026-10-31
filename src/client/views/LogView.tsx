@@ -150,6 +150,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   }, [localTree, remoteTrees, collapsed])
   const toggle = (p: string) => setCollapsed((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const current = locals.find((b) => b.current)
+  const favBranches = s.branches.filter((b) => favSet().has(b.name))
   const selectedRef = () => (document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-ref') || ''
   const isRemoteRef = () => !!(document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-remote')
   const refreshFav = () => setFavTick((x) => x + 1)
@@ -161,7 +162,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
         <IconButton icon="download" size={13} title={t('Update Selected')} onClick={() => void store.remoteOp('pull')} />
         <IconButton icon="trash" size={13} title={t('Delete Branch')} onClick={() => { const r = selectedRef(); if (r && !isRemoteRef() && window.confirm(t('Delete branch {name}?', { name: r }))) void store.deleteBranch(r) }} />
         <IconButton icon="target" size={13} title={t('Navigate Log to Selected Branch')} onClick={() => { const r = selectedRef(); if (r) store.openBranchHistory(r) }} />
-        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={16} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { toggleFavorite(r); refreshFav() } }} />
+        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={16} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { const on = !isFavorite(r); toggleFavorite(r); refreshFav(); store.setToast(on ? t('Added to Favorites') + ': ' + r : t('Removed from Favorites') + ': ' + r) } }} />
         <IconButton icon="cloud" size={13} title={t('Fetch')} onClick={() => void store.remoteOp('fetch')} />
         <IconButton icon="refresh" size={13} title={t('Refresh')} onClick={() => void store.refreshAll()} />
       </div>
@@ -171,6 +172,12 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
         <input className="dig-branches__input" placeholder={t('Branch or tag')} value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
       <div className="dig-branches__list">
+        {favBranches.length ? (
+          <>
+            <div className="dig-branches__section"><Icon name="star" size={15} /><span>{t('Favorites')}</span></div>
+            {favBranches.map((b) => <div key={'fav:' + b.ref} style={{ paddingLeft: 8 }}><BranchRow b={b} t={t} label={b.name.split('/').pop()} /></div>)}
+          </>
+        ) : null}
         <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={() => void store.refreshAll()} /></div>
         <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} />
         {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span><span style={{ flex: 1 }} /><IconButton icon="plus" title={t('Add Remote…')} size={13} onClick={async () => { const n = await askText(t('Remote name')); if (!n) return; const u = await askText(t('Remote URL')); if (u) void store.addRemote(n, u) }} /></div> : null}
@@ -422,7 +429,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     { separator: true },
     { label: t('Show History'), run: () => store.openBranchHistory(b.name) },
     { label: t('Compare with Current'), disabled: b.current, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
-    { label: isFavorite(b.name) ? t('Remove from Favorites') : t('Add to Favorites'), run: () => { toggleFavorite(b.name); void store.refreshAll() } },
+    { label: isFavorite(b.name) ? t('Remove from Favorites') : t('Add to Favorites'), run: () => { const on = !isFavorite(b.name); toggleFavorite(b.name); store.setToast(on ? t('Added to Favorites') + ': ' + b.name : t('Removed from Favorites') + ': ' + b.name); void store.refreshAll() } },
     { label: t('Copy Branch Name'), run: () => copyText(b.name) },
     { separator: true },
     { label: t("Merge '{name}' into Current", { name: b.name }), run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },

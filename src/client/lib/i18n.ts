@@ -400,6 +400,9 @@ const zh: Record<string, string> = {
   'Sign-off commit': 'Signed-off-by 署名',
   'Subject line is longer than 72 characters': '主题行超过 72 个字符',
   'Missing blank line between subject and body': '主题与正文之间缺少空行',
+  'Favorites': '收藏',
+  'Added to Favorites': '已添加到收藏',
+  'Removed from Favorites': '已取消收藏',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
