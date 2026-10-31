@@ -69,7 +69,7 @@ function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => 
     <div
       key={b.ref}
       className="dig-branchrow"
-      data-ref={b.ref}
+      data-ref={b.name}
       data-remote={b.remote ? 'true' : undefined}
       data-current={b.current ? 'true' : undefined}
       title={b.name}
