@@ -355,7 +355,12 @@ export function Panel() {
       {!w.maximized && (s.diff || s.blame) ? <DiffView bottom={bottom} theme={w.theme} /> : null}
       {!w.maximized && s.conflict ? <ConflictView bottom={bottom} theme={w.theme} /> : null}
       {!w.maximized && s.compare ? <CompareView bottom={bottom} theme={w.theme} /> : null}
-      <div className="dig-theme dig-panel" data-theme={w.theme} style={{ height }}>
+      <div
+        className="dig-theme dig-panel"
+        data-theme={w.theme}
+        data-maximized={w.maximized ? "true" : undefined}
+        style={{ height }}
+      >
         {!w.maximized && !w.minimized ? <ResizeHandle /> : null}
         <div className="dig-panel__header" onDoubleClick={() => toggleMaximized()}>
           <span className="dig-panel__brand">
