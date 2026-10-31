@@ -10,6 +10,9 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: 'light' 
   const t = useT()
   const c = s.compare
   const rows = React.useMemo(() => (c?.diff && !c.diff.loading ? computeRows(c.diff.oldText, c.diff.newText, 'none') : []), [c])
+  const [editing, setEditing] = React.useState(false)
+  const [draft, setDraft] = React.useState('')
+  React.useEffect(() => { setEditing(false) }, [c?.sel, c?.to])
   if (!c) return null
   return (
     <div className="dig-theme dig-diffarea" data-theme={theme} style={{ bottom }}>
@@ -18,6 +21,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: 'light' 
         <span className="dig-diff__title">{t('Compare')}: {c.from} ↔ {c.to}</span>
         <span style={{ flex: 1 }} />
         <span className="dig-diff__hint">{t('{n} files', { n: c.files.length })}</span>
+        {c.to === 'WORKTREE' && c.sel ? <button type="button" className="dig-btn" onClick={() => { setDraft(c.diff?.newText || ''); setEditing(true) }}>{t('Edit')}</button> : null}
         <IconButton icon="close" title={t('Close')} onClick={() => store.closeCompare()} />
       </div>
       <div className="dig-compare">
@@ -50,6 +54,12 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: 'light' 
           )}
         </div>
       </div>
+      {editing && c.sel ? (
+        <div className="dig-edit-overlay">
+          <div className="dig-edit-overlay__bar"><span>{t('Editing worktree file')}: {c.sel}</span><span style={{ flex: 1 }} /><button type="button" className="dig-btn" onClick={() => setEditing(false)}>{t('Cancel')}</button><button type="button" className="dig-btn" onClick={() => { setEditing(false); void store.saveWorktreeFile(c.sel!, draft, false).then(() => store.selectCompareFile(c.sel!)) }}>{t('Save')}</button><button type="button" className="dig-btn dig-btn--primary" onClick={() => { setEditing(false); void store.saveWorktreeFile(c.sel!, draft, true).then(() => store.selectCompareFile(c.sel!)) }}>{t('Save & Stage')}</button></div>
+          <textarea className="dig-edit-overlay__text" value={draft} spellCheck={false} onChange={(e) => setDraft(e.target.value)} />
+        </div>
+      ) : null}
     </div>
   )
 }
