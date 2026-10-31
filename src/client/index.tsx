@@ -58,6 +58,12 @@ function registerTarget(sessionId: string | undefined, directory: string) {
   void store.activate({ sessionId, directory })
 }
 
+function PanelSpacer() {
+  const w = useWindow()
+  const h = !w.open ? 0 : w.minimized ? 40 : w.maximized ? 'calc(100vh - 120px)' : w.height
+  return <div aria-hidden style={{ height: h, flex: 'none', width: '100%' }} />
+}
+
 function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
@@ -128,6 +134,11 @@ export function apply(ctx: any) {
   )
   ctx.slots.inject('shell.overlay', () =>
     ctx.slots.register({ name: 'shell.overlay', id: 'idea-git-window', order: 41 }, Panel),
+  )
+  // IDEA-style docking: reserve space below the composer equal to the panel height,
+  // so the conversation + composer are pushed up instead of being covered.
+  ctx.slots.inject('conversation.composer.dock', () =>
+    ctx.slots.register({ name: 'conversation.composer.dock', id: 'idea-git-spacer', order: 41 }, PanelSpacer),
   )
   ctx.slots.inject('settings.section', () =>
     ctx.slots.register({ name: 'settings.section', id: 'idea-git-settings', order: 60, label: () => 'IDEA Git' }, SettingsSection),
