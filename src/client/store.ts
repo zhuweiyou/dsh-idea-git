@@ -450,7 +450,7 @@ export async function selectCommit(id: string, mode: "single" | "toggle" | "rang
 
 async function withBusy(label: string, fn: () => Promise<void>) {
   if (state.busy) return
-  set({ busy: true, busyLabel: label })
+  set({ busy: true, busyLabel: t(label) })
   try {
     await fn()
   } catch (e: any) {
@@ -790,7 +790,7 @@ export function mergeBranch(name: string) {
     const out = (r.output || "").trim()
     if (/already up[ -]to[ -]date/i.test(out))
       setToast(t("Already up to date: current branch already contains {name}", { name }))
-    else setToast(out || `Merged ${name}`)
+    else setToast(out || t("Merged {name}", { name }))
     await refreshAll()
   })
 }
@@ -1094,7 +1094,8 @@ export async function openCommitInBrowser(commit: string) {
 let toastSeq = 0
 export function setToast(message: string) {
   const id = ++toastSeq
-  set({ toasts: [...state.toasts, { id, message }].slice(-6) })
+  const text = t(message)
+  set({ toasts: [...state.toasts, { id, message: text }].slice(-6) })
   setTimeout(() => {
     set({ toasts: state.toasts.filter((x) => x.id !== id) })
   }, 4000)
@@ -1106,7 +1107,7 @@ export function createPatch(target: { commit?: string; paths?: string[] }) {
     try {
       void navigator.clipboard?.writeText(r.path)
     } catch {}
-    setToast("Patch saved: " + r.path)
+    setToast(t("Patch saved: {path}", { path: r.path }))
   })
 }
 
@@ -1259,7 +1260,7 @@ export function downloadCommitFiles(commit: string, paths: string[]) {
       paths,
       dir,
     })
-    setToast("Saved to " + r.path)
+    setToast(t("Saved to {path}", { path: r.path }))
   })
 }
 
@@ -1355,13 +1356,13 @@ export function updateSubmodule(path?: string) {
 export function lfsLock(path: string) {
   return withBusy("Locking…", async () => {
     await api.rpc("lfsLock", { ...targetPayload(), path })
-    setToast("Locked: " + path)
+    setToast(t("Locked: {path}", { path }))
   })
 }
 export function lfsUnlock(path: string) {
   return withBusy("Unlocking…", async () => {
     await api.rpc("lfsUnlock", { ...targetPayload(), path })
-    setToast("Unlocked: " + path)
+    setToast(t("Unlocked: {path}", { path }))
   })
 }
 
@@ -1668,7 +1669,7 @@ export async function readIgnoreFile(destination: "gitignore" | "exclude") {
 export async function saveIgnoreFile(destination: "gitignore" | "exclude", content: string) {
   await api.rpc("writeIgnoreFile", { ...targetPayload(), destination, content })
   await refreshStatus()
-  setToast("Saved " + (destination === "exclude" ? ".git/info/exclude" : ".gitignore"))
+  setToast(t("Saved {file}", { file: destination === "exclude" ? ".git/info/exclude" : ".gitignore" }))
 }
 export function applyPatchText(text: string) {
   return withBusy("Applying patch…", async () => {
@@ -1683,7 +1684,7 @@ export function initRepo() {
     if (!dir) throw new Error("No workspace directory")
     await api.rpc("gitInit", { directory: dir })
     await refreshAll()
-    setToast("Initialized Git repository")
+    setToast(t("Initialized Git repository"))
   })
 }
 
@@ -1693,7 +1694,7 @@ export function cloneRepo(url: string, parent: string) {
     if (state.target?.sessionId) setTarget({ sessionId: state.target.sessionId, directory: r.path })
     set({ target: { sessionId: state.target?.sessionId || "", directory: r.path } })
     await refreshAll()
-    setToast("Cloned to " + r.path)
+    setToast(t("Cloned to {path}", { path: r.path }))
   })
 }
 
@@ -1701,7 +1702,7 @@ export function abortOperation() {
   return withBusy("Aborting…", async () => {
     await api.rpc("abortOperation", { ...targetPayload() })
     await refreshAll()
-    setToast("Operation aborted")
+    setToast(t("Operation aborted"))
   })
 }
 

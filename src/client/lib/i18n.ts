@@ -34,9 +34,9 @@ const zh: Record<string, string> = {
   'Committing and pushing…': '提交并推送…',
   'Checking out…': '切换分支…',
   'Creating and checking out…': '创建并切换…',
-  'Fetching…': 'Fetch…',
-  'Pulling…': 'Pull…',
-  'Pushing…': 'Push…',
+  'Fetching…': '拉取远程中…',
+  'Pulling…': '拉取中…',
+  'Pushing…': '推送中…',
 
   // changes
   Stage: '暂存',
@@ -365,7 +365,7 @@ const zh: Record<string, string> = {
   'Squash Into…': 'Squash 进…',
   'Commit local changes as fixup! {subject}?': '把本地改动提交为 fixup! {subject}？',
   'Commit local changes as squash! {subject}?': '把本地改动提交为 squash! {subject}？',
-  'Squash into…': 'Squash 进…',
+  'Squash into…': '压缩到…',
   'Changelists': '变更列表',
   'New Changelist': '新建变更列表',
   'Rename Changelist': '重命名变更列表',
@@ -501,6 +501,21 @@ const zh: Record<string, string> = {
   'Compare Commits with Current…': '与当前分支比较提交…',
   'Search branches, tags or revisions': '搜索分支、标签或修订',
   'Use revision': '使用修订',
+  'Cherry-pick…': '拣选中…',
+  'Tagging…': '创建标签中…',
+  'Renaming…': '重命名中…',
+  'Updating ignore…': '更新忽略规则中…',
+  'Undoing…': '撤销中…',
+  'Checkout & Rebase…': '检出并变基中…',
+  'Applying…': '应用中…',
+  'Merged {name}': '已合并 {name}',
+  'Patch saved: {path}': '补丁已保存：{path}',
+  'Saved to {path}': '已保存到 {path}',
+  'Locked: {path}': '已锁定：{path}',
+  'Unlocked: {path}': '已解锁：{path}',
+  'Saved {file}': '已保存 {file}',
+  'Initialized Git repository': 'Git 仓库已初始化',
+  'Cloned to {path}': '已克隆到 {path}',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
