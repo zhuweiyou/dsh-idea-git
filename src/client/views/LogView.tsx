@@ -152,11 +152,13 @@ function BranchNodes({
             <React.Fragment key={"d:" + n.path}>
               <div
                 className="dig-branches__folder"
-                style={{ paddingLeft: 8 + depth * 14 }}
+                style={{ paddingLeft: 8 + depth * 16 }}
                 onClick={() => toggle(n.path)}
               >
-                <Icon name={open ? "chevronDown" : "chevronRight"} size={14} />
-                <Icon name="folder" size={14} style={{ color: "var(--fg-subtle)" }} />
+                <span className="dig-tree__toggle">
+                  <Icon name={open ? "chevronDown" : "chevronRight"} size={14} />
+                </span>
+                <Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />
                 <span>{n.name}</span>
               </div>
               {open && n.children ? (
@@ -173,7 +175,7 @@ function BranchNodes({
           )
         }
         return (
-          <div key={"b:" + n.path} style={{ paddingLeft: depth * 14 + 8 + 20 }}>
+          <div key={"b:" + n.path} style={{ paddingLeft: depth * 16 + 8 + 16 }}>
             {n.branch ? <BranchRow b={n.branch} t={t} label={n.name} onSelect={onSelect} /> : null}
           </div>
         )
@@ -328,7 +330,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 <span>{t("Favorites")}</span>
               </div>
               {favBranches.map((b) => (
-                <div key={"fav:" + b.ref} style={{ paddingLeft: 28 }}>
+                <div key={"fav:" + b.ref} style={{ paddingLeft: 24 }}>
                   <BranchRow b={b} t={t} label={b.name.split("/").pop()} onSelect={setSelectedName} />
                 </div>
               ))}
@@ -403,8 +405,10 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                   ])
                 }}
               >
-                <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />
-                <Icon name="folder" size={14} style={{ color: "var(--fg-subtle)" }} />
+                <span className="dig-tree__toggle">
+                  <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />
+                </span>
+                <Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />
                 <span>{remote}</span>
               </div>
               {!collapsed.has("remote:" + remote) ? (

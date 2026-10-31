@@ -3034,3 +3034,7 @@ body.dig-docked #root {
 .dig-dsrow--add .dig-dsrow__no:last-of-type {
   box-shadow: inset -3px 0 0 var(--vcs-added) !important;
 }
+
+/* Fixed 16px tree slot for toggle and icons so folders/branches/favorites align. */
+.dig-tree__toggle { flex: none; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
+.dig-branches__folder > svg, .dig-branchrow > svg { flex: none; }
