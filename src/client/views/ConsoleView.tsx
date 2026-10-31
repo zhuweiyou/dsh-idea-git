@@ -39,8 +39,17 @@ export function ConsoleView() {
         {s.consoleEntries.map((e) => (
           <div key={e.id}>
             <div className="dig-console__cmd">
-              <span className="dig-console__time">[{new Date(e.at).toLocaleTimeString()}] </span>${" "}
-              {e.command}
+              <span className="dig-console__time">
+                [
+                {new Date(e.at).toLocaleTimeString([], {
+                  hour12: false,
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+                ]{" "}
+              </span>
+              $ {e.command}
             </div>
             {e.stdout ? <div className="dig-console__out">{e.stdout.trimEnd()}</div> : null}
             {e.stderr ? <div className="dig-console__err">{e.stderr.trimEnd()}</div> : null}
