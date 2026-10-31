@@ -2848,3 +2848,46 @@ body.dig-docked #root {
   font-family: var(--font-mono);
   font-size: var(--fs-small);
 }
+
+/* Patch preview */
+.dig-patchpreview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 460px;
+}
+.dig-patchpreview__files {
+  max-height: 40vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.dig-patchpreview__row {
+  display: flex;
+  gap: 10px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}
+.dig-patchpreview__path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-patchpreview__plus {
+  color: var(--vcs-added);
+}
+.dig-patchpreview__minus {
+  color: var(--vcs-deleted);
+}
+.dig-patchpreview__stat {
+  margin: 0;
+  max-height: 24vh;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--fg-secondary);
+}

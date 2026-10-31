@@ -905,7 +905,7 @@ export function ChangesView() {
                 onClick={async () => {
                   close()
                   const text = await askMultiline(t("Paste patch content"))
-                  if (text) void store.applyPatchText(text)
+                  if (text) void store.previewPatchText(text)
                 }}
               >
                 {t("Apply Patch (Paste)…")}

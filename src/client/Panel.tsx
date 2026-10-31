@@ -24,6 +24,7 @@ import { PromptHost, askText } from "./lib/prompt"
 import { ConfirmHost } from "./lib/confirm"
 import { MergeConflictsDialog } from "./views/MergeConflictsDialog"
 import { TagDialog } from "./views/TagDialog"
+import { PatchPreviewDialog } from "./views/PatchPreviewDialog"
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: "changes", label: "Commit" },
@@ -437,6 +438,7 @@ export function Panel() {
       <ConfirmHost />
       <MergeConflictsDialog />
       <TagDialog />
+      <PatchPreviewDialog />
       <RebasePlanDialog />
     </>
   )

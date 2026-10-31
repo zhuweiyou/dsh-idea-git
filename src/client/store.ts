@@ -60,6 +60,7 @@ export interface GitState {
   excludedHunks: Record<string, number[]>
   mergeDialog: boolean
   tagDialogCommit: string | null
+  patchPreview: { text: string; stat: string; files: Array<{ path: string; added: number; deleted: number }> } | null
   changelists: {
     lists: Array<{ id: string; name: string; comment: string }>
     active: string
@@ -172,6 +173,7 @@ const initial: GitState = {
   excludedHunks: {},
   mergeDialog: false,
   tagDialogCommit: null,
+  patchPreview: null,
   changelists: null,
   rebasePlan: null,
   blame: null,
@@ -1650,4 +1652,24 @@ export function openTagDialog(commit: string) {
 }
 export function closeTagDialog() {
   set({ tagDialogCommit: null })
+}
+
+export async function previewPatchText(text: string) {
+  const r = await api.rpc<{ stat: string; files: Array<{ path: string; added: number; deleted: number }> }>(
+    "previewPatch",
+    { ...targetPayload(), text },
+  )
+  set({ patchPreview: { text, stat: r.stat, files: r.files } })
+}
+export function closePatchPreview() {
+  set({ patchPreview: null })
+}
+export function applyPreviewPatch() {
+  const p = state.patchPreview
+  if (!p) return
+  return withBusy("Applying patch…", async () => {
+    await api.rpc("applyPatch", { ...targetPayload(), text: p.text })
+    set({ patchPreview: null })
+    await refreshAll()
+  })
 }

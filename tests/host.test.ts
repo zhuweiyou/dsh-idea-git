@@ -935,6 +935,19 @@ test("host integration", async () => {
     const work = g(["diff", "--unified=0"])
     ok("first hunk reverted, second kept", !work.includes("CHANGED-2") && work.includes("CHANGED-18"))
   }
+
+  /* ---------------- patch preview ---------------- */
+  console.log("\n[patch-preview]")
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, "a.txt"), "A\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
+    fs.writeFileSync(path.join(repo, "a.txt"), "A\nB\n")
+    const cp = await call("createPatch", { ...D(repo), paths: ["a.txt"] })
+    const pv = await call("previewPatch", { ...D(repo), path: cp.value.path })
+    ok("previewPatch files", pv.ok && pv.value.files.some((f) => f.path === "a.txt") && pv.value.stat.length > 0)
+    g(["checkout", "--", "a.txt"])
+    ok("applyPatch after preview", (await call("applyPatch", { ...D(repo), path: cp.value.path })).ok)
+  }
 } finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })

@@ -121,6 +121,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case "cherryPickPaths":
         return withRepo(ctx, payload, signal, (info) => svc.cherryPickPaths(info, payload, signal))
 
+      case "previewPatch":
+        return withRepo(ctx, payload, signal, (info) => svc.previewPatch(info, payload, signal))
+
       case "applyPatch":
         return withRepo(ctx, payload, signal, (info) => svc.applyPatch(info, payload, signal))
 

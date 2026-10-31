@@ -1799,6 +1799,25 @@ export async function tagDelete(info: RepoInfo, payload: any, signal?: AbortSign
   return { ok: true }
 }
 
+export async function previewPatch(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  let text = typeof payload?.text === "string" ? payload.text : ""
+  if (!text && payload?.path) {
+    try {
+      text = fs.readFileSync(String(payload.path), "utf8")
+    } catch {}
+  }
+  if (!text.trim()) throw new RepoError("git/empty-patch", "No patch content")
+  const stat = await runGit(info.gitPath, { cwd: info.root, signal, args: ["apply", "--stat", "-"], input: text })
+  const num = await runGit(info.gitPath, { cwd: info.root, signal, args: ["apply", "--numstat", "-"], input: text })
+  const files: Array<{ path: string; added: number; deleted: number }> = []
+  for (const line of num.stdout.split("\n")) {
+    if (!line.trim()) continue
+    const [a, d, p] = line.split("\t")
+    if (p) files.push({ path: p, added: Number(a) || 0, deleted: Number(d) || 0 })
+  }
+  return { stat: stat.stdout.trim(), files }
+}
+
 export async function applyPatch(info: RepoInfo, payload: any, signal?: AbortSignal) {
   let text = typeof payload?.text === "string" ? payload.text : ""
   if (!text && payload?.path) {

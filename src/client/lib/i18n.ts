@@ -486,6 +486,8 @@ const zh: Record<string, string> = {
   'Force overwrite if exists': '若已存在则强制覆盖',
   'Target': '目标',
   'New Tag…': '新建标签…',
+  'Apply Patch': '应用补丁',
+  'Patch does not apply cleanly': '补丁无法干净应用',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
