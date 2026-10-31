@@ -2910,3 +2910,51 @@ body.dig-docked #root {
 .dig-committab__half + .dig-committab__half {
   border-top: 1px solid var(--border);
 }
+
+/* Commit list dialogs */
+.dig-commitlists {
+  display: flex;
+  gap: 12px;
+  min-width: 720px;
+  max-width: 88vw;
+}
+.dig-commitlists__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dig-commitlists__title {
+  font-weight: 600;
+  color: var(--fg-strong);
+}
+.dig-commitlistdlg {
+  max-height: 50vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.dig-commitlistdlg__row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-small);
+}
+.dig-commitlistdlg__sha {
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  flex: none;
+}
+.dig-commitlistdlg__subject {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-commitlistdlg__author {
+  color: var(--fg-subtle);
+  flex: none;
+}

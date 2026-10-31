@@ -948,6 +948,19 @@ test("host integration", async () => {
     g(["checkout", "--", "a.txt"])
     ok("applyPatch after preview", (await call("applyPatch", { ...D(repo), path: cp.value.path })).ok)
   }
+
+  /* ---------------- incoming / compare commits ---------------- */
+  console.log("\n[incoming-compare]")
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, "a.txt"), "A\n"); g(["add", "."]); g(["commit", "-qm", "c1"])
+    const noUp = await call("incomingOutgoing", D(repo))
+    ok("incoming no upstream", noUp.ok && noUp.value.upstream === null)
+    g(["checkout", "-q", "-b", "feat"]); fs.writeFileSync(path.join(repo, "b.txt"), "B\n"); g(["add", "."]); g(["commit", "-qm", "feat1"])
+    g(["checkout", "-q", "main"])
+    const cmp = await call("compareCommits", { ...D(repo), from: "feat", to: "main" })
+    ok("compareCommits left", cmp.ok && cmp.value.left.some((c) => c.subject === "feat1") && cmp.value.right.length === 0)
+  }
 } finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })

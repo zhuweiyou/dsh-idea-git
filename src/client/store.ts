@@ -61,6 +61,17 @@ export interface GitState {
   mergeDialog: boolean
   tagDialogCommit: string | null
   patchPreview: { text: string; stat: string; files: Array<{ path: string; added: number; deleted: number }> } | null
+  incomingDialog: {
+    upstream: string | null
+    ahead: Array<{ id: string; short: string; subject: string; author: string; date: number }>
+    behind: Array<{ id: string; short: string; subject: string; author: string; date: number }>
+  } | null
+  compareDialog: {
+    from: string
+    to: string
+    left: Array<{ id: string; short: string; subject: string; author: string; date: number }>
+    right: Array<{ id: string; short: string; subject: string; author: string; date: number }>
+  } | null
   changelists: {
     lists: Array<{ id: string; name: string; comment: string }>
     active: string
@@ -174,6 +185,8 @@ const initial: GitState = {
   mergeDialog: false,
   tagDialogCommit: null,
   patchPreview: null,
+  incomingDialog: null,
+  compareDialog: null,
   changelists: null,
   rebasePlan: null,
   blame: null,
@@ -1672,4 +1685,26 @@ export function applyPreviewPatch() {
     set({ patchPreview: null })
     await refreshAll()
   })
+}
+
+export async function openIncomingOutgoing() {
+  const r = await api.rpc<{ upstream: string | null; ahead: Array<any>; behind: Array<any> }>(
+    "incomingOutgoing",
+    targetPayload(),
+  )
+  set({ incomingDialog: r })
+}
+export function closeIncomingOutgoing() {
+  set({ incomingDialog: null })
+}
+export async function openCompareCommits(from: string, to: string) {
+  const r = await api.rpc<{ from: string; to: string; left: Array<any>; right: Array<any> }>("compareCommits", {
+    ...targetPayload(),
+    from,
+    to,
+  })
+  set({ compareDialog: r })
+}
+export function closeCompareCommits() {
+  set({ compareDialog: null })
 }

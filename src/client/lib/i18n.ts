@@ -491,6 +491,14 @@ const zh: Record<string, string> = {
   'Stashes and Shelves': '储藏与货架',
   'Stash and Shelf': '储藏与货架',
   'Combine Stash and Shelf tabs': '合并储藏与货架页签',
+  'Incoming / Outgoing': '传入 / 传出',
+  'Incoming': '传入（待拉取）',
+  'Outgoing': '传出（待推送）',
+  'No upstream configured': '未配置上游分支',
+  'Nothing to pull': '没有需要拉取的提交',
+  'Nothing to push': '没有需要推送的提交',
+  'Show Incoming / Outgoing…': '显示传入/传出…',
+  'Compare Commits with Current…': '与当前分支比较提交…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

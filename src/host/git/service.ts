@@ -369,6 +369,53 @@ export async function readLog(
   return { commits: hasMore ? all.slice(0, limit) : all, hasMore }
 }
 
+export interface SimpleCommit {
+  id: string
+  short: string
+  subject: string
+  author: string
+  date: number
+}
+
+async function listCommits(info: RepoInfo, args: string[], signal?: AbortSignal): Promise<SimpleCommit[]> {
+  const fmt = "%H%x1f%h%x1f%s%x1f%an%x1f%ct"
+  const r = await runGit(info.gitPath, {
+    cwd: info.root,
+    signal,
+    args: [...args, `--pretty=format:${fmt}`],
+    maxBuffer: 8 * 1024 * 1024,
+  })
+  if (r.code !== 0) return []
+  const out: SimpleCommit[] = []
+  for (const line of r.stdout.split("\n")) {
+    if (!line.trim()) continue
+    const [id, short, subject, author, ct] = line.split("\x1f")
+    if (id) out.push({ id, short, subject: subject || "", author: author || "", date: Number(ct) * 1000 })
+  }
+  return out
+}
+
+export async function incomingOutgoing(info: RepoInfo, _payload: any, signal?: AbortSignal) {
+  const up = await runGit(info.gitPath, {
+    cwd: info.root,
+    signal,
+    args: ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+  })
+  if (up.code !== 0 || !up.stdout.trim()) return { upstream: null, ahead: [], behind: [] }
+  const upstream = up.stdout.trim()
+  const ahead = await listCommits(info, ["log", "HEAD", `^${upstream}`], signal)
+  const behind = await listCommits(info, ["log", upstream, "^HEAD"], signal)
+  return { upstream, ahead, behind }
+}
+
+export async function compareCommits(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const from = String(payload?.from ?? "HEAD")
+  const to = String(payload?.to ?? "HEAD")
+  const left = await listCommits(info, ["log", from, `^${to}`], signal)
+  const right = await listCommits(info, ["log", to, `^${from}`], signal)
+  return { from, to, left, right }
+}
+
 export async function readCommitFiles(info: RepoInfo, commit: string, signal?: AbortSignal): Promise<FileEntry[]> {
   const args = ["diff-tree", "--no-commit-id", "--name-status", "-r", "-M", "--root", commit]
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args })

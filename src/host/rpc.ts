@@ -223,6 +223,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case "status":
         return withRepo(ctx, payload, signal, (info) => svc.readStatus(info, signal))
 
+      case "incomingOutgoing":
+        return withRepo(ctx, payload, signal, (info) => svc.incomingOutgoing(info, payload, signal))
+
+      case "compareCommits":
+        return withRepo(ctx, payload, signal, (info) => svc.compareCommits(info, payload, signal))
+
       case "log":
         return withRepo(ctx, payload, signal, (info) => svc.readLog(info, payload, signal))
 

@@ -941,6 +941,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
         },
       },
       { label: t("Show History"), run: () => store.openBranchHistory(b.name) },
+      { label: t("Show Incoming / Outgoing…"), run: () => void store.openIncomingOutgoing() },
     ]
   }
   return [
@@ -971,6 +972,10 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
       label: t("Compare with Current"),
       disabled: b.current,
       run: () => void store.openCompare(b.name, "HEAD", b.name),
+    },
+    {
+      label: t("Compare Commits with Current…"),
+      run: () => void store.openCompareCommits(b.name, "HEAD"),
     },
     {
       label: t("Compare with Revision…"),
