@@ -480,6 +480,12 @@ const zh: Record<string, string> = {
   'Merge…': '合并…',
   'Revert Hunk': '回滚此块',
   'Reverting hunk…': '回滚此块中…',
+  'New Tag': '新建标签',
+  'Create': '创建',
+  'Tag name': '标签名',
+  'Force overwrite if exists': '若已存在则强制覆盖',
+  'Target': '目标',
+  'New Tag…': '新建标签…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

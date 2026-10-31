@@ -59,6 +59,7 @@ export interface GitState {
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   excludedHunks: Record<string, number[]>
   mergeDialog: boolean
+  tagDialogCommit: string | null
   changelists: {
     lists: Array<{ id: string; name: string; comment: string }>
     active: string
@@ -170,6 +171,7 @@ const initial: GitState = {
   submodules: [],
   excludedHunks: {},
   mergeDialog: false,
+  tagDialogCommit: null,
   changelists: null,
   rebasePlan: null,
   blame: null,
@@ -1641,4 +1643,11 @@ export function revertHunk(file: string, index: number) {
     const d = state.diff
     if (d && d.file === file) await openDiff({ title: d.title, path: d.file, staged: d.staged })
   })
+}
+
+export function openTagDialog(commit: string) {
+  set({ tagDialogCommit: commit })
+}
+export function closeTagDialog() {
+  set({ tagDialogCommit: null })
 }

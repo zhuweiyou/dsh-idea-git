@@ -2825,3 +2825,26 @@ body.dig-docked #root {
   gap: 6px;
   flex: none;
 }
+
+/* Tag dialog */
+.dig-tagdialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 420px;
+}
+.dig-tagdialog__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dig-tagdialog__check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dig-tagdialog__target {
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}

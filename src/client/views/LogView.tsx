@@ -897,24 +897,7 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
         if (n) void store.createBranchAt(n, c.id)
       },
     },
-    {
-      label: t("New Tag Here…"),
-      run: async () => {
-        const n = await askText(t("New tag name"))
-        if (!n) return
-        const msg = await askMultiline(t("Tag message (optional)"), "")
-        void store.createTag(n, c.id, msg || undefined)
-      },
-    },
-    {
-      label: t("New Tag (Force)…"),
-      run: async () => {
-        const n = await askText(t("New tag name"))
-        if (!n) return
-        const msg = await askMultiline(t("Tag message (optional)"), "")
-        void store.createTag(n, c.id, msg || undefined, true)
-      },
-    },
+    { label: t("New Tag…"), run: () => store.openTagDialog(c.id) },
     { separator: true },
     { label: t("Cherry-Pick"), run: () => void store.cherryPick([c.id]) },
     { separator: true },
