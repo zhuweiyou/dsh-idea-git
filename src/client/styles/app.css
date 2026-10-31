@@ -2003,3 +2003,7 @@ body.dig-docked #root { height: 100% !important; }
 .dig-settings-check > span { line-height: 20px; }
 .dig-group { min-height: 24px; }
 .dig-group[data-drop='true'] { outline: 1px dashed var(--accent); }
+
+/* Open-state GIT button matches the composer controls' hover subtlety. */
+.dig-entry[data-active='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, transparent); color: var(--dsw-alias-label-primary); }
+.dig-entry[data-active='true']:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent); color: var(--dsw-alias-label-primary); }
