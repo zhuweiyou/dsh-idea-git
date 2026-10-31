@@ -705,7 +705,9 @@
   min-height: 0;
   overflow: auto;
 }
-.dig-branchrow { min-width: 0; }
+.dig-branchrow {
+  min-width: 0;
+}
 .dig-branchrow:hover {
   background: var(--bg-tree-hover);
 }
@@ -3027,8 +3029,18 @@ body.dig-docked #root {
 }
 
 /* Fixed 16px tree slot for toggle and icons so folders/branches/favorites align. */
-.dig-tree__toggle { flex: none; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
-.dig-branches__folder > svg, .dig-branchrow > svg { flex: none; }
+.dig-tree__toggle {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-branches__folder > svg,
+.dig-branchrow > svg {
+  flex: none;
+}
 
 /* Unified branch tree layout: [depth*16][16 toggle][16 icon][label] */
 .dig-tree-row {
@@ -3043,9 +3055,33 @@ body.dig-docked #root {
   white-space: nowrap;
   user-select: none;
 }
-.dig-tree-row:hover { background: var(--bg-tree-hover); }
-.dig-tree-row[data-current='true'] { color: var(--fg-strong); font-weight: 600; }
-.dig-tree-row__toggle { flex: none; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
-.dig-tree-row__icon { flex: none; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; }
-.dig-tree-row__label { overflow: hidden; text-overflow: ellipsis; }
-.dig-tree-row[data-selected='true'] { background: var(--bg-tree-selected, var(--bg-hover)); }
+.dig-tree-row:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-tree-row[data-current="true"] {
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.dig-tree-row__toggle {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-tree-row__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-tree-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-tree-row[data-selected="true"] {
+  background: var(--bg-tree-selected, var(--bg-hover));
+}
