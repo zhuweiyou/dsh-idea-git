@@ -2036,3 +2036,4 @@ body.dig-docked #root { height: 100% !important; }
 .dig-tok-str { color: var(--syntax-string, #ce9178); }
 .dig-tok-num { color: var(--syntax-number, #b5cea8); }
 .dig-tok-kw { color: var(--syntax-keyword, #569cd6); }
+.dig-group__comment { margin-left: 8px; color: var(--fg-subtle); font-size: var(--fs-tiny); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

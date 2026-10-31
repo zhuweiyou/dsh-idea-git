@@ -168,7 +168,7 @@ function TreeView({ nodes, depth, expanded, toggle, selected, onSelect }: { node
   )
 }
 
-function Group({ title, files, groupByDir, listId, active, selected, onSelect, signal }: { title: string; files: FileEntry[]; groupByDir: boolean; listId?: string; active?: boolean; selected?: string; onSelect?: (p: string) => void; signal?: { n: number; mode: 'expand' | 'collapse' } }) {
+function Group({ title, files, groupByDir, listId, active, selected, onSelect, signal, comment }: { title: string; files: FileEntry[]; groupByDir: boolean; listId?: string; active?: boolean; selected?: string; onSelect?: (p: string) => void; signal?: { n: number; mode: 'expand' | 'collapse' }; comment?: string }) {
   const gs = useGit()
   const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
@@ -207,6 +207,7 @@ function Group({ title, files, groupByDir, listId, active, selected, onSelect, s
             { separator: true },
             { label: t('New Changelist'), run: async () => { const n = await askText(t('New Changelist')); if (n) store.newChangelist(n) } },
             { label: t('Rename Changelist'), run: async () => { const n = await askText(t('Rename Changelist'), title.replace(/ \*$/, '')); if (n) store.renameChangelist(listId, n) } },
+            { label: t('Edit Comment…'), run: async () => { const c2 = await askText(t('Changelist comment'), comment || ''); if (c2 !== null) store.setChangelistComment(listId, c2) } },
             { separator: true },
             ...(active ? [] : [{ label: t('Set Active Changelist'), run: () => store.setActiveChangelist(listId) }]),
             { label: t('Delete Changelist'), danger: true, disabled: listId === 'default', run: () => { if (window.confirm(t('Delete this changelist?'))) store.deleteChangelist(listId) } },
@@ -217,7 +218,7 @@ function Group({ title, files, groupByDir, listId, active, selected, onSelect, s
           ])
         } : undefined}>
         <span className="dig-check__box" data-on={allOn ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={() => store.setIncludeAll(files.map((f) => f.path), !allOn)}>{allOn ? <Icon name="check" size={10} /> : null}</span>
-        <span className="dig-group__title">{title}</span>
+        <span className="dig-group__title">{title}</span>{comment ? <span className="dig-group__comment" title={comment}>{comment}</span> : null}
         <span className="dig-group__count">{files.length}</span>
       </div>
       {groupByDir ? <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} /> : files.slice().sort((a, b) => a.path.localeCompare(b.path)).map((f) => <div key={f.path} style={{ paddingLeft: 8 }}><FileRow file={f} selected={selected === f.path} onSelect={onSelect} /></div>)}
@@ -367,7 +368,7 @@ export function ChangesView() {
           const active = cl?.active || 'default'
           const assign = cl?.files || {}
           const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
-          return lists.map((l) => <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={forList(l.id)} groupByDir={groupByDir} listId={l.id} active={l.id === active} selected={selectedPath} onSelect={setSelectedPath} signal={treeSignal} />)
+          return lists.map((l) => <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={forList(l.id)} groupByDir={groupByDir} listId={l.id} active={l.id === active} selected={selectedPath} onSelect={setSelectedPath} signal={treeSignal} comment={l.comment} />)
         })()}
       </div>
     </div>

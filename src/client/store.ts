@@ -973,6 +973,9 @@ export function newChangelist(name: string) {
 export function renameChangelist(id: string, name: string) {
   const cur = currentCL(); void saveChangelists({ ...cur, lists: cur.lists.map((l) => (l.id === id ? { ...l, name } : l)) })
 }
+export function setChangelistComment(id: string, comment: string) {
+  const cur = currentCL(); void saveChangelists({ ...cur, lists: cur.lists.map((l) => (l.id === id ? { ...l, comment } : l)) })
+}
 export function deleteChangelist(id: string) {
   const cur = currentCL(); if (id === 'default') return
   const files: Record<string, string> = {}

@@ -422,6 +422,8 @@ const zh: Record<string, string> = {
   'Word wrap': '自动换行',
   'Enter = next, Shift+Enter = previous': '回车=下一个，Shift+回车=上一个',
   'New Tag (Force)…': '新建标签（强制覆盖）…',
+  'Edit Comment…': '编辑备注…',
+  'Changelist comment': '变更列表备注',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
