@@ -1,7 +1,6 @@
 # dsh-idea-git（IDEA Git）
 
-IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行。使用 TS + React + TSX；
-样式与交互参考 [OpenIDEA](https://github.com/l0ng-ai/openidea)（Apache-2.0）的 Git 工具窗口。
+IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行。
 
 ## 入口
 - **GIT 按钮**：会话输入框左侧（“完全权限”右侧），hover 高亮、打开态常驻高亮，点击 toggle。
