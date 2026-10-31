@@ -3132,3 +3132,16 @@ body.dig-docked #root {
   max-width: 100%;
   animation: dig-toast-in 0.18s ease-out;
 }
+
+/* Busy indicator joins the floating stack. */
+.dig-toast-stack .dig-banner--busy {
+  width: auto;
+  max-width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated, var(--bg-app));
+  color: var(--fg-strong);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+  animation: dig-toast-in 0.18s ease-out;
+}

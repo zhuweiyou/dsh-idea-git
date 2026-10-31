@@ -457,10 +457,10 @@ export function Panel() {
             </button>
           </div>
         ) : null}
-        {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div> : null}
-        {s.toasts.length
+        {s.busy || s.toasts.length
           ? createPortal(
               <div className="dig-toast-stack">
+                {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div> : null}
                 {s.toasts.map((x) => (
                   <div key={x.id} className="dig-banner dig-banner--toast">
                     {x.message}
