@@ -2007,3 +2007,8 @@ body.dig-docked #root { height: 100% !important; }
 /* Open-state GIT button matches the composer controls' hover subtlety. */
 .dig-entry[data-active='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, transparent); color: var(--dsw-alias-label-primary); }
 .dig-entry[data-active='true']:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent); color: var(--dsw-alias-label-primary); }
+
+/* Align branch sync counters with the right-side icon column. */
+.dig-branches .dig-branchrow { padding-right: 10px; }
+.dig-branches__section { padding-right: 10px; }
+.dig-branchrow__sync { display: inline-flex; align-items: center; justify-content: flex-end; height: 100%; line-height: 22px; min-width: 32px; }
