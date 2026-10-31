@@ -165,6 +165,10 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
   const [opts, setOpts] = React.useState<Opts>(loadOpts)
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState('')
+  const [findOpen, setFindOpen] = React.useState(false)
+  const [findText, setFindText] = React.useState('')
+  const [wrap, setWrap] = React.useState<boolean>(() => localStorage.getItem('dig.diffWrap') === '1')
+  const findAt = React.useRef(0)
   const [expanded, setExpanded] = React.useState<Set<number>>(() => new Set())
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const d = s.diff
@@ -195,7 +199,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
   const title = b ? b.title : d!.title
 
   return (
-    <div className="dig-theme dig-diffarea" data-theme={theme} style={{ bottom }}>
+    <div className="dig-theme dig-diffarea" data-theme={theme} data-wrap={wrap ? 'true' : undefined} style={{ bottom }}>
       <div className="dig-diff__head">
         <Icon name="file" size={15} />
         <span className="dig-diff__title" title={title}>{title}</span>
@@ -222,6 +226,8 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
         <div className={styles.toolbar} role="toolbar">
           <IconButton icon="chevronDown" title={t('Previous change')} onClick={() => goto(-1)} />
           <IconButton icon="chevronRight" title={t('Next change')} onClick={() => goto(1)} />
+          <IconButton icon="search" title={t('Find')} onClick={() => setFindOpen((v) => !v)} />
+          <button type="button" className="dig-diffwrapbtn" data-active={wrap ? 'true' : undefined} title={t('Word wrap')} onClick={() => { const v = !wrap; setWrap(v); try { localStorage.setItem('dig.diffWrap', v ? '1' : '0') } catch {} }}>↩</button>
           <span className={styles.sep} />
           <div className="dig-seg">
             <button type="button" className="dig-seg__btn" data-active={opts.mode === 'split' ? 'true' : undefined} title={t('Side-by-side')} onClick={() => update({ mode: 'split' })}>

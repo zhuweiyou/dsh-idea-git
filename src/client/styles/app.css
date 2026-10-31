@@ -2022,3 +2022,11 @@ body.dig-docked #root { height: 100% !important; }
 .dig-partial { flex: none; padding: 0 4px; border-radius: 4px; background: color-mix(in srgb, var(--vcs-modified) 16%, transparent); color: var(--vcs-modified); font-size: 10px; line-height: 14px; }
 .dig-filerow[data-selected='true'] { background: var(--bg-selected); color: var(--fg-strong); }
 .dig-treewrap:focus { outline: none; }
+
+/* Diff find bar + word wrap */
+.dig-difffind { flex: none; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; border-bottom: 1px solid var(--border); }
+.dig-difffind input { height: 22px; width: 240px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--bg-input); color: var(--fg); outline: none; }
+.dig-difffind__hint { color: var(--fg-subtle); font-size: var(--fs-tiny); }
+.dig-diffwrapbtn { height: 24px; padding: 0 6px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--fg-subtle); cursor: pointer; font-size: 13px; }
+.dig-diffwrapbtn[data-active='true'] { background: var(--bg-selected); color: var(--fg-strong); }
+.dig-diffarea[data-wrap='true'] .dig-dsrow, .dig-diffarea[data-wrap='true'] .dig-durow { white-space: pre-wrap; word-break: break-word; }

@@ -417,6 +417,10 @@ const zh: Record<string, string> = {
   'Base': '基线',
   'Expand All': '全部展开',
   'Collapse All': '全部折叠',
+  'Find': '查找',
+  'Find in diff': '在差异中查找',
+  'Word wrap': '自动换行',
+  'Enter = next, Shift+Enter = previous': '回车=下一个，Shift+回车=上一个',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
