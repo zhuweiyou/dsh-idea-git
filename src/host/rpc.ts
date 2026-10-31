@@ -185,9 +185,6 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'gitVersion':
         return ok(await svc.gitVersionInfo(ctx))
 
-      case 'debugLayout':
-        return { ok: true, value: await svc.debugLayout(payload) }
-
       case 'ping':
         return ok({ pong: true, at: Date.now() })
 

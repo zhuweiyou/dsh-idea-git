@@ -1901,3 +1901,7 @@ button.dig-filterbtn,
 /* Reserve space via body shrink; panel is portaled to body so fixed is viewport-relative. */
 body.dig-docked { height: calc(100vh - var(--dig-panel-h, 0px)) !important; overflow: hidden !important; }
 body.dig-docked #root { height: 100% !important; }
+
+/* Softer panel/diff shadows. */
+.dig-panel { box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.10) !important; }
+.dig-diffarea { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important; }
