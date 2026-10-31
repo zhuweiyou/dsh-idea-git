@@ -613,6 +613,29 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
         </div>
       ) : null}
 
+      {findOpen ? (
+        <div className="dig-difffind">
+          <input
+            autoFocus
+            placeholder={t("Find in diff")}
+            value={findText}
+            onChange={(e) => setFindText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return
+              const el = bodyRef.current
+              if (!el || !findText) return
+              const rows = Array.from(
+                el.querySelectorAll<HTMLElement>(".dig-dsrow, .dig-durow"),
+              ).filter((r) => (r.textContent || "").includes(findText))
+              if (!rows.length) return
+              findAt.current = (findAt.current + (e.shiftKey ? rows.length - 1 : 1)) % rows.length
+              rows[findAt.current].scrollIntoView({ block: "center" })
+            }}
+          />
+          <span className="dig-difffind__hint">{t("Enter = next, Shift+Enter = previous")}</span>
+        </div>
+      ) : null}
+
       <div className="dig-diff__body" ref={bodyRef}>
         {b ? (
           b.loading ? (

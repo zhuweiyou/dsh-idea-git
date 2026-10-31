@@ -10,49 +10,6 @@ const shared = {
   lint: { options: { typeAware: true, typeCheck: true } },
 }
 
-function hash(s: string): string {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
-  return (h >>> 0).toString(36).slice(0, 6)
-}
-
-/** Inline CSS: .module.css -> hashed class map; all CSS is registered into __DIG_CSS__. */
-function inlineCss(): any {
-  const register = (css: string) =>
-    `;(function(){try{var g=globalThis;g.__DIG_CSS__=g.__DIG_CSS__||[];` +
-    `if(!g.__DIG_CSS_SEEN__)g.__DIG_CSS_SEEN__=new Set();` +
-    `if(!g.__DIG_CSS_SEEN__.has(${JSON.stringify(css.length + ":" + css.slice(0, 40))})){` +
-    `g.__DIG_CSS_SEEN__.add(${JSON.stringify(css.length + ":" + css.slice(0, 40))});g.__DIG_CSS__.push(${JSON.stringify(css)});}}catch(e){}})();\n`
-  return {
-    name: "dig-inline-css",
-    enforce: "pre",
-    load(id: string) {
-      if (!id.endsWith(".css")) return null
-      if (id.includes("node_modules")) return null
-      const raw = fs.readFileSync(id, "utf8")
-      if (!id.endsWith(".module.css"))
-        return { code: register(raw) + "export default {};\n", moduleSideEffects: true }
-      const suffix = hash(id)
-      const globals: string[] = []
-      let text = raw.replace(/:global\(([^)]*(?:\([^)]*\)[^)]*)*)\)/g, (_m, inner) => {
-        globals.push(inner)
-        return `__G${globals.length - 1}__`
-      })
-      const classes = new Map<string, string>()
-      text = text.replace(/(^|[^a-zA-Z0-9_\-.\\])(\.)([_a-zA-Z][\w-]*)/g, (m, pre, dot, name) => {
-        const scoped = `${name}__${suffix}`
-        classes.set(name, scoped)
-        return `${pre}${dot}${scoped}`
-      })
-      text = text.replace(/__G(\d+)__/g, (_m, i) => globals[Number(i)])
-      return {
-        code: register(text) + `export default ${JSON.stringify(Object.fromEntries(classes))};\n`,
-        moduleSideEffects: true,
-      }
-    },
-  }
-}
-
 const clientWrap: any = {
   name: "dig-client-wrapper",
   closeBundle() {

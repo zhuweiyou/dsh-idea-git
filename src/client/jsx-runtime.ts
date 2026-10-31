@@ -8,7 +8,7 @@ export const Fragment = React.Fragment
 
 function normalize(type: any, props: any, key: any) {
   if (key === undefined || key === null) return props ?? {}
-  return { ...(props ?? {}), key }
+  return { ...props, key }
 }
 
 export function jsx(type: any, props: any, key?: any) {

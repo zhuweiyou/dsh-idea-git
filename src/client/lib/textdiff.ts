@@ -53,8 +53,7 @@ export function computeRows(oldText: string, newText: string, ignore: IgnorePoli
   }
 
   // DP LCS lengths.
-  const dp: Uint32Array[] = new Array(n + 1)
-  for (let i = 0; i <= n; i++) dp[i] = new Uint32Array(m + 1)
+  const dp: Uint32Array[] = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1))
   for (let i = n - 1; i >= 0; i--) {
     for (let j = m - 1; j >= 0; j--) {
       dp[i][j] = na[i] === nb[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1])

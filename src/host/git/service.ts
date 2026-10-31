@@ -11,7 +11,7 @@ import path from "node:path"
 import fs from "node:fs"
 import { createHash } from "node:crypto"
 import os from "node:os"
-import { clearGitPathCache, gitOrThrow, resolveGitPath, runGit, runGitBytes } from "./exec.js"
+import { resolveGitPath, runGit, runGitBytes } from "./exec.js"
 import { getSettings } from "../settings.js"
 import { zipStore } from "./zip.js"
 
@@ -728,10 +728,6 @@ export async function diffText(
   return r.stdout
 }
 
-function hasNul(t: string) {
-  return t.indexOf("\u0000") >= 0
-}
-
 /** Both versions of one file, so the client can render split/unified and re-diff live. */
 const IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".ico", ".svg"])
 const MIME: Record<string, string> = {
@@ -872,7 +868,7 @@ export async function lfsLsFiles(info: RepoInfo, signal?: AbortSignal): Promise<
     .filter(Boolean)
 }
 
-export async function lfsInfo(ctx: any): Promise<{ installed: boolean; version?: string }> {
+export async function lfsInfo(_ctx: any): Promise<{ installed: boolean; version?: string }> {
   const gitPath = await resolveGitPath()
   if (!gitPath) return { installed: false }
   const r = await runGit(gitPath, { cwd: process.cwd(), args: ["lfs", "version"] })
@@ -1306,7 +1302,7 @@ export async function renameBranch(info: RepoInfo, payload: any, signal?: AbortS
   return { ok: true }
 }
 
-export async function addIgnore(info: RepoInfo, payload: any, signal?: AbortSignal) {
+export async function addIgnore(info: RepoInfo, payload: any, _signal?: AbortSignal) {
   const files: string[] = Array.isArray(payload?.files) ? payload.files.map(String) : []
   if (!files.length) throw new RepoError("git/no-paths", "Missing paths")
   const destination = payload?.destination === "exclude" ? "exclude" : "gitignore"
@@ -1377,7 +1373,7 @@ export async function conflictDiff3(
 export async function readConflictWorking(
   info: RepoInfo,
   payload: any,
-  signal?: AbortSignal,
+  _signal?: AbortSignal,
 ): Promise<{ content: string }> {
   const file = String(payload?.file ?? "").trim()
   if (!file) throw new RepoError("git/bad-path", "Missing file path")

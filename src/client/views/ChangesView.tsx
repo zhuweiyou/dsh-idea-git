@@ -172,7 +172,11 @@ function FileRow({
       }}
       onClick={() => {
         onSelect?.(file.path)
-        store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged })
+        void store.openDiff({
+          title: file.path,
+          path: file.path,
+          staged: file.staged && !file.unstaged,
+        })
       }}
       onContextMenu={(e) => openContextMenu(e, fileMenuItems(file, root, t))}
     >
@@ -294,7 +298,6 @@ function TreeView({
 }) {
   const gs = useGit()
   const t = useT()
-  const root = gs.info?.root || ""
   return (
     <>
       {nodes.map((n) => {
@@ -777,8 +780,6 @@ export function ChangesView() {
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
   }
-  const staged = s.files.filter((f) => f.staged)
-  const unstaged = s.files.filter((f) => !f.staged)
   const tree = (
     <div className="dig-changes">
       <div className="dig-toolbar">
@@ -1037,7 +1038,7 @@ export function ChangesView() {
             }
           } else if (e.key === "F4") {
             e.preventDefault()
-            store.openDiff({ title: selectedPath, path: selectedPath })
+            void store.openDiff({ title: selectedPath, path: selectedPath })
           }
         }}
       >

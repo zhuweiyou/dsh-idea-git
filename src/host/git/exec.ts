@@ -87,7 +87,7 @@ function spawnProc(exe: string, args: string[], opts: RunOptions): Promise<CmdRe
   return new Promise((resolve, reject) => {
     const child = spawn(exe, args, {
       cwd: opts.cwd,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...(opts.env ?? {}) },
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...opts.env },
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
     })

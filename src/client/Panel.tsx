@@ -19,7 +19,6 @@ import { CompareView } from "./views/CompareView"
 import { ContextMenuHost } from "./lib/contextMenu"
 import { syncAll } from "./services"
 import { saveCurrentWorkspace } from "./workspaceState"
-import { setTarget } from "./window"
 import { PromptHost, askText } from "./lib/prompt"
 
 const TABS: Array<{ id: store.TabId; label: string }> = [

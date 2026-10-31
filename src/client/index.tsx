@@ -10,7 +10,7 @@ import "./theme/tokens.css"
 import "./styles/app.css"
 import { setConnection, setUiWorkspace } from "./api"
 import { setActiveLocale } from "./lib/i18n"
-import { installServices, syncAll, syncTheme, syncLocale } from "./services"
+import { installServices, syncAll } from "./services"
 import * as store from "./store"
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from "./window"
 import { switchWorkspace } from "./workspaceState"
@@ -20,8 +20,6 @@ import { Icon } from "./lib/ui"
 
 export const name = "idea-git-client"
 export const inject = ["slots"]
-
-declare const globalThis: any
 
 function injectStyle(css: string): () => void {
   if (!css) return () => {}
@@ -37,7 +35,7 @@ function injectStyle(css: string): () => void {
 }
 
 function collectedCss(): string {
-  const arr = (globalThis.__DIG_CSS__ as string[] | undefined) || []
+  const arr = ((globalThis as any).__DIG_CSS__ as string[] | undefined) || []
   return arr.join("\n")
 }
 
@@ -63,12 +61,6 @@ function registerTarget(sessionId: string | undefined, directory: string) {
   if (cur && cur.sessionId === sessionId && cur.directory === directory) return
   setTarget({ sessionId, directory })
   void store.activate({ sessionId, directory })
-}
-
-function PanelSpacer() {
-  const w = useWindow()
-  const h = !w.open ? 0 : w.minimized ? 40 : w.maximized ? "calc(100vh - 120px)" : w.height
-  return <div aria-hidden style={{ height: h, flex: "none", width: "100%" }} />
 }
 
 function GitEntryButton(props: any) {

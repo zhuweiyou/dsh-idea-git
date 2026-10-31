@@ -249,7 +249,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
               type="button"
               className="dig-btn dig-btn--primary"
               onClick={() => {
-                store.resolveConflictContent(c.file, resultText)
+                void store.resolveConflictContent(c.file, resultText)
                 setResultEditing(false)
               }}
             >

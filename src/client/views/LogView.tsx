@@ -256,7 +256,6 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
       else n.add(p)
       return n
     })
-  const current = locals.find((b) => b.current)
   const favBranches = s.branches.filter((b) => favSet().has(b.name))
   const selectedBranch = s.branches.find((b) => b.name === selectedName)
   const isRemoteRef = () => !!selectedBranch?.remote
@@ -402,7 +401,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
               />
             </div>
           ) : null}
-          {[...remoteGroups.entries()].map(([remote, list]) => (
+          {[...remoteGroups.entries()].map(([remote]) => (
             <div key={remote}>
               <div
                 className="dig-branches__folder"
@@ -571,7 +570,6 @@ function FileNodes({
   range,
   selected,
   onSelectFile,
-  onToggleDir,
 }: {
   nodes: FNode[]
   depth: number
@@ -583,7 +581,6 @@ function FileNodes({
   range?: { from: string; to: string } | null
   selected: Set<string>
   onSelectFile: (p: string, e: React.MouseEvent) => void
-  onToggleDir: (n: FNode) => void
 }) {
   const openDiff = (path: string) =>
     range
@@ -600,7 +597,6 @@ function FileNodes({
         if (n.dir) {
           const open = expanded.has(n.path)
           const files = filesUnder(n)
-          const allOn = files.length > 0 && files.every((f) => selected.has(f))
           return (
             <React.Fragment key={"d:" + n.path}>
               <div
@@ -645,7 +641,6 @@ function FileNodes({
                   range={range}
                   selected={selected}
                   onSelectFile={onSelectFile}
-                  onToggleDir={onToggleDir}
                 />
               ) : null}
             </React.Fragment>
@@ -778,18 +773,6 @@ function DetailsPane() {
     })
     if (!e.shiftKey) anchor.current = p
   }
-  const onToggleDir = (node: FNode) => {
-    const files = filesUnder(node)
-    setSelected((prev) => {
-      const allOn = files.length > 0 && files.every((f) => prev.has(f))
-      const n = new Set(prev)
-      for (const f of files) {
-        if (allOn) n.delete(f)
-        else n.add(f)
-      }
-      return n
-    })
-  }
   return (
     <div className="dig-details">
       <div className="dig-details__fileshead">
@@ -809,7 +792,6 @@ function DetailsPane() {
           range={s.detailRange}
           selected={selected}
           onSelectFile={onSelectFile}
-          onToggleDir={onToggleDir}
         />
       </div>
       <div className="dig-details__msg">
@@ -937,7 +919,8 @@ function commitMenuItems(
       run: () => {
         const isHead = store.getState().commits[0]?.id === c.id
         if (window.confirm(t("Drop this commit? Its changes will be discarded."))) {
-          isHead ? void store.dropHead() : void store.dropCommit(c.id)
+          if (isHead) void store.dropHead()
+          else void store.dropCommit(c.id)
         }
       },
     },
