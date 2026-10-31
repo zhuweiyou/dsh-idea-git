@@ -1,0 +1,550 @@
+/**
+ * Panel state store. A tiny external store (no zustand dependency) shared by the
+ * button, the panel shell and the views.
+ */
+import * as api from './api'
+import type { BlameLine, BranchItem, CommitItem, ConsoleEntry, FileEntry, RemoteItem, RepoInfoResult, StashItem, StatusResult, WorktreeItem } from './types'
+
+export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'worktree'
+
+export interface Target {
+  sessionId: string
+  directory: string
+}
+
+export interface GitState {
+  target: Target | null
+  tab: TabId
+  ready: boolean
+  loading: boolean
+  error: string | null
+  errorCode: string | null
+  info: RepoInfoResult | null
+  files: FileEntry[]
+  status: StatusResult | null
+  branches: BranchItem[]
+  tags: string[]
+  remotes: RemoteItem[]
+  commits: CommitItem[]
+  logHasMore: boolean
+  logLoading: boolean
+  selectedCommit: string | null
+  commitFiles: FileEntry[]
+  message: string
+  amend: boolean
+  busy: boolean
+  busyLabel: string | null
+  consoleEntries: ConsoleEntry[]
+  selection: string[]
+  include: Record<string, boolean>
+  stashes: StashItem[]
+  worktrees: WorktreeItem[]
+  blame: { title: string; lines: BlameLine[]; loading: boolean } | null
+  aiBusy: boolean
+  logFilterFile: string | null
+  logBranch: string | null
+  diff: { title: string; loading: boolean; file?: string; commit?: string; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
+  rev: number
+}
+
+function readTab(): TabId {
+  try {
+    const v = localStorage.getItem('dig.tab')
+    if (v === 'changes' || v === 'log' || v === 'console' || v === 'stash' || v === 'worktree') return v
+  } catch {}
+  return 'changes'
+}
+
+const initial: GitState = {
+  target: null,
+  tab: readTab(),
+  ready: false,
+  loading: false,
+  error: null,
+  errorCode: null,
+  info: null,
+  files: [],
+  status: null,
+  branches: [],
+  tags: [],
+  remotes: [],
+  commits: [],
+  logHasMore: false,
+  logLoading: false,
+  selectedCommit: null,
+  commitFiles: [],
+  message: '',
+  amend: false,
+  busy: false,
+  busyLabel: null,
+  consoleEntries: [],
+  selection: [],
+  include: {},
+  stashes: [],
+  worktrees: [],
+  blame: null,
+  aiBusy: false,
+  logFilterFile: null,
+  logBranch: null,
+  diff: null,
+  rev: 0,
+}
+
+let state: GitState = initial
+const subs = new Set<() => void>()
+
+export function subscribe(fn: () => void): () => void {
+  subs.add(fn)
+  return () => subs.delete(fn)
+}
+
+export function getState(): GitState {
+  return state
+}
+
+function set(patch: Partial<GitState>) {
+  state = { ...state, ...patch, rev: state.rev + 1 }
+  subs.forEach((f) => {
+    try { f() } catch {}
+  })
+}
+
+export function setTab(tab: TabId) {
+  try { localStorage.setItem('dig.tab', tab) } catch {}
+  set({ tab })
+  if (tab === 'console') void loadConsole()
+  if (tab === 'log' && state.commits.length === 0) void loadLog(true)
+  if (tab === 'stash') void loadStashes()
+  if (tab === 'worktree') void loadWorktrees()
+}
+
+export function setMessage(message: string) {
+  set({ message })
+}
+
+export function setAmend(amend: boolean) {
+  set({ amend })
+}
+
+export function toggleSelect(path: string) {
+  const has = state.selection.includes(path)
+  set({ selection: has ? state.selection.filter((p) => p !== path) : [...state.selection, path] })
+}
+
+export function clearError() {
+  set({ error: null, errorCode: null })
+}
+
+/* ------------------------------------------------------------------ */
+
+const targetPayload = () => ({
+  sessionId: state.target?.sessionId,
+  directory: state.target?.directory,
+})
+
+export async function activate(target: Target) {
+  set({ target, ready: false })
+  await refreshAll()
+}
+
+export async function refreshAll() {
+  if (!state.target) return
+  set({ loading: true, error: null, errorCode: null })
+  try {
+    const info = await api.rpc<RepoInfoResult>('info', targetPayload())
+    if (!info.isRepo) {
+      set({ loading: false, ready: true, info, error: info.reason || '当前工作区不是 Git 仓库', errorCode: info.code || 'git/not-a-repository', files: [], commits: [], branches: [], status: null })
+      return
+    }
+    set({ info, ready: true })
+    await Promise.all([refreshStatus(), refreshBranches(), refreshTags(), refreshRemotes()])
+    await loadLog(true)
+  } catch (e: any) {
+    set({ loading: false, ready: true, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+export async function refreshSummary() {
+  if (!state.target || !state.info?.isRepo) return
+  if (state.busy) return
+  try {
+    const status = await api.rpc<StatusResult>('status', targetPayload())
+    set({ status, files: status.files })
+  } catch {}
+}
+
+export async function refreshStatus() {
+  if (!state.target) return
+  try {
+    const status = await api.rpc<StatusResult>('status', targetPayload())
+    const include: Record<string, boolean> = {}
+    for (const f of status.files) include[f.path] = state.include[f.path] !== false
+    set({ status, files: status.files, include, error: null, errorCode: null })
+  } catch (e: any) {
+    set({ error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+async function refreshBranches() {
+  try { set({ branches: await api.rpc<BranchItem[]>('branches', targetPayload()) }) } catch {}
+}
+async function refreshTags() {
+  try { set({ tags: await api.rpc<string[]>('tags', targetPayload()) }) } catch {}
+}
+async function refreshRemotes() {
+  try { set({ remotes: await api.rpc<RemoteItem[]>('remotes', targetPayload()) }) } catch {}
+}
+
+export async function loadLog(reset: boolean) {
+  if (!state.target) return
+  if (state.logLoading) return
+  const skip = reset ? 0 : state.commits.length
+  set({ logLoading: true })
+  try {
+    const r = await api.rpc<{ commits: CommitItem[]; hasMore: boolean }>('log', { ...targetPayload(), limit: 200, skip, ...(state.logFilterFile ? { file: state.logFilterFile } : {}), ...(state.logBranch ? { branch: state.logBranch } : {}) })
+    set({ commits: reset ? r.commits : [...state.commits, ...r.commits], logHasMore: r.hasMore, logLoading: false })
+  } catch (e: any) {
+    set({ logLoading: false, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+export async function selectCommit(id: string, mode: 'single' | 'toggle' | 'range' = 'single') {
+  const order = state.commits.map((c) => c.id)
+  let selection = state.selection
+  if (mode === 'range' && state.selectedCommit) {
+    const a = order.indexOf(state.selectedCommit)
+    const b = order.indexOf(id)
+    if (a >= 0 && b >= 0) {
+      const [s, e] = a < b ? [a, b] : [b, a]
+      selection = order.slice(s, e + 1)
+    } else selection = [id]
+  } else if (mode === 'toggle') {
+    selection = selection.includes(id) ? selection.filter((x) => x !== id) : [...selection, id]
+  } else {
+    selection = [id]
+  }
+  set({ selection, selectedCommit: id, commitFiles: [] })
+  try {
+    const files = await api.rpc<FileEntry[]>('commitFiles', { ...targetPayload(), commit: id })
+    if (state.selectedCommit === id) set({ commitFiles: files })
+  } catch {}
+}
+
+/* ------------------------------------------------------------------ */
+/* Mutations                                                           */
+/* ------------------------------------------------------------------ */
+
+async function withBusy(label: string, fn: () => Promise<void>) {
+  if (state.busy) return
+  set({ busy: true, busyLabel: label })
+  try {
+    await fn()
+  } catch (e: any) {
+    set({ error: e?.message || String(e), errorCode: e?.code || null })
+  } finally {
+    set({ busy: false, busyLabel: null })
+  }
+}
+
+export function stage(paths: string[]) {
+  return withBusy('Staging…', async () => {
+    await api.rpc('stage', { ...targetPayload(), paths })
+    await refreshStatus()
+  })
+}
+
+export function unstage(paths: string[]) {
+  return withBusy('Unstaging…', async () => {
+    await api.rpc('unstage', { ...targetPayload(), paths })
+    await refreshStatus()
+  })
+}
+
+export function discard(paths: string[]) {
+  return withBusy('Discarding…', async () => {
+    await api.rpc('discard', { ...targetPayload(), paths, confirm: true })
+    await refreshStatus()
+  })
+}
+
+export function stageAll() {
+  const paths = state.files.filter((f) => f.unstaged || !f.staged).map((f) => f.path)
+  return stage(paths)
+}
+
+export function commitNow(push: boolean) {
+  return withBusy(push ? 'Committing and pushing…' : 'Committing…', async () => {
+    const checked = state.files.filter((f) => state.include[f.path] !== false).map((f) => f.path)
+    if (!state.amend) {
+      if (checked.length === 0) throw new Error('没有勾选要提交的文件')
+      await api.rpc('stage', { ...targetPayload(), paths: checked })
+    }
+    await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, paths: state.amend ? undefined : checked })
+    set({ message: '', amend: false, selectedCommit: null, commitFiles: [] })
+    if (push) {
+      try { await api.rpc('remote', { ...targetPayload(), op: 'push', setUpstream: true }) } catch {}
+    }
+    await refreshAll()
+  })
+}
+
+export function checkout(branch: string, create = false) {
+  return withBusy(create ? 'Creating and checking out…' : 'Checking out…', async () => {
+    await api.rpc('checkout', { ...targetPayload(), branch, create })
+    await refreshAll()
+  })
+}
+
+export function remoteOp(op: 'fetch' | 'pull' | 'push') {
+  return withBusy(op === 'fetch' ? 'Fetching…' : op === 'pull' ? 'Pulling…' : 'Pushing…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('remote', { ...targetPayload(), op })
+    if (!r || !r.ok) throw new Error(r?.output || `${op} failed`)
+    await refreshAll()
+  })
+}
+
+export async function loadConsole() {
+  try {
+    const r = await api.rpc<{ entries: ConsoleEntry[] }>('console', targetPayload())
+    set({ consoleEntries: r.entries })
+  } catch {}
+}
+
+export async function clearConsole() {
+  try { await api.rpc('clearConsole', targetPayload()); set({ consoleEntries: [] }) } catch {}
+}
+
+export function dismissError() {
+  set({ error: null, errorCode: null })
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Diff viewer                                                         */
+/* ------------------------------------------------------------------ */
+
+export function closeDiff() {
+  set({ diff: null, blame: null })
+}
+
+export async function openDiff(req: { title: string; path?: string; staged?: boolean; commit?: string }) {
+  set({ diff: { title: req.title, loading: true, file: req.path, commit: req.commit }, blame: null })
+  try {
+    const r = await api.rpc<any>('fileDiff', { ...targetPayload(), file: req.path, staged: req.staged === true, commit: req.commit })
+    set({ diff: { title: req.title, loading: false, file: req.path, commit: req.commit, kind: r.kind, oldText: r.oldText, newText: r.newText, oldB64: r.oldB64, newB64: r.newB64, mime: r.mime, oldLabel: r.oldLabel, newLabel: r.newLabel, lfs: r.lfs } })
+  } catch (e: any) {
+    set({ diff: { title: req.title, loading: false, file: req.path, commit: req.commit }, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Stash                                                               */
+/* ------------------------------------------------------------------ */
+
+export async function loadStashes() {
+  if (!state.target) return
+  try {
+    set({ stashes: await api.rpc<StashItem[]>('stashList', targetPayload()) })
+  } catch {}
+}
+
+export function stashAll() {
+  return withBusy('Staging…', async () => {
+    await api.rpc('stashPush', { ...targetPayload(), includeUntracked: true })
+    await refreshStatus()
+    await loadStashes()
+  })
+}
+
+export function stashApply(index: number, pop: boolean) {
+  return withBusy(pop ? 'Pulling…' : 'Staging…', async () => {
+    await api.rpc('stashApply', { ...targetPayload(), index, pop })
+    await refreshAll()
+  })
+}
+
+export function stashDrop(index: number) {
+  return withBusy('Discarding…', async () => {
+    await api.rpc('stashDrop', { ...targetPayload(), index })
+    await loadStashes()
+  })
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Blame                                                               */
+/* ------------------------------------------------------------------ */
+
+export function clearBlame() {
+  set({ blame: null })
+}
+
+export async function openBlame(file: string, title: string) {
+  set({ blame: { title, lines: [], loading: true } })
+  try {
+    const lines = await api.rpc<BlameLine[]>('blame', { ...targetPayload(), file })
+    set({ blame: { title, lines, loading: false } })
+  } catch (e: any) {
+    set({ blame: { title, lines: [], loading: false }, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Worktrees                                                           */
+/* ------------------------------------------------------------------ */
+
+export async function loadWorktrees() {
+  if (!state.target) return
+  try {
+    set({ worktrees: await api.rpc<WorktreeItem[]>('worktreeList', targetPayload()) })
+  } catch {}
+}
+
+export function addWorktree(worktreePath: string, newBranch?: string) {
+  return withBusy('Staging…', async () => {
+    await api.rpc('worktreeAdd', { ...targetPayload(), worktreePath, newBranch: newBranch || undefined })
+    await loadWorktrees()
+  })
+}
+
+export function removeWorktree(worktreePath: string) {
+  return withBusy('Discarding…', async () => {
+    await api.rpc('worktreeRemove', { ...targetPayload(), worktreePath, confirm: true })
+    await loadWorktrees()
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/* AI commit message                                                   */
+/* ------------------------------------------------------------------ */
+
+export function generateCommitMessage(locale: string) {
+  if (state.aiBusy) return
+  set({ aiBusy: true })
+  void (async () => {
+    try {
+      const r = await api.rpc<{ message: string }>('aiCommit', { ...targetPayload(), locale })
+      if (r.message) set({ message: r.message, aiBusy: false })
+      else set({ aiBusy: false, error: 'No staged changes to describe', errorCode: null })
+    } catch (e: any) {
+      set({ aiBusy: false, error: e?.message || String(e), errorCode: e?.code || null })
+    }
+  })()
+}
+
+
+/* ------------------------------------------------------------------ */
+/* File history                                                        */
+/* ------------------------------------------------------------------ */
+
+export function openHistory(file: string) {
+  set({ tab: 'log', logFilterFile: file, commits: [], selectedCommit: null, commitFiles: [], diff: null, blame: null })
+  void loadLog(true)
+}
+
+export function clearHistory() {
+  set({ logFilterFile: null, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+
+export function resolveConflict(file: string, side: 'ours' | 'theirs' | 'mark') {
+  return withBusy('Staging…', async () => {
+    await api.rpc('resolveConflict', { ...targetPayload(), file, side: side === 'mark' ? undefined : side })
+    await refreshStatus()
+  })
+}
+
+/* ------------------------------------------------------------------ */
+/* Branch / commit operations (context menus)                          */
+/* ------------------------------------------------------------------ */
+
+export function mergeBranch(name: string) {
+  return withBusy('Merging…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('merge', { ...targetPayload(), branch: name })
+    if (!r || !r.ok) throw new Error(r?.output || 'Merge failed')
+    await refreshAll()
+  })
+}
+
+export function deleteBranch(name: string) {
+  return withBusy('Discarding…', async () => {
+    await api.rpc('deleteBranch', { ...targetPayload(), name })
+    await refreshAll()
+  })
+}
+
+export function createBranchAt(name: string, start: string) {
+  return withBusy('Creating branch…', async () => {
+    await api.rpc('createBranch', { ...targetPayload(), name, start, checkout: true })
+    await refreshAll()
+  })
+}
+
+export function resetTo(commit: string, mode: 'soft' | 'mixed' = 'soft') {
+  return withBusy('Resetting…', async () => {
+    await api.rpc('reset', { ...targetPayload(), commit, mode })
+    await refreshAll()
+  })
+}
+
+export function revertCommit(commit: string) {
+  return withBusy('Reverting…', async () => {
+    await api.rpc('revert', { ...targetPayload(), commit })
+    await refreshAll()
+  })
+}
+
+
+/* ------------------------------------------------------------------ */
+/* More context-menu operations                                        */
+/* ------------------------------------------------------------------ */
+
+export function openBranchHistory(branch: string) {
+  set({ tab: 'log', logBranch: branch, logFilterFile: null, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+
+export function clearBranchHistory() {
+  set({ logBranch: null, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+
+export function cherryPick(commits: string[]) {
+  return withBusy('Cherry-pick…', async () => {
+    await api.rpc('cherryPick', { ...targetPayload(), commits })
+    await refreshAll()
+  })
+}
+
+export function createTag(name: string, commit: string) {
+  return withBusy('Tagging…', async () => {
+    await api.rpc('tagCreate', { ...targetPayload(), name, commit })
+    await refreshTags()
+  })
+}
+
+export function renameBranch(from: string, to: string) {
+  return withBusy('Renaming…', async () => {
+    await api.rpc('renameBranch', { ...targetPayload(), from, to })
+    await refreshAll()
+  })
+}
+
+
+/* inclusion checkboxes */
+export function toggleInclude(path: string) {
+  set({ include: { ...state.include, [path]: state.include[path] === false } })
+}
+export function setIncludeAll(paths: string[], value: boolean) {
+  const next = { ...state.include }
+  for (const p of paths) next[p] = value
+  set({ include: next })
+}
+
+
+export function addIgnore(files: string[], destination: 'gitignore' | 'exclude' = 'gitignore') {
+  return withBusy('Updating ignore…', async () => {
+    await api.rpc('addIgnore', { ...targetPayload(), files, destination })
+    await refreshStatus()
+  })
+}

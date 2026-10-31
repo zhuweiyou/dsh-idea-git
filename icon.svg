@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Git">
+  <g fill="none" stroke="#3871e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 9v9.5"/>
+    <path d="M10 9l7.5-4.2" stroke="#73bd79"/>
+    <path d="M10 18.5 17.5 23" stroke="#d59637"/>
+    <circle cx="22" cy="7" r="3" fill="#73bd79" stroke="none"/>
+    <circle cx="22" cy="23" r="3" fill="#d59637" stroke="none"/>
+  </g>
+  <circle cx="10" cy="9" r="2.4" fill="#3871e1"/>
+  <circle cx="10" cy="18.5" r="2.4" fill="#3871e1"/>
+</svg>

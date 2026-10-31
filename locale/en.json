@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "IDEA Git",
+    "description": "IDEA-style Git tool window: changes & commit, commit graph log, console, diff, branches, stash and worktrees."
+  }
+}

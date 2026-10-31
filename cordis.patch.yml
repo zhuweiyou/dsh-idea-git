@@ -1,0 +1,5 @@
+# dsh-idea-git: OpenIDEA-style Git tool window.
+# Inserts one Host plugin row. The Client half is delivered through `dsh.client`.
+- insert:
+    - id: idea-git
+      name: dsh-idea-git

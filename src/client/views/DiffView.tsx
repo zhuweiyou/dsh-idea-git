@@ -1,0 +1,285 @@
+/** IDEA-style diff viewer: split/unified, whitespace & highlight policies, folds. */
+import React from 'react'
+import { useGit, Icon, IconButton } from '../lib/ui'
+import { useT } from '../lib/i18n'
+import { computeRows, wordRanges, type DiffRow, type IgnorePolicy } from '../lib/textdiff'
+import * as store from '../store'
+import styles from '../vendor/vcs/DiffEditor.module.css'
+
+type Mode = 'split' | 'unified'
+type Highlight = 'words' | 'lines' | 'none'
+
+interface Opts {
+  mode: Mode
+  ignore: IgnorePolicy
+  highlight: Highlight
+  collapse: boolean
+  swap: boolean
+}
+
+const DEFAULTS: Opts = { mode: 'split', ignore: 'none', highlight: 'words', collapse: true, swap: false }
+const KEY = 'dig.diffOpts'
+
+function loadOpts(): Opts {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || 'null')
+    if (raw && typeof raw === 'object') return { ...DEFAULTS, ...raw }
+  } catch {}
+  return DEFAULTS
+}
+function saveOpts(o: Opts) {
+  try { localStorage.setItem(KEY, JSON.stringify(o)) } catch {}
+}
+
+function ToolSelect({ value, options, onChange }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void }) {
+  return (
+    <select className={('dig-dsel ' + (styles as any).select)} value={value} onChange={(e) => onChange(e.target.value)} title={options.find((o) => o.value === value)?.label}>
+      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  )
+}
+
+function Fragments({ text, other, enabled }: { text: string; other: string; enabled: boolean }) {
+  if (!enabled || text === other) return <>{text || '\u00a0'}</>
+  const r = wordRanges(text, other)
+  if (r.aStart >= r.aEnd) return <>{text || '\u00a0'}</>
+  return (
+    <>
+      {text.slice(0, r.aStart)}
+      <mark className="dig-word">{text.slice(r.aStart, r.aEnd)}</mark>
+      {text.slice(r.aEnd)}
+    </>
+  )
+}
+
+type Item = { fold: true; count: number; start: number } | { fold: false; row: DiffRow; index: number }
+
+function buildItems(rows: DiffRow[], collapse: boolean, expanded: Set<number>): Item[] {
+  const items: Item[] = []
+  let i = 0
+  while (i < rows.length) {
+    if (rows[i].kind === 'ctx') {
+      let j = i
+      while (j < rows.length && rows[j].kind === 'ctx') j++
+      const count = j - i
+      if (collapse && count >= 4 && !expanded.has(i)) items.push({ fold: true, count, start: i })
+      else for (let k = i; k < j; k++) items.push({ fold: false, row: rows[k], index: k })
+      i = j
+      continue
+    }
+    items.push({ fold: false, row: rows[i], index: i })
+    i++
+  }
+  return items
+}
+
+function FoldButton({ count, onExpand }: { count: number; onExpand: () => void }) {
+  const t = useT()
+  return <button type="button" className="dig-difffold" onClick={onExpand}>⋯ {t('{n} unchanged lines — click to expand', { n: count })}</button>
+}
+
+function SplitView({ rows, highlight, collapse, expanded, onExpand }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void }) {
+  const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
+  return (
+    <div className="dig-diff__split">
+      {items.map((it, k) =>
+        it.fold ? (
+          <FoldButton key={'f' + k} count={it.count} onExpand={() => onExpand(it.start)} />
+        ) : (
+          <div key={'r' + it.index} className={'dig-dsrow dig-dsrow--' + it.row.kind}>
+            <span className="dig-dsrow__no">{it.row.oldNo ?? ''}</span>
+            <span className="dig-dsrow__cell dig-dsrow__cell--old">
+              {it.row.oldNo != null ? <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === 'words'} /> : null}
+            </span>
+            <span className="dig-dsrow__no">{it.row.newNo ?? ''}</span>
+            <span className="dig-dsrow__cell dig-dsrow__cell--new">
+              {it.row.newNo != null ? <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === 'words'} /> : null}
+            </span>
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
+function UnifiedView({ rows, highlight, collapse, expanded, onExpand }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void }) {
+  const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
+  const lines: React.ReactNode[] = []
+  for (const it of items) {
+    if (it.fold) {
+      lines.push(<FoldButton key={'f' + lines.length} count={it.count} onExpand={() => onExpand(it.start)} />)
+      continue
+    }
+    const r = it.row
+    if (r.kind === 'ctx') {
+      lines.push(
+        <div key={lines.length} className="dig-durow">
+          <span className="dig-durow__no">{r.oldNo}</span>
+          <span className="dig-durow__no">{r.newNo}</span>
+          <span className="dig-durow__sign" />
+          <span className="dig-durow__text">{r.oldText || '\u00a0'}</span>
+        </div>,
+      )
+    } else {
+      if (r.oldNo != null) lines.push(
+        <div key={lines.length} className="dig-durow dig-durow--del">
+          <span className="dig-durow__no">{r.oldNo}</span>
+          <span className="dig-durow__no" />
+          <span className="dig-durow__sign">−</span>
+          <span className="dig-durow__text"><Fragments text={r.oldText} other={r.newText} enabled={highlight === 'words'} /></span>
+        </div>,
+      )
+      if (r.newNo != null) lines.push(
+        <div key={lines.length} className="dig-durow dig-durow--add">
+          <span className="dig-durow__no" />
+          <span className="dig-durow__no">{r.newNo}</span>
+          <span className="dig-durow__sign">＋</span>
+          <span className="dig-durow__text"><Fragments text={r.newText} other={r.oldText} enabled={highlight === 'words'} /></span>
+        </div>,
+      )
+    }
+  }
+  return <div className="dig-diff__unified">{lines}</div>
+}
+
+function ImageView({ d, t }: { d: NonNullable<ReturnType<typeof useGit>['diff']>; t: (s: string, p?: any) => string }) {
+  const src = (b64?: string) => (b64 ? `data:${d.mime || 'application/octet-stream'};base64,${b64}` : '')
+  return (
+    <div className="dig-imgdiff">
+      <div className="dig-imgpane">
+        <div className="dig-imgpane__label">{d.oldLabel || t('Before')}</div>
+        {d.oldB64 ? <img className="dig-imgpane__img" src={src(d.oldB64)} alt="old" /> : <div className="dig-empty">{t('No image')}</div>}
+      </div>
+      <div className="dig-imgpane">
+        <div className="dig-imgpane__label">{d.newLabel || t('After')}</div>
+        {d.newB64 ? <img className="dig-imgpane__img" src={src(d.newB64)} alt="new" /> : <div className="dig-empty">{t('No image')}</div>}
+      </div>
+    </div>
+  )
+}
+
+export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | 'dark' }) {
+  const s = useGit()
+  const t = useT()
+  const [opts, setOpts] = React.useState<Opts>(loadOpts)
+  const [expanded, setExpanded] = React.useState<Set<number>>(() => new Set())
+  const bodyRef = React.useRef<HTMLDivElement>(null)
+  const d = s.diff
+  const b = s.blame
+
+  const update = (patch: Partial<Opts>) => setOpts((o) => { const n = { ...o, ...patch }; saveOpts(n); return n })
+
+  const rows = React.useMemo(() => {
+    if (!d || d.loading || (d.kind && d.kind !== 'text')) return [] as DiffRow[]
+    const oldText = d.oldText ?? ''
+    const newText = d.newText ?? ''
+    return opts.swap ? computeRows(newText, oldText, opts.ignore) : computeRows(oldText, newText, opts.ignore)
+  }, [d?.oldText, d?.newText, opts.ignore, opts.swap, d?.loading])
+
+  React.useEffect(() => { setExpanded(new Set()) }, [d?.file, d?.commit])
+
+  const goto = (dir: 1 | -1) => {
+    const el = bodyRef.current
+    if (!el) return
+    const marks = Array.from(el.querySelectorAll<HTMLElement>('.dig-dsrow--rep, .dig-dsrow--add, .dig-dsrow--del, .dig-durow--add, .dig-durow--del'))
+    if (!marks.length) return
+    const top = el.scrollTop
+    const target = dir === 1 ? marks.find((m) => m.offsetTop > top + 4) : [...marks].reverse().find((m) => m.offsetTop < top - 4)
+    if (target) el.scrollTop = target.offsetTop - 12
+  }
+
+  if (!d && !b) return null
+  const title = b ? b.title : d!.title
+
+  return (
+    <div className="dig-theme dig-diffarea" data-theme={theme} style={{ bottom }}>
+      <div className="dig-diff__head">
+        <Icon name="file" size={15} />
+        <span className="dig-diff__title" title={title}>{title}</span>
+        {d?.lfs ? <span className="dig-lfs-badge">LFS</span> : null}
+        <span style={{ flex: 1 }} />
+        {b ? (
+          <button type="button" className="dig-btn" onClick={() => store.clearBlame()}>{t('Diff')}</button>
+        ) : d && d.file && !d.commit ? (
+          <>
+            <button type="button" className="dig-btn" onClick={() => { store.closeDiff(); store.openHistory(d.file!) }}>{t('History')}</button>
+            <button type="button" className="dig-btn" onClick={() => void store.openBlame(d.file!, d.file!)}>{t('Blame')}</button>
+          </>
+        ) : null}
+        <IconButton icon="close" title={t('Close')} onClick={() => store.closeDiff()} />
+      </div>
+
+      {!b && d?.kind !== 'image' && d?.kind !== 'binary' ? (
+        <div className={styles.toolbar} role="toolbar">
+          <IconButton icon="chevronDown" title={t('Previous change')} onClick={() => goto(-1)} />
+          <IconButton icon="chevronRight" title={t('Next change')} onClick={() => goto(1)} />
+          <span className={styles.sep} />
+          <div className="dig-seg">
+            <button type="button" className="dig-seg__btn" data-active={opts.mode === 'split' ? 'true' : undefined} title={t('Side-by-side')} onClick={() => update({ mode: 'split' })}>
+              <span className="dig-seg__split" />
+            </button>
+            <button type="button" className="dig-seg__btn" data-active={opts.mode === 'unified' ? 'true' : undefined} title={t('Unified')} onClick={() => update({ mode: 'unified' })}>
+              <span className="dig-seg__unified" />
+            </button>
+          </div>
+          <ToolSelect
+            value={opts.ignore}
+            onChange={(v) => update({ ignore: v as IgnorePolicy })}
+            options={[
+              { value: 'none', label: t('Do not ignore') },
+              { value: 'trim', label: t('Trim whitespaces') },
+              { value: 'whitespace', label: t('Ignore whitespaces') },
+              { value: 'whitespaceAndLines', label: t('Ignore whitespaces and empty lines') },
+            ]}
+          />
+          <ToolSelect
+            value={opts.highlight}
+            onChange={(v) => update({ highlight: v as Highlight })}
+            options={[
+              { value: 'words', label: t('Highlight words') },
+              { value: 'lines', label: t('Highlight lines') },
+              { value: 'none', label: t('Do not highlight') },
+            ]}
+          />
+          <span className={styles.sep} />
+          <IconButton icon="undo" title={t('Swap sides')} onClick={() => update({ swap: !opts.swap })} />
+          <IconButton icon="minus" title={t('Collapse unchanged')} active={opts.collapse} onClick={() => update({ collapse: !opts.collapse })} />
+          <span style={{ flex: 1 }} />
+          <span className={styles.count}>{t('{n} changes', { n: rows.filter((r) => r.kind !== 'ctx').length })}</span>
+        </div>
+      ) : null}
+
+      <div className="dig-diff__body" ref={bodyRef}>
+        {b ? (
+          b.loading ? <div className="dig-empty">{t('Loading')}</div> : (
+            <div className="dig-blame">
+              {b.lines.map((l) => (
+                <div className="dig-blameline" key={l.line}>
+                  <span className="dig-blameline__sha" title={l.sha}>{l.shortSha}</span>
+                  <span className="dig-blameline__author">{l.author}</span>
+                  <span className="dig-blameline__time">{new Date(l.time).toISOString().slice(0, 10)}</span>
+                  <span className="dig-blameline__code">{l.content || ' '}</span>
+                </div>
+              ))}
+            </div>
+          )
+        ) : d!.loading ? (
+          <div className="dig-empty">{t('Loading')}</div>
+        ) : d!.kind === 'image' ? (
+          <ImageView d={d!} t={t} />
+        ) : d!.kind === 'binary' ? (
+          <div className="dig-empty" style={{ flexDirection: 'column', gap: 8 }}>
+            <span>{t('Binary file')}</span>
+            {d!.lfs ? <span className="dig-lfs-note">{t('Git LFS object')}</span> : null}
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="dig-empty">{t('No differences')}</div>
+        ) : opts.mode === 'split' ? (
+          <SplitView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} />
+        ) : (
+          <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} />
+        )}
+      </div>
+    </div>
+  )
+}

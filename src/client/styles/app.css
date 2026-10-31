@@ -1,0 +1,1714 @@
+/* dsh-idea-git component styles.
+ * Panel internals use OpenIDEA's token names (defined by tokens.css scoped to
+ * .dig-theme). The composer entry button lives outside .dig-theme, so it uses the
+ * DSH alias tokens directly.
+ */
+
+/* ---------------- composer entry button ---------------- */
+.dig-entry {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.dig-entry:hover {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, transparent);
+  color: var(--dsw-alias-label-primary);
+}
+.dig-entry:active {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent);
+}
+/* Panel open: keep the highlight permanently. */
+.dig-entry[data-active='true'] {
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 16%, transparent);
+  color: var(--dsw-alias-brand-primary);
+}
+.dig-entry[data-active='true']:hover {
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 22%, transparent);
+  color: var(--dsw-alias-brand-primary);
+}
+.dig-entry:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: -2px;
+}
+
+/* ---------------- panel shell ---------------- */
+.dig-theme {
+  font-family: var(--font-ui);
+  font-size: var(--fs-ui);
+  color: var(--fg);
+  line-height: 1.45;
+}
+.dig-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  color: var(--fg);
+  border-top: 1px solid var(--border-strong);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+.dig-panel__handle {
+  flex: none;
+  height: 6px;
+  cursor: row-resize;
+  background: transparent;
+}
+.dig-panel__handle:hover {
+  background: var(--accent);
+  opacity: 0.4;
+}
+.dig-panel__header {
+  flex: none;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  user-select: none;
+}
+.dig-panel__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--fg-strong);
+  margin-right: 6px;
+  white-space: nowrap;
+}
+.dig-panel__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+.dig-tab {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: var(--fs-ui);
+  white-space: nowrap;
+}
+.dig-tab:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.dig-tab[data-active='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}
+.dig-panel__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.dig-panel__branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  max-width: 220px;
+  padding: 0 8px;
+  border-radius: 6px;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-panel__branch:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.dig-panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dig-banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: var(--fs-small);
+  border-bottom: 1px solid var(--border);
+}
+.dig-banner--error {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.dig-banner--busy {
+  color: var(--fg-secondary);
+}
+.dig-banner__close {
+  margin-left: auto;
+}
+
+/* ---------------- generic controls ---------------- */
+.dig-iconbtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-icon);
+  cursor: pointer;
+}
+.dig-iconbtn:hover {
+  background: var(--bg-hover);
+  color: var(--fg-strong);
+}
+.dig-iconbtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.dig-iconbtn[data-active='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}
+.dig-btn {
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: var(--fs-ui);
+  white-space: nowrap;
+}
+.dig-btn:hover {
+  background: var(--bg-hover);
+}
+.dig-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dig-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.dig-btn--primary:hover {
+  filter: brightness(1.08);
+}
+.dig-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  font-size: var(--fs-ui);
+}
+.dig-check__box {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px var(--control-off);
+  background: var(--bg-input);
+  color: #fff;
+}
+.dig-check__box[data-on='true'] {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+/* ---------------- dropdown / menu ---------------- */
+.dig-dropdown {
+  position: relative;
+}
+.dig-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 80;
+  min-width: 200px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--border-popup);
+  border-radius: 8px;
+  background: var(--bg-popup);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.dig-menu--right {
+  left: auto;
+  right: 0;
+}
+.dig-menuitem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--fs-ui);
+}
+.dig-menuitem:hover {
+  background: var(--bg-hover);
+}
+.dig-menuitem--danger {
+  color: var(--danger);
+}
+.dig-menuitem:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dig-menuitem__check {
+  width: 14px;
+  display: inline-flex;
+}
+.dig-menuitem__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------- splitter ---------------- */
+.dig-split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.dig-split--h {
+  flex-direction: row;
+}
+.dig-split--v {
+  flex-direction: column;
+}
+.dig-split__first {
+  flex: none;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.dig-split__second {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.dig-split__handle {
+  flex: none;
+  background: var(--border);
+}
+.dig-split--h > .dig-split__handle {
+  width: 1px;
+  cursor: col-resize;
+}
+.dig-split--v > .dig-split__handle {
+  height: 1px;
+  cursor: row-resize;
+}
+.dig-split__handle:hover {
+  background: var(--accent);
+}
+.dig-hlayout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.dig-vlayout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dig-vlayout__handle {
+  flex: none;
+  height: 5px;
+  cursor: row-resize;
+}
+.dig-vlayout__handle:hover {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+/* ---------------- toolbar / empty ---------------- */
+.dig-toolbar {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-toolbar__sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--border);
+}
+.dig-toolbar__hint {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+.dig-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-subtle);
+  font-size: var(--fs-ui);
+  padding: 24px;
+  text-align: center;
+}
+
+/* ---------------- changes ---------------- */
+.dig-changes {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dig-treewrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.dig-group {
+  display: flex;
+  flex-direction: column;
+}
+.dig-group__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  background: var(--bg-elev);
+  color: var(--fg-secondary);
+  font-weight: 600;
+  font-size: var(--fs-small);
+  border-bottom: 1px solid var(--border);
+}
+.dig-group__count {
+  color: var(--fg-subtle);
+  font-weight: 400;
+}
+.dig-group__actions {
+  margin-left: auto;
+}
+.dig-dirrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  user-select: none;
+}
+.dig-dirrow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-filerow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px 0 22px;
+  white-space: nowrap;
+  cursor: default;
+}
+.dig-filerow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-filerow__icon {
+  flex: none;
+  display: inline-flex;
+}
+.dig-filerow__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-filerow__dir {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+.dig-filerow__letter {
+  flex: none;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  font-weight: 600;
+}
+.dig-filerow__actions {
+  flex: none;
+  display: none;
+  align-items: center;
+  gap: 1px;
+}
+.dig-filerow:hover .dig-filerow__actions {
+  display: inline-flex;
+}
+
+/* ---------------- commit panel ---------------- */
+.dig-commit {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.dig-commit__bar {
+  flex: none;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+}
+.dig-commit__len {
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+}
+.dig-commit__message {
+  flex: 1;
+  min-height: 48px;
+  margin: 0;
+  padding: 6px 10px;
+  resize: none;
+  border: 0;
+  border-top: 1px solid var(--border);
+  outline: none;
+  background: var(--bg-input);
+  color: var(--fg-strong);
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  line-height: var(--lh-code, 1.5);
+}
+.dig-commit__message::placeholder {
+  color: var(--fg-subtle);
+  font-family: var(--font-ui);
+  font-size: var(--fs-ui);
+}
+.dig-commit__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.dig-commit__busy {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+
+/* ---------------- log ---------------- */
+.dig-log {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dig-filterbar {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-search {
+  flex: 0 1 240px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--fg);
+  outline: none;
+  font-size: var(--fs-ui);
+}
+.dig-search:focus {
+  border-color: var(--accent);
+}
+.dig-commitlist {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+}
+.dig-listhead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+.dig-crow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 8px;
+  white-space: nowrap;
+  cursor: default;
+  font-size: var(--fs-ui);
+}
+.dig-crow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-crow[data-selected='true'] {
+  background: var(--bg-tree-selected);
+}
+.dig-crow__graph {
+  flex: none;
+  overflow: visible;
+}
+.dig-crow__subject {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dig-crow__author {
+  flex: none;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-secondary);
+}
+.dig-crow__date {
+  flex: none;
+  width: 120px;
+  color: var(--fg-subtle);
+}
+.dig-crow__hash {
+  flex: none;
+  width: 66px;
+  font-family: var(--font-mono);
+  color: var(--fg-subtle);
+}
+.dig-refs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.dig-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 170px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: var(--fs-tiny);
+  line-height: 16px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-ref--head {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
+}
+.dig-ref--remote {
+  background: color-mix(in srgb, var(--syn-annotation) 18%, transparent);
+  color: var(--syn-annotation);
+}
+.dig-ref--tag {
+  background: color-mix(in srgb, var(--fg-subtle) 20%, transparent);
+  color: var(--fg-secondary);
+}
+
+/* branches panel */
+.dig-branches {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+.dig-branches__head {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-secondary);
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+.dig-branches__list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.dig-branchrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--fg-secondary);
+}
+.dig-branchrow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-branchrow[data-current='true'] {
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.dig-branchrow__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-branchrow__sync {
+  margin-left: auto;
+  color: var(--fg-subtle);
+  font-size: var(--fs-tiny);
+}
+
+/* details */
+.dig-details {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+.dig-details__msg {
+  flex: none;
+  max-height: 45%;
+  overflow: auto;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  user-select: text;
+}
+.dig-details__subject {
+  color: var(--fg-strong);
+  font-weight: 600;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.dig-details__body {
+  margin-top: 6px;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.dig-details__meta {
+  margin-top: 8px;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+}
+.dig-details__hash {
+  font-family: var(--font-mono);
+}
+.dig-details__files {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.dig-details__fileshead {
+  padding: 6px 12px;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+.dig-dfile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.dig-dfile:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-dfile__letter {
+  flex: none;
+  width: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--fs-tiny);
+}
+.dig-dfile__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-dfile__dir {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- console ---------------- */
+.dig-console {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dig-console__bar {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-console__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 18px;
+  user-select: text;
+}
+.dig-console__cmd {
+  margin-top: 6px;
+  color: var(--fg-emphasis);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.dig-console__out {
+  color: var(--fg-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.dig-console__err {
+  color: var(--danger);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.dig-console__time {
+  color: var(--fg-faint);
+}
+
+/* ---------------- diff drawer ---------------- */
+.dig-panel__body {
+  position: relative;
+}
+.dig-filerow,
+.dig-dfile {
+  cursor: pointer;
+}
+.dig-diff {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(760px, 62%);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+.dig-diff__head {
+  flex: none;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.dig-diff__title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-diff__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 18px;
+  user-select: text;
+}
+.dig-diffline {
+  white-space: pre;
+  padding: 0 12px;
+  min-height: 18px;
+}
+.dig-diffline--add {
+  background: color-mix(in srgb, var(--vcs-added) 16%, transparent);
+  color: var(--vcs-added);
+}
+.dig-diffline--del {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+.dig-diffline--hunk {
+  color: var(--syn-annotation);
+}
+.dig-diffline--meta {
+  color: var(--fg-subtle);
+}
+
+/* ---------------- stash ---------------- */
+.dig-stash {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dig-stash__list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.dig-stashrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-stashrow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-stashrow__main {
+  flex: 1;
+  min-width: 0;
+}
+.dig-stashrow__msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.dig-stashrow__meta {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  margin-top: 2px;
+}
+.dig-stashrow__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------------- blame ---------------- */
+.dig-blame {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 18px;
+}
+.dig-blameline {
+  display: flex;
+  gap: 10px;
+  white-space: pre;
+  padding: 0 12px;
+  min-height: 18px;
+}
+.dig-blameline:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-blameline__sha {
+  flex: none;
+  width: 64px;
+  color: var(--fg-subtle);
+}
+.dig-blameline__author {
+  flex: none;
+  width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-secondary);
+}
+.dig-blameline__time {
+  flex: none;
+  width: 84px;
+  color: var(--fg-faint);
+}
+.dig-blameline__code {
+  flex: 1;
+  color: var(--fg);
+}
+
+/* ---------------- worktrees ---------------- */
+.dig-wt {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dig-wt__list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.dig-wtrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-wtrow:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-wtrow__main {
+  flex: 1;
+  min-width: 0;
+}
+.dig-wtrow__path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-wtrow__meta {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  margin-top: 2px;
+}
+.dig-wtrow__badge {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-size: var(--fs-tiny);
+  line-height: 18px;
+}
+
+/* ---------------- size tuning (panel reads a bit larger than tokens default) ---------------- */
+.dig-theme {
+  --fs-ui: 14px;
+  --fs-small: 12.5px;
+  --fs-tiny: 11.5px;
+}
+.dig-filerow {
+  height: 26px;
+  font-size: 14px;
+}
+.dig-filerow__name {
+  font-size: 14px;
+}
+.dig-filerow__dir {
+  font-size: 12.5px;
+}
+.dig-filerow__letter {
+  font-size: 12px;
+}
+.dig-dirrow {
+  height: 25px;
+  font-size: 14px;
+}
+.dig-group__head {
+  height: 28px;
+  font-size: 12.5px;
+}
+.dig-crow {
+  height: 28px;
+  font-size: 13.5px;
+}
+.dig-listhead {
+  height: 26px;
+  font-size: 12.5px;
+}
+
+/* ---------------- chips & mini buttons ---------------- */
+.dig-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  font-size: var(--fs-small);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-chip__x {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.dig-mini {
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: 11px;
+}
+.dig-mini:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+
+/* ---------------- settings page ---------------- */
+.dig-settings {
+  padding: 8px 4px 16px;
+  max-width: 720px;
+}
+.dig-settings__title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--dsw-alias-label-primary);
+}
+.dig-settings__desc {
+  margin: 0 0 14px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dig-settings__row {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+  font-size: 13px;
+}
+.dig-settings__label {
+  flex: none;
+  width: 140px;
+  color: var(--dsw-alias-label-secondary);
+}
+.dig-settings__value {
+  flex: 1;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  word-break: break-word;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* ---------------- diff area above the panel ---------------- */
+.dig-diffarea {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 59;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  color: var(--fg);
+  border-bottom: 1px solid var(--border-strong);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------------- context menu ---------------- */
+.dig-ctxmenu {
+  position: fixed;
+  z-index: 200;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-overlay);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+.dig-ctxmenu__item {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.dig-ctxmenu__item:hover {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent);
+}
+.dig-ctxmenu__item--danger {
+  color: var(--dsw-alias-state-error-primary);
+}
+.dig-ctxmenu__item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dig-ctxmenu__sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--dsw-alias-border-l1);
+}
+
+/* branch selection highlight (single click selects, does not switch) */
+.dig-branchrow[data-selected='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}
+
+/* ---------------- diff viewer (IDEA-style) ---------------- */
+.dig-diff__toolbar {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.dig-diff__sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.dig-seg {
+  display: inline-flex;
+  height: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.dig-seg__btn {
+  width: 30px;
+  border: none;
+  background: transparent;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-seg__btn[data-active='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}
+.dig-seg__split,
+.dig-seg__unified {
+  width: 15px;
+  height: 11px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  display: inline-block;
+}
+.dig-seg__split {
+  background: linear-gradient(to right, transparent 46%, currentColor 46%, currentColor 54%, transparent 54%);
+}
+.dig-dsel {
+  height: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--fg);
+  font-size: var(--fs-ui);
+  padding: 0 6px;
+  max-width: 240px;
+}
+.dig-diff__hint {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
+.dig-diff__split {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 18px;
+}
+.dig-dsrow {
+  display: flex;
+  align-items: stretch;
+  min-height: 18px;
+}
+.dig-dsrow__no {
+  flex: none;
+  width: 44px;
+  text-align: right;
+  padding-right: 8px;
+  color: var(--fg-faint);
+  user-select: none;
+}
+.dig-dsrow__cell {
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: hidden;
+}
+.dig-dsrow__cell--old {
+  border-right: 1px solid var(--border);
+}
+.dig-dsrow--rep .dig-dsrow__cell--old,
+.dig-dsrow--del .dig-dsrow__cell--old {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.dig-dsrow--rep .dig-dsrow__cell--new,
+.dig-dsrow--add .dig-dsrow__cell--new {
+  background: color-mix(in srgb, var(--vcs-added) 16%, transparent);
+}
+.dig-word {
+  background: color-mix(in srgb, var(--warning) 40%, transparent);
+  border-radius: 2px;
+  color: inherit;
+}
+.dig-durow {
+  display: flex;
+  min-height: 18px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 18px;
+  white-space: pre-wrap;
+}
+.dig-durow__no {
+  flex: none;
+  width: 40px;
+  text-align: right;
+  padding-right: 6px;
+  color: var(--fg-faint);
+  user-select: none;
+}
+.dig-durow__sign {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  color: var(--fg-subtle);
+}
+.dig-durow__text {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.dig-durow--del {
+  background: color-mix(in srgb, var(--danger) 13%, transparent);
+}
+.dig-durow--add {
+  background: color-mix(in srgb, var(--vcs-added) 15%, transparent);
+}
+.dig-difffold {
+  display: block;
+  width: 100%;
+  text-align: left;
+  height: 20px;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  cursor: pointer;
+  padding: 0 12px;
+}
+.dig-difffold:hover {
+  background: var(--bg-hover);
+}
+
+/* metrics used by the vendored OpenIDEA DiffEditor.module.css */
+.dig-theme {
+  --h-header: 34px;
+  --h-row: 26px;
+  --h-control-small: 24px;
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* branch panel: search / folders / sections */
+.dig-branches__search {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-branches__input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--fg);
+  padding: 0 8px;
+  outline: none;
+  font-size: var(--fs-ui);
+}
+.dig-branches__input:focus { border-color: var(--accent); }
+.dig-branches__section {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  color: var(--fg-secondary);
+  font-weight: 600;
+  font-size: var(--fs-small);
+}
+.dig-branches__folder {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  user-select: none;
+}
+.dig-branches__folder:hover { background: var(--bg-tree-hover); }
+
+/* filter bar */
+.dig-searchwrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  flex: 0 1 320px;
+}
+.dig-searchwrap .dig-search {
+  border: none;
+  background: transparent;
+  height: 24px;
+  flex: 1;
+  min-width: 60px;
+  padding: 0;
+}
+.dig-toggle {
+  height: 20px;
+  min-width: 22px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+.dig-toggle[data-on='true'] { background: var(--bg-selected); color: var(--fg-strong); }
+.dig-toggle:hover { color: var(--fg); }
+.dig-filterbtn {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: var(--fs-ui);
+  white-space: nowrap;
+}
+.dig-filterbtn:hover { background: var(--bg-hover); color: var(--fg); }
+.dig-chip--static { flex: none; }
+.dig-historybar { flex: none; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+
+/* details file tree */
+.dig-dfile-dir {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  user-select: none;
+}
+.dig-dfile-dir:hover { background: var(--bg-tree-hover); }
+.dig-dfile-count {
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  margin-left: 2px;
+}
+
+/* in-app prompt dialog */
+.dig-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-modal {
+  width: 380px;
+  max-width: 90vw;
+  padding: 16px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-overlay);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  color: var(--dsw-alias-label-primary);
+}
+.dig-modal__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.dig-modal__input {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  outline: none;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.dig-modal__input:focus { border-color: var(--dsw-alias-brand-primary); }
+.dig-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* larger tree rows */
+.dig-dfile-dir { height: 26px; font-size: 14px; }
+.dig-dfile { height: 24px; font-size: 14px; }
+.dig-branchrow { height: 24px; font-size: 14px; }
+.dig-branches__folder { height: 24px; font-size: 14px; }
+.dig-branches__section { height: 28px; }
+.dig-branches__input { height: 26px; }
+
+.dig-filterbtn[data-active='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}
+
+/* row selection must not select text (shift-click multiselect) */
+.dig-commitlist,
+.dig-crow,
+.dig-listhead,
+.dig-branches,
+.dig-branchrow,
+.dig-branches__folder,
+.dig-branches__section,
+.dig-changes,
+.dig-treewrap,
+.dig-filerow,
+.dig-dirrow,
+.dig-group__head,
+.dig-ddetails,
+.dig-dfile,
+.dig-dfile-dir {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* IDEA-style dialog for prompts */
+.dig-dialog {
+  width: 440px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  color: var(--fg-strong);
+  border: 1px solid var(--border-popup);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: var(--fs-ui);
+}
+.dig-dialog__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-dialog__title {
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dig-dialog__body {
+  padding: 16px 16px 8px;
+}
+.dig-dialog__input {
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--fg-strong);
+  outline: none;
+  font-size: var(--fs-ui);
+}
+.dig-dialog__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.dig-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px 16px;
+}
+
+/* unify changes-tree and details-tree row sizing */
+.dig-filerow { height: 24px; font-size: 13.5px; }
+.dig-dirrow { height: 24px; font-size: 13.5px; }
+.dig-dfile { height: 24px; font-size: 13.5px; }
+.dig-dfile-dir { height: 24px; font-size: 13.5px; }
+.dig-group__head { height: 26px; }
+
+/* larger changes tree to match IDEA */
+.dig-filerow { height: 28px; font-size: 14px; }
+.dig-dirrow { height: 26px; font-size: 14px; }
+.dig-dfile { height: 26px; font-size: 14px; }
+.dig-dfile-dir { height: 26px; font-size: 14px; }
+.dig-check__box { width: 16px; height: 16px; }
+.dig-group__head { height: 30px; font-size: 13px; }
+.dig-filerow__letter { font-size: 12px; }
+
+/* image diff */
+.dig-imgdiff {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.dig-imgpane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+.dig-imgpane:last-child { border-right: none; }
+.dig-imgpane__label {
+  flex: none;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.dig-imgpane__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  margin: auto;
+  background:
+    repeating-conic-gradient(#0000000d 0% 25%, transparent 0% 50%) 50% / 18px 18px;
+}
+.dig-lfs-badge {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-size: var(--fs-tiny);
+  line-height: 16px;
+}
+.dig-lfs-note { color: var(--fg-subtle); font-size: var(--fs-small); }
+
+/* button styling fixes (primary hover/disabled readable) */
+.dig-btn--primary {
+  background: var(--accent, #3871e1);
+  border-color: var(--accent, #3871e1);
+  color: #fff;
+}
+.dig-btn--primary:hover {
+  background: color-mix(in srgb, var(--accent, #3871e1) 85%, #fff);
+  border-color: color-mix(in srgb, var(--accent, #3871e1) 85%, #fff);
+  filter: none;
+  color: #fff;
+}
+.dig-btn--primary:disabled {
+  background: color-mix(in srgb, var(--accent, #3871e1) 30%, var(--bg-elev, #eee));
+  border-color: var(--border-strong, #ccc);
+  color: var(--fg-subtle, #888);
+  opacity: 1;
+}
+.dig-btn:disabled:hover {
+  background: var(--bg-elev, #eee);
+}
