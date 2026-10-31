@@ -524,6 +524,18 @@ try {
     const files = (await call('stashFiles', { ...D(repo), index: 0 })).value
     ok('stashFiles lists changes', files.some((f) => f.path === 'a.txt') && files.some((f) => f.path === 'b.txt'))
   }
+
+  /* ---------------- conflict diff3 ---------------- */
+  console.log('\n[conflict-3way]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'base\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    g(['checkout', '-q', '-b', 'feat']); fs.writeFileSync(path.join(repo, 'a.txt'), 'theirs\n'); g(['commit', '-qam', 'f'])
+    g(['checkout', '-q', 'main']); fs.writeFileSync(path.join(repo, 'a.txt'), 'ours\n'); g(['commit', '-qam', 'm'])
+    try { g(['merge', 'feat']) } catch {}
+    const r = await call('conflictDiff3', { ...D(repo), file: 'a.txt' })
+    ok('conflictDiff3 has base section', r.ok && r.value.text.includes('|||||||') && r.value.text.includes('base'))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

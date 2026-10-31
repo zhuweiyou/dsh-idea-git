@@ -54,7 +54,7 @@ export interface GitState {
   logPath: string | null
   logHeadOnly: boolean
   logSort: 'date' | 'reverse' | 'topo'
-  conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string; working: string } | null
+  conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string; working: string; diff3: string } | null
   toast: string | null
   compare: { title: string; from: string; to: string; loading: boolean; files: Array<{ path: string; kind: string }>; sel?: string; diff?: { loading: boolean; oldText: string; newText: string } } | null
   diff: { title: string; loading: boolean; file?: string; commit?: string; staged?: boolean; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
@@ -658,15 +658,16 @@ export function closeConflict() {
 }
 
 export async function openConflict(file: string) {
-  set({ conflict: { file, loading: true, ours: '', theirs: '', base: '', working: '' }, diff: null, blame: null })
+  set({ conflict: { file, loading: true, ours: '', theirs: '', base: '', working: '', diff3: '' }, diff: null, blame: null })
   try {
-    const [r, w] = await Promise.all([
+    const [r, w, d] = await Promise.all([
       api.rpc<{ ours: string; theirs: string; base: string }>('conflictVersions', { ...targetPayload(), file }),
       api.rpc<{ content: string }>('conflictWorking', { ...targetPayload(), file }),
+      api.rpc<{ text: string }>('conflictDiff3', { ...targetPayload(), file }),
     ])
-    set({ conflict: { file, loading: false, ours: r.ours, theirs: r.theirs, base: r.base, working: w.content } })
+    set({ conflict: { file, loading: false, ours: r.ours, theirs: r.theirs, base: r.base, working: w.content, diff3: d.text } })
   } catch (e: any) {
-    set({ conflict: { file, loading: false, ours: '', theirs: '', base: '', working: '' }, error: e?.message || String(e), errorCode: e?.code || null })
+    set({ conflict: { file, loading: false, ours: '', theirs: '', base: '', working: '', diff3: '' }, error: e?.message || String(e), errorCode: e?.code || null })
   }
 }
 

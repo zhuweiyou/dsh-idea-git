@@ -154,6 +154,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'revert':
         return withRepo(ctx, payload, signal, (info) => svc.revertCommit(info, payload, signal))
 
+      case 'conflictDiff3':
+        return withRepo(ctx, payload, signal, (info) => svc.conflictDiff3(info, payload, signal))
+
       case 'conflictWorking':
         return withRepo(ctx, payload, signal, (info) => svc.readConflictWorking(info, payload, signal))
 

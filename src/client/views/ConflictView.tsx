@@ -4,7 +4,7 @@ import { useGit, Icon, IconButton } from '../lib/ui'
 import { useT } from '../lib/i18n'
 import * as store from '../store'
 
-type Seg = { type: 'text'; text: string } | { type: 'conflict'; ours: string; theirs: string }
+type Seg = { type: 'text'; text: string } | { type: 'conflict'; ours: string; theirs: string; base?: string }
 
 function parseConflicts(text: string): Seg[] {
   const lines = text.replace(/\r\n/g, '\n').split('\n')
@@ -19,10 +19,16 @@ function parseConflicts(text: string): Seg[] {
       const ours: string[] = []
       while (i < lines.length && !lines[i].startsWith('=======')) { ours.push(lines[i]); i++ }
       i++
+      let base: string[] = []
+      if (i < lines.length && lines[i].startsWith('|||||||')) {
+        i++
+        while (i < lines.length && !lines[i].startsWith('=======')) { base.push(lines[i]); i++ }
+      }
+      i++
       const theirs: string[] = []
       while (i < lines.length && !lines[i].startsWith('>>>>>>>')) { theirs.push(lines[i]); i++ }
       i++
-      segs.push({ type: 'conflict', ours: ours.join('\n'), theirs: theirs.join('\n') })
+      segs.push({ type: 'conflict', ours: ours.join('\n'), theirs: theirs.join('\n'), base: base.length ? base.join('\n') : undefined })
     } else { buf.push(l); i++ }
   }
   flush()
@@ -33,7 +39,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: 'light'
   const s = useGit()
   const t = useT()
   const c = s.conflict
-  const segs = React.useMemo(() => (c && !c.loading && c.working ? parseConflicts(c.working) : []), [c?.working, c?.loading])
+  const segs = React.useMemo(() => { if (!c || c.loading) return []; const src = c.diff3 && c.diff3.includes('|||||||') ? c.diff3 : c.working; return src ? parseConflicts(src) : [] }, [c?.working, c?.diff3, c?.loading])
   const conflictCount = React.useMemo(() => segs.filter((x) => x.type === 'conflict').length, [segs])
   const [choices, setChoices] = React.useState<Record<number, 'ours' | 'theirs' | 'both'>>({})
   const [resultEditing, setResultEditing] = React.useState(false)
@@ -87,6 +93,12 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: 'light'
                       <div className="dig-merge__label">{t('Ours')}</div>
                       <pre>{seg.ours || ' '}</pre>
                     </div>
+                    {seg.base !== undefined ? (
+                      <div className="dig-merge__pane dig-merge__pane--base">
+                        <div className="dig-merge__label">{t('Base')}</div>
+                        <pre>{seg.base || ' '}</pre>
+                      </div>
+                    ) : null}
                     <div className="dig-merge__pane dig-merge__pane--theirs">
                       <div className="dig-merge__label">{t('Theirs')}</div>
                       <pre>{seg.theirs || ' '}</pre>

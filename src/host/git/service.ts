@@ -1026,6 +1026,27 @@ export async function addIgnore(info: RepoInfo, payload: any, signal?: AbortSign
   return { added }
 }
 
+export async function conflictDiff3(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ text: string }> {
+  const file = String(payload?.file ?? '').trim()
+  if (!file) throw new RepoError('git/bad-path', 'Missing file')
+  const show = async (rev: string): Promise<Buffer | null> => {
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${rev}:${file}`], signal })
+    return r.code === 0 ? r.stdout : null
+  }
+  const base = await show(':1')
+  const ours = await show(':2')
+  const theirs = await show(':3')
+  if (!base || !ours || !theirs) {
+    try { return { text: fs.readFileSync(path.resolve(info.root, file), 'utf8') } } catch { return { text: '' } }
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dig-diff3-'))
+  const w = (n: string, b: Buffer) => { const p = path.join(dir, n); fs.writeFileSync(p, b); return p }
+  try {
+    const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['merge-file', '-p', '--diff3', w('ours', ours), w('base', base), w('theirs', theirs)], maxBuffer: 16 * 1024 * 1024 })
+    return { text: r.stdout }
+  } finally { try { fs.rmSync(dir, { recursive: true, force: true }) } catch {} }
+}
+
 export async function readConflictWorking(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ content: string }> {
   const file = String(payload?.file ?? '').trim()
   if (!file) throw new RepoError('git/bad-path', 'Missing file path')
