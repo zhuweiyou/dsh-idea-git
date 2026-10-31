@@ -271,6 +271,8 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
+  const [statusCopied, setStatusCopied] = React.useState(false)
+  const statusTimer = React.useRef<any>(null)
   React.useEffect(() => {
     const h = w.open && !w.maximized ? (w.minimized ? 40 : w.height) : 0
     const body = document.body
@@ -464,9 +466,22 @@ export function Panel() {
             </ViewBoundary>
           </div>
         ) : null}
-        <div className="dig-statusbar">
-          <span className="dig-statusbar__msg">
-            {s.busy ? s.busyLabel || t("Loading") : s.toasts.length ? s.toasts[s.toasts.length - 1].message : ""}
+        <div className="dig-statusbar" data-kind={s.statusKind}>
+          <span
+            className="dig-statusbar__msg"
+            title={t("Click to copy")}
+            onClick={async () => {
+              const text = s.busy ? s.busyLabel || t("Loading") : s.statusText || ""
+              if (!text) return
+              try {
+                await navigator.clipboard.writeText(text)
+                setStatusCopied(true)
+                if (statusTimer.current) clearTimeout(statusTimer.current)
+                statusTimer.current = setTimeout(() => setStatusCopied(false), 1500)
+              } catch {}
+            }}
+          >
+            {statusCopied ? t("Copied") : s.busy ? s.busyLabel || t("Loading") : s.statusText || ""}
           </span>
         </div>
       </div>

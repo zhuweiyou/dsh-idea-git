@@ -106,6 +106,8 @@ export interface GitState {
     diff3: string
   } | null
   toasts: Array<{ id: number; message: string }>
+  statusText: string | null
+  statusKind: "info" | "error"
   compare: {
     title: string
     from: string
@@ -187,6 +189,8 @@ const initial: GitState = {
   include: {},
   conflict: null,
   toasts: [],
+  statusText: null,
+  statusKind: "info",
   compare: null,
   stashes: [],
   shelves: [],
@@ -473,7 +477,7 @@ async function withBusy(label: string, fn: () => Promise<void>) {
     if (ok) {
       if (toastSeq === toastBefore) setToast(t("Completed: {action}", { action }))
     } else {
-      setToast(t("Failed: {message}", { message: errMsg }))
+      setStatus(t("Failed: {message}", { message: errMsg }), "error")
     }
   }
 }
@@ -1103,13 +1107,12 @@ export async function openCommitInBrowser(commit: string) {
 }
 
 let toastSeq = 0
+export function setStatus(message: string, kind: "info" | "error" = "info") {
+  toastSeq++
+  set({ statusText: t(message), statusKind: kind })
+}
 export function setToast(message: string) {
-  const id = ++toastSeq
-  const text = t(message)
-  set({ toasts: [...state.toasts, { id, message: text }].slice(-6) })
-  setTimeout(() => {
-    set({ toasts: state.toasts.filter((x) => x.id !== id) })
-  }, 4000)
+  setStatus(message, "info")
 }
 
 export function createPatch(target: { commit?: string; paths?: string[] }) {

@@ -406,6 +406,8 @@ const zh: Record<string, string> = {
   'Refreshed': '已刷新',
   'Refreshing…': '刷新中…',
   'Done': '完成',
+  'Copied': '已复制',
+  'Click to copy': '点击复制',
   'Clearing console…': '清除控制台中…',
   'Saving ignore rules…': '保存忽略规则中…',
   'Completed: {action}': '已{action}',

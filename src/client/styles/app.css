@@ -3169,3 +3169,12 @@ body.dig-docked #root {
   white-space: nowrap;
   max-width: 70%;
 }
+.dig-statusbar[data-kind="error"] .dig-statusbar__msg {
+  color: var(--danger);
+}
+.dig-statusbar__msg {
+  cursor: pointer;
+}
+.dig-statusbar__msg:hover {
+  color: var(--fg-secondary);
+}
