@@ -64,7 +64,7 @@ function buildBranchTree(branches: BranchItem[], prefix = '', favs: Set<string> 
   return [...top, ...nodes, ...rest]
 }
 
-function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => string; label?: string }) {
+function BranchRow({ b, t, label, onSelect }: { b: BranchItem; t: (s: string, p?: any) => string; label?: string; onSelect?: (name: string) => void }) {
   return (
     <div
       key={b.ref}
@@ -74,6 +74,7 @@ function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => 
       data-current={b.current ? 'true' : undefined}
       title={b.name}
       onClick={(e) => {
+        onSelect?.(b.name)
         for (const el of Array.from(document.querySelectorAll('.dig-branchrow[data-selected]'))) el.removeAttribute('data-selected')
         ;(e.currentTarget as HTMLElement).setAttribute('data-selected', 'true')
       }}
@@ -86,7 +87,7 @@ function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => 
   )
 }
 
-function BranchNodes({ nodes, depth, expanded, toggle, t }: { nodes: BNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; t: (s: string, p?: any) => string }) {
+function BranchNodes({ nodes, depth, expanded, toggle, t, onSelect }: { nodes: BNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; t: (s: string, p?: any) => string; onSelect?: (name: string) => void }) {
   return (
     <>
       {nodes.map((n) => {
@@ -98,11 +99,11 @@ function BranchNodes({ nodes, depth, expanded, toggle, t }: { nodes: BNode[]; de
                 <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} />
                 <span>{n.name}</span>
               </div>
-              {open && n.children ? <BranchNodes nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} t={t} /> : null}
+              {open && n.children ? <BranchNodes nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} t={t} onSelect={onSelect} /> : null}
             </React.Fragment>
           )
         }
-        return <div key={'b:' + n.path} style={{ paddingLeft: depth * 14 + 8 }}>{n.branch ? <BranchRow b={n.branch} t={t} label={n.name} /> : null}</div>
+        return <div key={'b:' + n.path} style={{ paddingLeft: depth * 14 + 8 }}>{n.branch ? <BranchRow b={n.branch} t={t} label={n.name} onSelect={onSelect} /> : null}</div>
       })}
     </>
   )
@@ -118,6 +119,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const t = useT()
   const [favTick, setFavTick] = React.useState(0)
   React.useEffect(() => {}, [favTick])
+  const [selectedName, setSelectedName] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set())
   const q = query.trim().toLowerCase()
@@ -151,18 +153,18 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const toggle = (p: string) => setCollapsed((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const current = locals.find((b) => b.current)
   const favBranches = s.branches.filter((b) => favSet().has(b.name))
-  const selectedRef = () => (document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-ref') || ''
-  const isRemoteRef = () => !!(document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-remote')
+  const selectedBranch = s.branches.find((b) => b.name === selectedName)
+  const isRemoteRef = () => !!selectedBranch?.remote
   const refreshFav = () => setFavTick((x) => x + 1)
   return (
     <div className="dig-branches">
       <div className="dig-branches__rail" role="toolbar" aria-orientation="vertical" aria-label={t('Branches')}>
         <IconButton icon="chevronLeft" size={13} title={t('Hide Branches')} onClick={onHide} />
-        <IconButton icon="plus" size={13} title={t('New Branch…')} onClick={async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, selectedRef() || 'HEAD') }} />
+        <IconButton icon="plus" size={13} title={t('New Branch…')} onClick={async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, selectedName || 'HEAD') }} />
         <IconButton icon="download" size={13} title={t('Update Selected')} onClick={() => void store.remoteOp('pull')} />
-        <IconButton icon="trash" size={13} title={t('Delete Branch')} onClick={() => { const r = selectedRef(); if (r && !isRemoteRef() && window.confirm(t('Delete branch {name}?', { name: r }))) void store.deleteBranch(r) }} />
-        <IconButton icon="target" size={13} title={t('Navigate Log to Selected Branch')} onClick={() => { const r = selectedRef(); if (r) store.openBranchHistory(r) }} />
-        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={16} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { const on = !isFavorite(r); toggleFavorite(r); refreshFav(); store.setToast(on ? t('Added to Favorites') + ': ' + r : t('Removed from Favorites') + ': ' + r) } }} />
+        <IconButton icon="trash" size={13} title={t('Delete Branch')} onClick={() => { const r = selectedName; if (r && !isRemoteRef() && window.confirm(t('Delete branch {name}?', { name: r }))) void store.deleteBranch(r) }} />
+        <IconButton icon="target" size={13} title={t('Navigate Log to Selected Branch')} onClick={() => { const r = selectedName; if (r) store.openBranchHistory(r) }} />
+        <IconButton icon={isFavorite(selectedName) ? 'star' : 'starOutline'} size={16} title={isFavorite(selectedName) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedName; if (r) { const on = !isFavorite(r); toggleFavorite(r); refreshFav(); store.setToast(on ? t('Added to Favorites') + ': ' + r : t('Removed from Favorites') + ': ' + r) } }} />
         <IconButton icon="cloud" size={13} title={t('Fetch')} onClick={() => void store.remoteOp('fetch')} />
         <IconButton icon="refresh" size={13} title={t('Refresh')} onClick={() => void store.refreshAll()} />
       </div>
@@ -175,11 +177,11 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
         {favBranches.length ? (
           <>
             <div className="dig-branches__section"><Icon name="star" size={15} /><span>{t('Favorites')}</span></div>
-            {favBranches.map((b) => <div key={'fav:' + b.ref} style={{ paddingLeft: 8 }}><BranchRow b={b} t={t} label={b.name.split('/').pop()} /></div>)}
+            {favBranches.map((b) => <div key={'fav:' + b.ref} style={{ paddingLeft: 8 }}><BranchRow b={b} t={t} label={b.name.split('/').pop()} onSelect={setSelectedName} /></div>)}
           </>
         ) : null}
         <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={() => void store.refreshAll()} /></div>
-        <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} />
+        <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} onSelect={setSelectedName} />
         {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span><span style={{ flex: 1 }} /><IconButton icon="plus" title={t('Add Remote…')} size={13} onClick={async () => { const n = await askText(t('Remote name')); if (!n) return; const u = await askText(t('Remote URL')); if (u) void store.addRemote(n, u) }} /></div> : null}
         {[...remoteGroups.entries()].map(([remote, list]) => (
           <div key={remote}>
@@ -192,13 +194,13 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
               <Icon name={(collapsed.has('remote:' + remote)) ? 'chevronRight' : 'chevronDown'} size={12} />
               <span>{remote}</span>
             </div>
-            {!collapsed.has('remote:' + remote) ? <BranchNodes nodes={remoteTrees.get(remote) || []} depth={1} expanded={expanded} toggle={toggle} t={t} /> : null}
+            {!collapsed.has('remote:' + remote) ? <BranchNodes nodes={remoteTrees.get(remote) || []} depth={1} expanded={expanded} toggle={toggle} t={t} onSelect={setSelectedName} /> : null}
           </div>
         ))}
         {s.tags.length ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="tag" size={15} /><span>{t('Tags')}</span></div> : null}
         {s.tags.map((tag) => (
           <div key={tag} className="dig-branchrow" style={{ paddingLeft: 22 }} title={tag}
-            onClick={(e) => { for (const el of Array.from(document.querySelectorAll('.dig-branchrow[data-selected]'))) el.removeAttribute('data-selected'); (e.currentTarget as HTMLElement).setAttribute('data-selected', 'true') }}
+            onClick={(e) => { setSelectedName(tag); for (const el of Array.from(document.querySelectorAll('.dig-branchrow[data-selected]'))) el.removeAttribute('data-selected'); (e.currentTarget as HTMLElement).setAttribute('data-selected', 'true') }}
             onContextMenu={(e) => openContextMenu(e, [
               { label: t('Checkout'), run: () => void store.checkout(tag) },
               { label: t('New Branch from Here…'), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, tag) } },
