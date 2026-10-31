@@ -29,7 +29,7 @@ const MAP: Record<string, string> = {
   tag: 'tag',
   download: 'git-pull',
   upload: 'git-push',
-  cloud: 'refresh',
+  cloud: 'git-fetch',
   trash: 'trash',
   stash: 'stash',
   sparkle: 'commit',
