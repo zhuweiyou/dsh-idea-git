@@ -9,6 +9,7 @@
  */
 import path from 'node:path'
 import fs from 'node:fs'
+import { createHash } from 'node:crypto'
 import os from 'node:os'
 import { clearGitPathCache, gitOrThrow, resolveGitPath, runGit, runGitBytes } from './exec.js'
 import { getSettings } from '../settings.js'
@@ -1090,7 +1091,8 @@ async function runRebasePlan(info: RepoInfo, base: string | null, entries: PlanE
   const todoFile = path.join(dir, 'todo')
   fs.writeFileSync(todoFile, todo.join('\n') + '\n')
   const seq = path.join(dir, 'seq.mjs')
-  fs.writeFileSync(seq, `import fs from 'node:fs'\nfs.copyFileSync(${JSON.stringify(todoFile)}, process.argv[2])\n`)
+  fs.writeFileSync(seq, `import fs from 'node:fs'
+import { createHash } from 'node:crypto'\nfs.copyFileSync(${JSON.stringify(todoFile)}, process.argv[2])\n`)
   const noop = path.join(dir, 'noop.mjs')
   fs.writeFileSync(noop, '// keep the editor buffer as-is\n')
   try {
@@ -1373,6 +1375,43 @@ export async function lfsUnlock(info: RepoInfo, payload: any, signal?: AbortSign
   if (payload?.force === true) args.push('--force')
   await runWrite(info, args, signal)
   return { ok: true }
+}
+
+/* ---- Changelists: project-persisted grouping of local changes (port of ide-vcs/changelists.rs) ---- */
+export interface Changelist { id: string; name: string; comment: string }
+export interface ChangelistState { lists: Changelist[]; active: string; files: Record<string, string> }
+const DEFAULT_LIST: Changelist = { id: 'default', name: 'Changes', comment: '' }
+
+function projectStateDir(root: string) {
+  const key = path.basename(root).replace(/[^a-zA-Z0-9._-]+/g, '_') + '-' + createHash('sha1').update(root).digest('hex').slice(0, 8)
+  return path.join(os.homedir(), '.dsh-idea-git', key)
+}
+function changelistFile(root: string) { return path.join(projectStateDir(root), 'changelists.json') }
+function normChangelists(st: any): ChangelistState {
+  const lists: Changelist[] = Array.isArray(st?.lists) ? st.lists.filter((l: any) => l && l.id) : []
+  const seen = new Set<string>()
+  const uniq = lists.filter((l) => (seen.has(l.id) ? false : (seen.add(l.id), true))).map((l) => ({ id: String(l.id), name: String(l.name ?? l.id), comment: String(l.comment ?? '') }))
+  if (!uniq.length) return { lists: [{ ...DEFAULT_LIST }], active: DEFAULT_LIST.id, files: {} }
+  let active = String(st?.active ?? '')
+  if (!uniq.some((l) => l.id === active)) active = uniq[0].id
+  const ids = new Set(uniq.map((l) => l.id))
+  const files: Record<string, string> = {}
+  if (st?.files && typeof st.files === 'object') for (const [k, v] of Object.entries(st.files)) if (ids.has(String(v))) files[k] = String(v)
+  return { lists: uniq, active, files }
+}
+
+export async function changelistsLoad(info: RepoInfo): Promise<ChangelistState> {
+  try { return normChangelists(JSON.parse(fs.readFileSync(changelistFile(info.root), 'utf8'))) } catch { return normChangelists(null) }
+}
+
+export async function changelistsSave(info: RepoInfo, payload: any): Promise<ChangelistState> {
+  const state = normChangelists(payload?.state)
+  const file = changelistFile(info.root)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  const tmp = file + '.tmp'
+  fs.writeFileSync(tmp, JSON.stringify(state, null, 2))
+  fs.renameSync(tmp, file)
+  return state
 }
 
 /* ------------------------------------------------------------------ */

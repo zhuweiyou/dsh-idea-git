@@ -42,6 +42,7 @@ export interface GitState {
   shelves: Array<{ index: number; ref: string; name: string; date: number }>
   worktrees: WorktreeItem[]
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
+  changelists: { lists: Array<{ id: string; name: string; comment: string }>; active: string; files: Record<string, string> } | null
   blame: { title: string; lines: BlameLine[]; loading: boolean } | null
   aiBusy: boolean
   logFilterFile: string | null
@@ -97,6 +98,7 @@ const initial: GitState = {
   shelves: [],
   worktrees: [],
   submodules: [],
+  changelists: null,
   blame: null,
   aiBusy: false,
   logFilterFile: null,
@@ -921,4 +923,37 @@ function prepareFixup(kind: 'fixup' | 'squash', subject: string) {
     await api.rpc('prepareFixup', { ...targetPayload(), message: `${kind}! ${subject}` })
     await refreshAll()
   })
+}
+
+
+/* Changelists */
+export async function loadChangelists() {
+  if (!state.target) return
+  try { set({ changelists: await api.rpc('changelistsLoad', targetPayload()) }) } catch {}
+}
+async function saveChangelists(next: { lists: Array<{ id: string; name: string; comment: string }>; active: string; files: Record<string, string> }) {
+  set({ changelists: next })
+  try { const saved = await api.rpc<any>('changelistsSave', { ...targetPayload(), state: next }); set({ changelists: saved }) } catch (e: any) { set({ error: e?.message || String(e), errorCode: e?.code || null }) }
+}
+function currentCL() { return state.changelists || { lists: [{ id: 'default', name: 'Changes', comment: '' }], active: 'default', files: {} } }
+export function newChangelist(name: string) {
+  const cur = currentCL(); const id = 'cl-' + Date.now().toString(36)
+  void saveChangelists({ lists: [...cur.lists, { id, name, comment: '' }], active: cur.active, files: cur.files })
+}
+export function renameChangelist(id: string, name: string) {
+  const cur = currentCL(); void saveChangelists({ ...cur, lists: cur.lists.map((l) => (l.id === id ? { ...l, name } : l)) })
+}
+export function deleteChangelist(id: string) {
+  const cur = currentCL(); if (id === 'default') return
+  const files: Record<string, string> = {}
+  for (const [k, v] of Object.entries(cur.files)) if (v !== id) files[k] = v
+  void saveChangelists({ lists: cur.lists.filter((l) => l.id !== id), active: cur.active === id ? (cur.lists.find((l) => l.id !== id)?.id || 'default') : cur.active, files })
+}
+export function setActiveChangelist(id: string) {
+  const cur = currentCL(); void saveChangelists({ ...cur, active: id })
+}
+export function moveToChangelist(paths: string[], id: string) {
+  const cur = currentCL(); const files = { ...cur.files }
+  for (const p of paths) { if (id === 'default') delete files[p]; else files[p] = id }
+  void saveChangelists({ ...cur, files })
 }

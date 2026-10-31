@@ -56,6 +56,8 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
     { label: t('Unstage'), disabled: !canUnstage, run: () => void store.unstage([path]) },
     ...(file.kind === 'untracked' ? [{ label: t('Add to .gitignore'), run: () => void store.addIgnore([path], 'gitignore') }] : []),
     { separator: true },
+    ...((() => { const cl = store.getState().changelists; if (!cl || cl.lists.length === 0) return []; return cl.lists.filter((l) => l.id !== 'default').map((l) => ({ label: t('Move to Changelist: {name}', { name: l.name }), run: () => store.moveToChangelist([path], l.id) })) })()),
+    { separator: true },
     { label: t('Create Patch…'), run: () => void store.createPatch({ paths: [path] }) },
     { label: t('Show History'), run: () => store.openHistory(path) },
     { label: t('Annotate with Git Blame'), run: () => void store.openBlame(path, path) },
@@ -236,6 +238,7 @@ function CommitPanel() {
 export function ChangesView() {
   const s = useGit()
   const t = useT()
+  React.useEffect(() => { void store.loadChangelists() }, [])
   const [groupByDir, setGroupByDir] = React.useState<boolean>(() => localStorage.getItem('dig.groupByDir') !== '0')
   const [commitHeight, setCommitHeight] = React.useState(() => Number(localStorage.getItem('dig.commitHeight')) || 230)
   const heightRef = React.useRef(commitHeight)
@@ -268,6 +271,19 @@ export function ChangesView() {
         <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('View Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="eye" size={14} /></span>}>
           {(close) => (<MenuItem checked={groupByDir} onClick={() => { close(); const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }}>{t('Group by Directory')}</MenuItem>)}
         </Dropdown>
+        <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('Changelists')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="list" size={14} /></span>}>
+          {(close) => {
+            const cl = s.changelists
+            const lists = cl?.lists?.length ? cl.lists : [{ id: 'default', name: t('Changes'), comment: '' }]
+            const active = cl?.active || 'default'
+            return (<>
+              {lists.map((l) => <MenuItem key={l.id} checked={l.id === active} onClick={() => { close(); store.setActiveChangelist(l.id) }}>{l.name}</MenuItem>)}
+              <MenuItem onClick={async () => { close(); const n = await askText(t('New Changelist')); if (n) store.newChangelist(n) }}>＋ {t('New Changelist')}</MenuItem>
+              {active !== 'default' ? <MenuItem onClick={async () => { close(); const n = await askText(t('Rename Changelist'), lists.find((l) => l.id === active)?.name || ''); if (n) store.renameChangelist(active, n) }}>{t('Rename Changelist')}</MenuItem> : null}
+              {active !== 'default' ? <MenuItem danger onClick={() => { close(); if (window.confirm(t('Delete this changelist?'))) store.deleteChangelist(active) }}>{t('Delete Changelist')}</MenuItem> : null}
+            </>)
+          }}
+        </Dropdown>
         <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('More')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="more" size={14} /></span>}>
           {(close) => (<>
             <MenuItem onClick={async () => { close(); const p = await askText(t('Patch file path')); if (p) void store.applyPatchFromPath(p) }}>{t('Apply Patch…')}</MenuItem>
@@ -286,8 +302,19 @@ export function ChangesView() {
           <div className="dig-empty">{t('No local changes')}</div>
         ) : (
           <>
-            {staged.length ? <Group title={t('Staged')} files={staged} groupByDir={groupByDir} /> : null}
-            {unstaged.length ? <Group title={t('Changes')} files={unstaged} groupByDir={groupByDir} /> : null}
+            {(() => {
+              const cl = s.changelists
+              const lists = cl && cl.lists.length ? cl.lists : [{ id: 'default', name: t('Changes'), comment: '' }]
+              const active = cl?.active || 'default'
+              const assign = cl?.files || {}
+              const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
+              const multi = lists.length > 1
+              return lists.map((l) => {
+                const fs2 = forList(l.id)
+                if (!fs2.length && !multi) return null
+                return <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={fs2} groupByDir={groupByDir} />
+              })
+            })()}
           </>
         )}
       </div>

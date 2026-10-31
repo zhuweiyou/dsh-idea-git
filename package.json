@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "IDEA-style Git tool window for DeepSeek Harness: changes & commit, commit graph log, console, diff, branches/remotes, stash/worktrees and AI commit messages.",
-  "author": "zhuweiyou <zhuweiyou@users.noreply.github.com>",
+  "author": "zhuweiyou <i@zhuweiyou.com> (https://github.com/zhuweiyou)",
   "license": "MIT",
   "keywords": [
     "dsh",

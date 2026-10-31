@@ -419,6 +419,20 @@ try {
     ok('prepareFixup creates commit', fx.ok && !!fx.value.id)
     ok('fixup subject', (await call('log', D(repo))).value.commits[0].subject === 'fixup! c2-new')
   }
+
+  /* ---------------- changelists ---------------- */
+  console.log('\n[changelists]')
+  {
+    const { repo } = makeRepo()
+    const init = (await call('changelistsLoad', D(repo))).value
+    ok('changelist default', init.lists[0].name === 'Changes' && init.active === 'default')
+    const st = { lists: [{ id: 'default', name: 'Changes', comment: '' }, { id: 'f', name: 'Feature', comment: '' }], active: 'f', files: { 'src/a.rs': 'f', 'b.rs': 'missing' } }
+    const saved = (await call('changelistsSave', { ...D(repo), state: st })).value
+    ok('changelist drop invalid assignment', !('b.rs' in saved.files) && saved.files['src/a.rs'] === 'f')
+    const back = (await call('changelistsLoad', D(repo))).value
+    ok('changelist persisted active', back.active === 'f' && back.lists.length === 2)
+    ok('changelist not in repo', !fs.existsSync(path.join(repo, '.dsh-idea-git')))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}
