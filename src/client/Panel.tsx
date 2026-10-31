@@ -19,6 +19,8 @@ import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
 import { syncAll } from './services'
 import { saveCurrentWorkspace } from './workspaceState'
+import { useRepoRoots } from './roots'
+import { setTarget } from './window'
 import { PromptHost, askText } from './lib/prompt'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
@@ -133,6 +135,7 @@ export function Panel() {
 
   const height = w.maximized ? '100vh' : w.minimized ? 40 : w.height
   const bottom = w.minimized ? 40 : w.height
+  const roots = useRepoRoots()
   const branch = s.info?.branch?.head
   const locals = s.branches.filter((b) => !b.remote)
   const content = (
@@ -154,6 +157,17 @@ export function Panel() {
           ))}
         </div>
         <div className="dig-panel__spacer" />
+        {roots.length > 1 ? (
+          <Dropdown align="right" trigger={() => (
+            <span className="dig-panel__branch" title={s.target?.directory || ''}>{(() => { const p = (s.target?.directory || '').replace(/[\\/]+$/, ''); return p.split(/[\\/]/).pop() || 'repo' })()} ▾</span>
+          )}>
+            {(close) => (<>
+              {roots.map((r) => (
+                <MenuItem key={r.id} checked={(s.target?.directory || '') === r.path} onClick={() => { close(); if (s.target?.sessionId) setTarget({ sessionId: s.target.sessionId, directory: r.path }); void store.selectRoot(r.path) }}>{r.label}</MenuItem>
+              ))}
+            </>)}
+          </Dropdown>
+        ) : null}
         {s.info?.isRepo ? (
           <Dropdown
             align="right"

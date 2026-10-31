@@ -1080,3 +1080,11 @@ export function applyHunks(file: string, indexes: number[], mode: 'stage' | 'uns
     if (d && d.file === file) await openDiff({ title: d.title, path: d.file, staged: d.staged })
   })
 }
+
+
+export function selectRoot(directory: string) {
+  if (!state.target) return
+  const target = { ...state.target, directory }
+  set({ target, ready: false })
+  return refreshAll()
+}

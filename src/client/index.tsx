@@ -14,6 +14,7 @@ import { installServices, syncAll, syncTheme, syncLocale } from './services'
 import * as store from './store'
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from './window'
 import { switchWorkspace } from './workspaceState'
+import { setRepoRoots } from './roots'
 import { Panel } from './Panel'
 import { SettingsSection } from './SettingsSection'
 import { Icon } from './lib/ui'
@@ -68,11 +69,19 @@ function PanelSpacer() {
 function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
+  const wsSnap = props.useWorkspaces ? props.useWorkspaces((v: any) => v) : null
   React.useEffect(() => { syncAll(); const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d)); return () => ts.forEach(clearTimeout) }, [])
 
   React.useEffect(() => {
     switchWorkspace(directory)
   }, [directory])
+
+  React.useEffect(() => {
+    try {
+      const items = (wsSnap?.items || []) as any[]
+      setRepoRoots(items.filter((x) => x?.path).map((x) => ({ id: String(x.id || x.path), label: String(x.name || x.path.split('/').pop() || x.path), path: String(x.path) })))
+    } catch {}
+  }, [wsSnap])
 
   React.useEffect(() => {
     if (!w.open) return
