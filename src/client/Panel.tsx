@@ -28,8 +28,6 @@ const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: 'console', label: 'Console' },
   { id: 'worktree', label: 'Worktrees' },
   { id: 'submodule', label: 'Submodules' },
-  { id: 'stash', label: 'Stash' },
-  { id: 'shelf', label: 'Shelf' },
 ]
 
 function errorText(t: (s: string, p?: any) => string, code: string | null, fallback: string | null): string {
@@ -82,6 +80,32 @@ export class ViewBoundary extends React.Component<{ children: React.ReactNode },
   }
 }
 
+function CommitTabView() {
+  const t = useT()
+  const [sub, setSub] = React.useState<'changes' | 'stash' | 'shelf'>(() => {
+    const v = localStorage.getItem('dig.commitSub')
+    return v === 'stash' || v === 'shelf' ? v : 'changes'
+  })
+  const pick = (v: 'changes' | 'stash' | 'shelf') => { setSub(v); try { localStorage.setItem('dig.commitSub', v) } catch {} }
+  const tabs: Array<{ id: 'changes' | 'stash' | 'shelf'; label: string }> = [
+    { id: 'changes', label: t('Commit') },
+    { id: 'stash', label: t('Stash') },
+    { id: 'shelf', label: t('Shelf') },
+  ]
+  return (
+    <div className="dig-committab">
+      <div className="dig-committab__bar" role="tablist">
+        {tabs.map((x) => (
+          <button key={x.id} type="button" role="tab" className="dig-committab__tab" data-active={sub === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>{x.label}</button>
+        ))}
+      </div>
+      <div className="dig-committab__body">
+        {sub === 'changes' ? <ChangesView /> : sub === 'stash' ? <StashView /> : <ShelfView />}
+      </div>
+    </div>
+  )
+}
+
 function Body() {
   const s = useGit()
   const t = useT()
@@ -97,7 +121,7 @@ function Body() {
     )
   }
   switch (s.tab) {
-    case 'changes': return <ChangesView />
+    case 'changes': return <CommitTabView />
     case 'log': return <LogView />
     case 'console': return <ConsoleView />
     case 'stash': return <StashView />

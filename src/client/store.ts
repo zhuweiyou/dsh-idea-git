@@ -64,7 +64,8 @@ export interface GitState {
 function readTab(): TabId {
   try {
     const v = localStorage.getItem('dig.tab')
-    if (v === 'changes' || v === 'log' || v === 'console' || v === 'stash' || v === 'worktree') return v
+    if (v === 'stash' || v === 'shelf') { localStorage.setItem('dig.commitSub', v); return 'changes' }
+    if (v === 'changes' || v === 'log' || v === 'console' || v === 'worktree' || v === 'submodule') return v
   } catch {}
   return 'changes'
 }

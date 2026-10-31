@@ -2047,3 +2047,11 @@ body.dig-docked #root { height: 100% !important; }
 .dig-check__box[data-indeterminate='true'] { background: var(--accent); box-shadow: none; }
 .dig-dash { display: block; width: 8px; height: 2px; background: #fff; }
 .dig-merge__pane--base { background: color-mix(in srgb, var(--fg-subtle) 8%, transparent); border-right: 1px solid var(--border); }
+
+/* Commit tool-window content tabs (Commit / Stash / Shelf) */
+.dig-committab { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dig-committab__bar { flex: none; display: flex; align-items: center; gap: 2px; padding: 4px 6px 0; border-bottom: 1px solid var(--border); }
+.dig-committab__tab { height: 26px; padding: 0 10px; border: 0; background: transparent; color: var(--fg-secondary); cursor: pointer; border-radius: 6px 6px 0 0; font-size: var(--fs-ui); }
+.dig-committab__tab:hover { background: var(--bg-hover); }
+.dig-committab__tab[data-active='true'] { background: var(--bg-selected); color: var(--fg-strong); font-weight: 600; }
+.dig-committab__body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
