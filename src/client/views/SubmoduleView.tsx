@@ -29,11 +29,7 @@ export function SubmoduleView() {
   return (
     <div className="dig-wt">
       <div className="dig-toolbar">
-        <IconButton
-          icon="refresh"
-          title={t("Refresh")}
-          onClick={() => void store.loadSubmodules()}
-        />
+        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadSubmodules()} />
         <button type="button" className="dig-btn" onClick={() => void store.updateSubmodule()}>
           {t("Update All")}
         </button>
@@ -57,11 +53,7 @@ export function SubmoduleView() {
             <span className="dig-wtrow__badge" style={{ color: color(m.state) }}>
               {label(m.state)}
             </span>
-            <button
-              type="button"
-              className="dig-btn"
-              onClick={() => void store.updateSubmodule(m.path)}
-            >
+            <button type="button" className="dig-btn" onClick={() => void store.updateSubmodule(m.path)}>
               {t("Update")}
             </button>
           </div>

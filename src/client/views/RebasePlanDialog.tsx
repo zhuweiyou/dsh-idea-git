@@ -22,11 +22,7 @@ export function RebasePlanDialog({ theme }: { theme: "light" | "dark" }) {
             ? t("Fixup")
             : t("Drop")
   return (
-    <div
-      className="dig-theme dig-modal-mask"
-      data-theme={theme}
-      onMouseDown={() => store.closeRebasePlan()}
-    >
+    <div className="dig-theme dig-modal-mask" data-theme={theme} onMouseDown={() => store.closeRebasePlan()}>
       <div className="dig-modal dig-rebase-dialog" onMouseDown={(e) => e.stopPropagation()}>
         <div className="dig-modal__title">{t("Interactive Rebase")}</div>
         <div className="dig-rebase-dialog__hint">

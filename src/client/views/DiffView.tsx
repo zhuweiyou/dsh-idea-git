@@ -92,8 +92,7 @@ function highlightCode(text: string, lang: string): React.ReactNode {
     if (m.index > last) parts.push(text.slice(last, m.index))
     const tok = m[0]
     let cls = ""
-    if ((hash && tok.startsWith("#")) || tok.startsWith("//") || tok.startsWith("/*"))
-      cls = "dig-tok-com"
+    if ((hash && tok.startsWith("#")) || tok.startsWith("//") || tok.startsWith("/*")) cls = "dig-tok-com"
     else if (/^['"`]/.test(tok)) cls = "dig-tok-str"
     else if (/^\d/.test(tok)) cls = "dig-tok-num"
     else if (KW.has(tok)) cls = "dig-tok-kw"
@@ -112,17 +111,7 @@ function highlightCode(text: string, lang: string): React.ReactNode {
   return <>{parts}</>
 }
 
-function Fragments({
-  text,
-  other,
-  enabled,
-  lang,
-}: {
-  text: string
-  other: string
-  enabled: boolean
-  lang?: string
-}) {
+function Fragments({ text, other, enabled, lang }: { text: string; other: string; enabled: boolean; lang?: string }) {
   const code = (t: string) => highlightCode(t, lang || "")
   if (!enabled || text === other) return <>{code(text)}</>
   const r = wordRanges(text, other)
@@ -136,9 +125,7 @@ function Fragments({
   )
 }
 
-type Item =
-  | { fold: true; count: number; start: number }
-  | { fold: false; row: DiffRow; index: number }
+type Item = { fold: true; count: number; start: number } | { fold: false; row: DiffRow; index: number }
 
 function buildItems(rows: DiffRow[], collapse: boolean, expanded: Set<number>): Item[] {
   const items: Item[] = []
@@ -191,10 +178,7 @@ function SplitView({
   onToggleHunk?: (i: number) => void
   hunkLabel?: string
 }) {
-  const items = React.useMemo(
-    () => buildItems(rows, collapse, expanded),
-    [rows, collapse, expanded],
-  )
+  const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   return (
     <div className="dig-diff__split">
       {items.map((it, k) =>
@@ -205,12 +189,7 @@ function SplitView({
             <span className="dig-dsrow__no">{it.row.oldNo ?? ""}</span>
             <span className="dig-dsrow__cell dig-dsrow__cell--old">
               {it.row.oldNo != null ? (
-                <Fragments
-                  text={it.row.oldText}
-                  other={it.row.newText}
-                  enabled={highlight === "words"}
-                  lang={lang}
-                />
+                <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === "words"} lang={lang} />
               ) : null}
             </span>
             <span className="dig-dsrow__no">
@@ -227,12 +206,7 @@ function SplitView({
             </span>
             <span className="dig-dsrow__cell dig-dsrow__cell--new">
               {it.row.newNo != null ? (
-                <Fragments
-                  text={it.row.newText}
-                  other={it.row.oldText}
-                  enabled={highlight === "words"}
-                  lang={lang}
-                />
+                <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === "words"} lang={lang} />
               ) : null}
             </span>
           </div>
@@ -265,20 +239,11 @@ function UnifiedView({
   onToggleHunk?: (i: number) => void
   hunkLabel?: string
 }) {
-  const items = React.useMemo(
-    () => buildItems(rows, collapse, expanded),
-    [rows, collapse, expanded],
-  )
+  const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   const lines: React.ReactNode[] = []
   for (const it of items) {
     if (it.fold) {
-      lines.push(
-        <FoldButton
-          key={"f" + lines.length}
-          count={it.count}
-          onExpand={() => onExpand(it.start)}
-        />,
-      )
+      lines.push(<FoldButton key={"f" + lines.length} count={it.count} onExpand={() => onExpand(it.start)} />)
       continue
     }
     const r = it.row
@@ -310,12 +275,7 @@ function UnifiedView({
             <span className="dig-durow__no" />
             <span className="dig-durow__sign">−</span>
             <span className="dig-durow__text">
-              <Fragments
-                text={r.oldText}
-                other={r.newText}
-                enabled={highlight === "words"}
-                lang={lang}
-              />
+              <Fragments text={r.oldText} other={r.newText} enabled={highlight === "words"} lang={lang} />
             </span>
           </div>,
         )
@@ -337,12 +297,7 @@ function UnifiedView({
             </span>
             <span className="dig-durow__sign">＋</span>
             <span className="dig-durow__text">
-              <Fragments
-                text={r.newText}
-                other={r.oldText}
-                enabled={highlight === "words"}
-                lang={lang}
-              />
+              <Fragments text={r.newText} other={r.oldText} enabled={highlight === "words"} lang={lang} />
             </span>
           </div>,
         )
@@ -351,15 +306,8 @@ function UnifiedView({
   return <div className="dig-diff__unified">{lines}</div>
 }
 
-function ImageView({
-  d,
-  t,
-}: {
-  d: NonNullable<ReturnType<typeof useGit>["diff"]>
-  t: (s: string, p?: any) => string
-}) {
-  const src = (b64?: string) =>
-    b64 ? `data:${d.mime || "application/octet-stream"};base64,${b64}` : ""
+function ImageView({ d, t }: { d: NonNullable<ReturnType<typeof useGit>["diff"]>; t: (s: string, p?: any) => string }) {
+  const src = (b64?: string) => (b64 ? `data:${d.mime || "application/octet-stream"};base64,${b64}` : "")
   return (
     <div className="dig-imgdiff">
       <div className="dig-imgpane">
@@ -390,9 +338,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
   const [draft, setDraft] = React.useState("")
   const [findOpen, setFindOpen] = React.useState(false)
   const [findText, setFindText] = React.useState("")
-  const [wrap, setWrap] = React.useState<boolean>(
-    () => localStorage.getItem("dig.diffWrap") === "1",
-  )
+  const [wrap, setWrap] = React.useState<boolean>(() => localStorage.getItem("dig.diffWrap") === "1")
   const findAt = React.useRef(0)
   const [expanded, setExpanded] = React.useState<Set<number>>(() => new Set())
   const bodyRef = React.useRef<HTMLDivElement>(null)
@@ -428,9 +374,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
     if (!d || d.loading || (d.kind && d.kind !== "text")) return [] as DiffRow[]
     const oldText = d.oldText ?? ""
     const newText = d.newText ?? ""
-    return opts.swap
-      ? computeRows(newText, oldText, opts.ignore)
-      : computeRows(oldText, newText, opts.ignore)
+    return opts.swap ? computeRows(newText, oldText, opts.ignore) : computeRows(oldText, newText, opts.ignore)
   }, [d?.oldText, d?.newText, opts.ignore, opts.swap, d?.loading])
 
   React.useEffect(() => {
@@ -448,9 +392,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
     if (!marks.length) return
     const top = el.scrollTop
     const target =
-      dir === 1
-        ? marks.find((m) => m.offsetTop > top + 4)
-        : [...marks].reverse().find((m) => m.offsetTop < top - 4)
+      dir === 1 ? marks.find((m) => m.offsetTop > top + 4) : [...marks].reverse().find((m) => m.offsetTop < top - 4)
     if (target) el.scrollTop = target.offsetTop - 12
   }
 
@@ -465,12 +407,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
   const title = b ? b.title : d!.title
 
   return (
-    <div
-      className="dig-theme dig-diffarea"
-      data-theme={theme}
-      data-wrap={wrap ? "true" : undefined}
-      style={{ bottom }}
-    >
+    <div className="dig-theme dig-diffarea" data-theme={theme} data-wrap={wrap ? "true" : undefined} style={{ bottom }}>
       <div className="dig-diff__head">
         <Icon name="file" size={15} />
         <span className="dig-diff__title" title={title}>
@@ -504,8 +441,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
                   ev as any,
                   items.map((h) => ({
                     label: h.header + "  " + t(d.staged ? "Unstage Hunk" : "Stage Hunk"),
-                    run: () =>
-                      void store.applyHunks(d.file!, [h.index], d.staged ? "unstage" : "stage"),
+                    run: () => void store.applyHunks(d.file!, [h.index], d.staged ? "unstage" : "stage"),
                   })),
                 )
               }}
@@ -522,11 +458,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
             >
               {t("History")}
             </button>
-            <button
-              type="button"
-              className="dig-btn"
-              onClick={() => void store.openBlame(d.file!, d.file!)}
-            >
+            <button type="button" className="dig-btn" onClick={() => void store.openBlame(d.file!, d.file!)}>
               {t("Blame")}
             </button>
           </>
@@ -595,11 +527,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
             ]}
           />
           <span className={styles.sep} />
-          <IconButton
-            icon="undo"
-            title={t("Swap sides")}
-            onClick={() => update({ swap: !opts.swap })}
-          />
+          <IconButton icon="undo" title={t("Swap sides")} onClick={() => update({ swap: !opts.swap })} />
           <IconButton
             icon="minus"
             title={t("Collapse unchanged")}
@@ -607,9 +535,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
             onClick={() => update({ collapse: !opts.collapse })}
           />
           <span style={{ flex: 1 }} />
-          <span className={styles.count}>
-            {t("{n} changes", { n: rows.filter((r) => r.kind !== "ctx").length })}
-          </span>
+          <span className={styles.count}>{t("{n} changes", { n: rows.filter((r) => r.kind !== "ctx").length })}</span>
         </div>
       ) : null}
 
@@ -624,9 +550,9 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
               if (e.key !== "Enter") return
               const el = bodyRef.current
               if (!el || !findText) return
-              const rows = Array.from(
-                el.querySelectorAll<HTMLElement>(".dig-dsrow, .dig-durow"),
-              ).filter((r) => (r.textContent || "").includes(findText))
+              const rows = Array.from(el.querySelectorAll<HTMLElement>(".dig-dsrow, .dig-durow")).filter((r) =>
+                (r.textContent || "").includes(findText),
+              )
               if (!rows.length) return
               findAt.current = (findAt.current + (e.shiftKey ? rows.length - 1 : 1)) % rows.length
               rows[findAt.current].scrollIntoView({ block: "center" })
@@ -648,9 +574,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
                     {l.shortSha}
                   </span>
                   <span className="dig-blameline__author">{l.author}</span>
-                  <span className="dig-blameline__time">
-                    {new Date(l.time).toISOString().slice(0, 10)}
-                  </span>
+                  <span className="dig-blameline__time">{new Date(l.time).toISOString().slice(0, 10)}</span>
                   <span className="dig-blameline__code">{l.content || " "}</span>
                 </div>
               ))}

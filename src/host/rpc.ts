@@ -7,9 +7,7 @@
 import * as svc from "./git/service.js"
 import { clearConsole, readConsole } from "./git/exec.js"
 
-type Reply =
-  | { ok: true; value: unknown }
-  | { ok: false; error: { code: string; message: string; details?: unknown } }
+type Reply = { ok: true; value: unknown } | { ok: false; error: { code: string; message: string; details?: unknown } }
 
 function ok(value: unknown): Reply {
   return { ok: true, value }
@@ -17,11 +15,7 @@ function ok(value: unknown): Reply {
 
 function fail(error: any): Reply {
   const code =
-    typeof error?.code === "string"
-      ? error.code
-      : error instanceof svc.RepoError
-        ? error.code
-        : "idea-git/failed"
+    typeof error?.code === "string" ? error.code : error instanceof svc.RepoError ? error.code : "idea-git/failed"
   const message = error instanceof Error ? error.message : String(error)
   return { ok: false, error: { code, message, details: error?.details ?? {} } }
 }
@@ -40,12 +34,7 @@ async function withRepo(
   }
 }
 
-export async function dispatch(
-  ctx: any,
-  method: string,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<Reply> {
+export async function dispatch(ctx: any, method: string, payload: any, signal?: AbortSignal): Promise<Reply> {
   try {
     switch (method) {
       case "addIgnore":
@@ -79,14 +68,10 @@ export async function dispatch(
         return withRepo(ctx, payload, signal, (info) => svc.tagDelete(info, payload, signal))
 
       case "editCommitMessage":
-        return withRepo(ctx, payload, signal, (info) =>
-          svc.editCommitMessage(info, payload, signal),
-        )
+        return withRepo(ctx, payload, signal, (info) => svc.editCommitMessage(info, payload, signal))
 
       case "prepareFixup":
-        return withRepo(ctx, payload, signal, (info) =>
-          svc.prepareFixupCommit(info, payload, signal),
-        )
+        return withRepo(ctx, payload, signal, (info) => svc.prepareFixupCommit(info, payload, signal))
 
       case "squashRange":
         return withRepo(ctx, payload, signal, (info) => svc.squashRange(info, payload, signal))
@@ -95,9 +80,7 @@ export async function dispatch(
         return withRepo(ctx, payload, signal, (info) => svc.dropCommit(info, payload, signal))
 
       case "interactiveRebase":
-        return withRepo(ctx, payload, signal, (info) =>
-          svc.interactiveRebase(info, payload, signal),
-        )
+        return withRepo(ctx, payload, signal, (info) => svc.interactiveRebase(info, payload, signal))
 
       case "squashHead":
         return withRepo(ctx, payload, signal, (info) => svc.squashHead(info, payload, signal))
@@ -181,14 +164,10 @@ export async function dispatch(
         return withRepo(ctx, payload, signal, (info) => svc.conflictDiff3(info, payload, signal))
 
       case "conflictWorking":
-        return withRepo(ctx, payload, signal, (info) =>
-          svc.readConflictWorking(info, payload, signal),
-        )
+        return withRepo(ctx, payload, signal, (info) => svc.readConflictWorking(info, payload, signal))
 
       case "resolveConflictContent":
-        return withRepo(ctx, payload, signal, (info) =>
-          svc.resolveConflictContent(info, payload, signal),
-        )
+        return withRepo(ctx, payload, signal, (info) => svc.resolveConflictContent(info, payload, signal))
 
       case "conflictVersions":
         return withRepo(ctx, payload, signal, (info) => svc.conflictVersions(info, payload, signal))

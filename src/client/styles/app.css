@@ -1270,13 +1270,7 @@
   display: inline-block;
 }
 .dig-seg__split {
-  background: linear-gradient(
-    to right,
-    transparent 46%,
-    currentColor 46%,
-    currentColor 54%,
-    transparent 54%
-  );
+  background: linear-gradient(to right, transparent 46%, currentColor 46%, currentColor 54%, transparent 54%);
 }
 .dig-dsel {
   height: 24px;

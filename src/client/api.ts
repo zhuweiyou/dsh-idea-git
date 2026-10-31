@@ -36,11 +36,7 @@ function makeError(error: any): RpcError {
   return e
 }
 
-export async function rpc<T = unknown>(
-  method: string,
-  payload: unknown = {},
-  signal?: AbortSignal,
-): Promise<T> {
+export async function rpc<T = unknown>(method: string, payload: unknown = {}, signal?: AbortSignal): Promise<T> {
   if (!connection?.rpc?.call)
     throw makeError({
       code: "idea-git/no-connection",
@@ -54,12 +50,7 @@ export async function rpc<T = unknown>(
   // unwrap again if it really looks like an RPC reply ({ ok, value|error }) —
   // otherwise values like { ok:false, output } would be misread as an envelope.
   const inner: any = res.value
-  if (
-    inner &&
-    typeof inner === "object" &&
-    typeof inner.ok === "boolean" &&
-    ("value" in inner || "error" in inner)
-  ) {
+  if (inner && typeof inner === "object" && typeof inner.ok === "boolean" && ("value" in inner || "error" in inner)) {
     if (inner.ok === true) return inner.value as T
     throw makeError(inner.error)
   }

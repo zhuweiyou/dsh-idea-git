@@ -241,8 +241,7 @@
 
   --shadow-popup: 0 6px 20px rgba(0, 0, 0, 0.45);
   /* macOS window shadow (dialogs are separate windows in IDEA) */
-  --shadow-dialog:
-    0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 10px 24px rgba(0, 0, 0, 0.35), 0 24px 72px rgba(0, 0, 0, 0.45);
+  --shadow-dialog: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 10px 24px rgba(0, 0, 0, 0.35), 0 24px 72px rgba(0, 0, 0, 0.45);
   /* NSWindow standard buttons */
   --traffic-close: #ff5f57;
   --traffic-close-border: #e0443e;
@@ -574,8 +573,7 @@
 
   /* shadows and window controls */
   --shadow-popup: 0 6px 20px rgba(0, 0, 0, 0.12);
-  --shadow-dialog:
-    0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 10px 24px rgba(0, 0, 0, 0.1), 0 24px 72px rgba(0, 0, 0, 0.2);
+  --shadow-dialog: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 10px 24px rgba(0, 0, 0, 0.1), 0 24px 72px rgba(0, 0, 0, 0.2);
   --traffic-close: #ff5f57;
   --traffic-close-border: #e0443e;
   --traffic-close-pressed: #bf4942;

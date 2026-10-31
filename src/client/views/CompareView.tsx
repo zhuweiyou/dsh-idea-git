@@ -44,9 +44,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
       </div>
       <div className="dig-compare">
         <div className="dig-compare__files">
-          {c.files.length === 0 && !c.loading ? (
-            <div className="dig-empty">{t("No differences")}</div>
-          ) : null}
+          {c.files.length === 0 && !c.loading ? <div className="dig-empty">{t("No differences")}</div> : null}
           {c.files.map((f) => {
             const color =
               f.kind === "added"
@@ -54,14 +52,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
                 : f.kind === "deleted"
                   ? "var(--vcs-deleted)"
                   : "var(--vcs-modified)"
-            const letter =
-              f.kind === "added"
-                ? "A"
-                : f.kind === "deleted"
-                  ? "D"
-                  : f.kind === "renamed"
-                    ? "R"
-                    : "M"
+            const letter = f.kind === "added" ? "A" : f.kind === "deleted" ? "D" : f.kind === "renamed" ? "R" : "M"
             return (
               <div
                 key={f.path}
@@ -70,9 +61,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
                 onClick={() => void store.selectCompareFile(f.path)}
                 title={f.path}
               >
-                <span style={{ color, width: 12, flex: "none", fontFamily: "var(--font-mono)" }}>
-                  {letter}
-                </span>
+                <span style={{ color, width: 12, flex: "none", fontFamily: "var(--font-mono)" }}>{letter}</span>
                 <span className="dig-compare__fname">{f.path.split("/").pop()}</span>
                 <span className="dig-compare__fdir">
                   {f.path.includes("/") ? f.path.slice(0, f.path.lastIndexOf("/")) : ""}
@@ -121,9 +110,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
               className="dig-btn"
               onClick={() => {
                 setEditing(false)
-                void store
-                  .saveWorktreeFile(c.sel!, draft, false)
-                  .then(() => store.selectCompareFile(c.sel!))
+                void store.saveWorktreeFile(c.sel!, draft, false).then(() => store.selectCompareFile(c.sel!))
               }}
             >
               {t("Save")}
@@ -133,9 +120,7 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
               className="dig-btn dig-btn--primary"
               onClick={() => {
                 setEditing(false)
-                void store
-                  .saveWorktreeFile(c.sel!, draft, true)
-                  .then(() => store.selectCompareFile(c.sel!))
+                void store.saveWorktreeFile(c.sel!, draft, true).then(() => store.selectCompareFile(c.sel!))
               }}
             >
               {t("Save & Stage")}

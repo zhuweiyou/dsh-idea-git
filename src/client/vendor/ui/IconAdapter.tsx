@@ -46,12 +46,7 @@ const MAP: Record<string, string> = {
   diff: "diff",
 }
 
-export function Icon(props: {
-  name: string
-  size?: number
-  className?: string
-  style?: React.CSSProperties
-}) {
+export function Icon(props: { name: string; size?: number; className?: string; style?: React.CSSProperties }) {
   const name = MAP[props.name] || props.name
   return <IdeaIcon name={name} size={props.size} className={props.className} style={props.style} />
 }

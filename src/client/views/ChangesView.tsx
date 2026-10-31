@@ -40,9 +40,7 @@ function buildTree(files: FileEntry[]): TreeNode[] {
       cur.children = cur.children || []
       let next = cur.children.find((c) => c.name === name && c.dir === !isLeaf)
       if (!next) {
-        next = isLeaf
-          ? { name, path: p, dir: false, file }
-          : { name, path: p, dir: true, children: [] }
+        next = isLeaf ? { name, path: p, dir: false, file } : { name, path: p, dir: true, children: [] }
         cur.children.push(next)
       }
       cur = next
@@ -60,8 +58,7 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
   const path = file.path
   const canStage = file.unstaged || (!file.staged && file.kind !== "conflicted")
   const canUnstage = file.staged
-  const showDiff = () =>
-    void store.openDiff({ title: path, path, staged: file.staged && !file.unstaged })
+  const showDiff = () => void store.openDiff({ title: path, path, staged: file.staged && !file.unstaged })
   return [
     ...(file.kind === "conflicted"
       ? [{ label: t("Resolve Conflicts…"), run: () => void store.openConflict(file.path) }]
@@ -73,8 +70,7 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
       label: t("Rollback…"),
       danger: true,
       run: () => {
-        if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path })))
-          void store.discard([path])
+        if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path }))) void store.discard([path])
       },
     },
     { label: t("Stage"), disabled: !canStage, run: () => void store.stage([path]) },
@@ -105,9 +101,7 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
 
 function dirMenuItems(node: { path: string }, gs: any, t: (x: string, p?: any) => string) {
   const root = gs.info?.root || ""
-  const files = (gs.files as FileEntry[]).filter(
-    (f) => f.path === node.path || f.path.startsWith(node.path + "/"),
-  )
+  const files = (gs.files as FileEntry[]).filter((f) => f.path === node.path || f.path.startsWith(node.path + "/"))
   const paths = files.map((f) => f.path)
   return [
     { label: t("Show History"), disabled: true },
@@ -117,11 +111,7 @@ function dirMenuItems(node: { path: string }, gs: any, t: (x: string, p?: any) =
       danger: true,
       disabled: !files.length,
       run: () => {
-        if (
-          window.confirm(
-            t("Discard changes to {path}? This cannot be undone.", { path: node.path }),
-          )
-        )
+        if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path: node.path })))
           void store.discard(paths)
       },
     },
@@ -199,10 +189,7 @@ function FileRow({
       <span className="dig-filerow__icon" style={{ color: fileIconColor(file.path) }}>
         <Icon name="file" size={18} />
       </span>
-      <span
-        className="dig-filerow__name"
-        style={{ color: file.kind === "deleted" ? "var(--vcs-deleted)" : undefined }}
-      >
+      <span className="dig-filerow__name" style={{ color: file.kind === "deleted" ? "var(--vcs-deleted)" : undefined }}>
         {baseName(file.path)}
       </span>
       {file.staged && file.unstaged && file.kind !== "conflicted" ? (
@@ -216,20 +203,10 @@ function FileRow({
       </span>
       <span className="dig-filerow__actions" onClick={(e) => e.stopPropagation()}>
         {canStage ? (
-          <IconButton
-            icon="plus"
-            title={t("Stage")}
-            size={13}
-            onClick={() => store.stage([file.path])}
-          />
+          <IconButton icon="plus" title={t("Stage")} size={13} onClick={() => store.stage([file.path])} />
         ) : null}
         {canUnstage ? (
-          <IconButton
-            icon="minus"
-            title={t("Unstage")}
-            size={13}
-            onClick={() => store.unstage([file.path])}
-          />
+          <IconButton icon="minus" title={t("Unstage")} size={13} onClick={() => store.unstage([file.path])} />
         ) : null}
         {file.kind === "conflicted" ? (
           <>
@@ -257,11 +234,7 @@ function FileRow({
             title={t("Discard Changes")}
             size={13}
             onClick={() => {
-              if (
-                window.confirm(
-                  t("Discard changes to {path}? This cannot be undone.", { path: file.path }),
-                )
-              )
+              if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path: file.path })))
                 void store.discard([file.path])
             }}
           />
@@ -373,8 +346,7 @@ function Group({
   const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
   const fullyOn =
-    files.length > 0 &&
-    files.every((f) => gs.include[f.path] !== false && !(gs.excludedHunks?.[f.path] || []).length)
+    files.length > 0 && files.every((f) => gs.include[f.path] !== false && !(gs.excludedHunks?.[f.path] || []).length)
   const anyOn = files.some((f) => gs.include[f.path] !== false)
   const tree = React.useMemo(() => buildTree(files), [files])
   React.useEffect(() => {
@@ -493,18 +465,14 @@ function Group({
                     danger: true,
                     disabled: listId === "default",
                     run: () => {
-                      if (window.confirm(t("Delete this changelist?")))
-                        store.deleteChangelist(listId)
+                      if (window.confirm(t("Delete this changelist?"))) store.deleteChangelist(listId)
                     },
                   },
                   { separator: true },
                   {
                     label: t("Stage"),
                     disabled: !files.some((f) => f.unstaged || !f.staged),
-                    run: () =>
-                      void store.stage(
-                        files.filter((f) => f.unstaged || !f.staged).map((f) => f.path),
-                      ),
+                    run: () => void store.stage(files.filter((f) => f.unstaged || !f.staged).map((f) => f.path)),
                   },
                   {
                     label: t("Unstage"),
@@ -516,8 +484,7 @@ function Group({
                     danger: true,
                     disabled: !paths.length,
                     run: () => {
-                      if (window.confirm(t("Rollback all changes? This cannot be undone.")))
-                        void store.discard(paths)
+                      if (window.confirm(t("Rollback all changes? This cannot be undone."))) void store.discard(paths)
                     },
                   },
                 ])
@@ -537,11 +504,7 @@ function Group({
             )
           }
         >
-          {fullyOn ? (
-            <Icon name="check" size={10} />
-          ) : anyOn && !fullyOn ? (
-            <span className="dig-dash" />
-          ) : null}
+          {fullyOn ? <Icon name="check" size={10} /> : anyOn && !fullyOn ? <span className="dig-dash" /> : null}
         </span>
         <span className="dig-group__title">{title}</span>
         {comment ? (
@@ -552,14 +515,7 @@ function Group({
         <span className="dig-group__count">{files.length}</span>
       </div>
       {groupByDir ? (
-        <TreeView
-          nodes={tree}
-          depth={0}
-          expanded={expanded}
-          toggle={toggle}
-          selected={selected}
-          onSelect={onSelect}
-        />
+        <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} />
       ) : (
         files
           .slice()
@@ -574,13 +530,7 @@ function Group({
   )
 }
 
-function CommitHistory({
-  onPick,
-  t,
-}: {
-  onPick: (m: string) => void
-  t: (x: string, p?: any) => string
-}) {
+function CommitHistory({ onPick, t }: { onPick: (m: string) => void; t: (x: string, p?: any) => string }) {
   const [items] = React.useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem("dig.msgHistory") || "[]")
@@ -639,8 +589,7 @@ function CommitPanel() {
   if (firstLine.length > 72) problems.push(t("Subject line is longer than 72 characters"))
   {
     const lines = s.message.split("\n")
-    if (lines.length > 1 && lines[1].trim() !== "")
-      problems.push(t("Missing blank line between subject and body"))
+    if (lines.length > 1 && lines[1].trim() !== "") problems.push(t("Missing blank line between subject and body"))
   }
   return (
     <div className="dig-commit">
@@ -719,20 +668,11 @@ function CommitPanel() {
         }}
       />
       <div className="dig-commit__actions">
-        <Button
-          primary
-          disabled={!canCommit || s.busy}
-          onClick={() => void store.commitNow(false)}
-          title="⌘↵"
-        >
+        <Button primary disabled={!canCommit || s.busy} onClick={() => void store.commitNow(false)} title="⌘↵">
           {t("Commit")}
           {includedCount ? ` (${includedCount})` : ""}
         </Button>
-        <Button
-          disabled={!canCommit || s.busy}
-          onClick={() => void store.commitNow(true)}
-          title="⌥⌘↵"
-        >
+        <Button disabled={!canCommit || s.busy} onClick={() => void store.commitNow(true)} title="⌥⌘↵">
           {t("Commit and Push")}
         </Button>
         <span style={{ flex: 1 }} />
@@ -748,17 +688,13 @@ export function ChangesView() {
   React.useEffect(() => {
     void store.loadChangelists()
   }, [])
-  const [groupByDir, setGroupByDir] = React.useState<boolean>(
-    () => localStorage.getItem("dig.groupByDir") !== "0",
-  )
+  const [groupByDir, setGroupByDir] = React.useState<boolean>(() => localStorage.getItem("dig.groupByDir") !== "0")
   const [selectedPath, setSelectedPath] = React.useState("")
   const [treeSignal, setTreeSignal] = React.useState<{ n: number; mode: "expand" | "collapse" }>({
     n: 0,
     mode: "expand",
   })
-  const [commitWidth, setCommitWidth] = React.useState(
-    () => Number(localStorage.getItem("dig.commitWidth")) || 380,
-  )
+  const [commitWidth, setCommitWidth] = React.useState(() => Number(localStorage.getItem("dig.commitWidth")) || 380)
   const widthRef = React.useRef(commitWidth)
   widthRef.current = commitWidth
   const startDrag = (e: React.PointerEvent) => {
@@ -766,12 +702,7 @@ export function ChangesView() {
     const startX = e.clientX
     const startW = widthRef.current
     const move = (ev: PointerEvent) =>
-      setCommitWidth(
-        Math.max(
-          260,
-          Math.min(Math.min(760, window.innerWidth - 360), startW + (startX - ev.clientX)),
-        ),
-      )
+      setCommitWidth(Math.max(260, Math.min(Math.min(760, window.innerWidth - 360), startW + (startX - ev.clientX))))
     const up = () => {
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)
@@ -783,11 +714,7 @@ export function ChangesView() {
   const tree = (
     <div className="dig-changes">
       <div className="dig-toolbar">
-        <IconButton
-          icon="refresh"
-          title={t("Refresh")}
-          onClick={() => void store.refreshStatus()}
-        />
+        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.refreshStatus()} />
         <IconButton icon="plus" title={t("Stage All")} onClick={() => void store.stageAll()} />
         <IconButton
           icon="minus"
@@ -804,18 +731,10 @@ export function ChangesView() {
               void store.discard(s.files.map((f) => f.path))
           }}
         />
-        <IconButton
-          icon="download"
-          title={t("Update")}
-          onClick={() => void store.remoteOp("pull")}
-        />
+        <IconButton icon="download" title={t("Update")} onClick={() => void store.remoteOp("pull")} />
         <IconButton
           icon={groupByDir ? "folder" : "list"}
-          title={
-            groupByDir
-              ? t("Directory Tree (click for flat)")
-              : t("Flat List (click for directories)")
-          }
+          title={groupByDir ? t("Directory Tree (click for flat)") : t("Flat List (click for directories)")}
           active={!groupByDir}
           onClick={() => {
             const v = !groupByDir
@@ -883,9 +802,7 @@ export function ChangesView() {
         >
           {(close) => {
             const cl = s.changelists
-            const lists = cl?.lists?.length
-              ? cl.lists
-              : [{ id: "default", name: t("Changes"), comment: "" }]
+            const lists = cl?.lists?.length ? cl.lists : [{ id: "default", name: t("Changes"), comment: "" }]
             const active = cl?.active || "default"
             return (
               <>
@@ -914,10 +831,7 @@ export function ChangesView() {
                   <MenuItem
                     onClick={async () => {
                       close()
-                      const n = await askText(
-                        t("Rename Changelist"),
-                        lists.find((l) => l.id === active)?.name || "",
-                      )
+                      const n = await askText(t("Rename Changelist"), lists.find((l) => l.id === active)?.name || "")
                       if (n) store.renameChangelist(active, n)
                     }}
                   >
@@ -929,8 +843,7 @@ export function ChangesView() {
                     danger
                     onClick={() => {
                       close()
-                      if (window.confirm(t("Delete this changelist?")))
-                        store.deleteChangelist(active)
+                      if (window.confirm(t("Delete this changelist?"))) store.deleteChangelist(active)
                     }}
                   >
                     {t("Delete Changelist")}
@@ -1044,8 +957,7 @@ export function ChangesView() {
       >
         {(() => {
           const cl = s.changelists
-          const lists =
-            cl && cl.lists.length ? cl.lists : [{ id: "default", name: t("Changes"), comment: "" }]
+          const lists = cl && cl.lists.length ? cl.lists : [{ id: "default", name: t("Changes"), comment: "" }]
           const active = cl?.active || "default"
           const assign = cl?.files || {}
           const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
@@ -1070,12 +982,7 @@ export function ChangesView() {
   return (
     <div className="dig-hlayout-c">
       <div className="dig-hlayout-c__main">{tree}</div>
-      <div
-        className="dig-hlayout-c__handle"
-        role="separator"
-        aria-orientation="vertical"
-        onPointerDown={startDrag}
-      />
+      <div className="dig-hlayout-c__handle" role="separator" aria-orientation="vertical" onPointerDown={startDrag} />
       <div className="dig-hlayout-c__side" style={{ width: commitWidth }}>
         <CommitPanel />
       </div>

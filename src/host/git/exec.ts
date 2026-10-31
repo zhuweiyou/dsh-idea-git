@@ -155,10 +155,7 @@ function spawnProc(exe: string, args: string[], opts: RunOptions): Promise<CmdRe
   })
 }
 
-export async function runGit(
-  gitPath: string,
-  opts: RunOptions & { args: string[] },
-): Promise<CmdResult> {
+export async function runGit(gitPath: string, opts: RunOptions & { args: string[] }): Promise<CmdResult> {
   const start = Date.now()
   const args = [...FORCED_CONFIG, ...opts.args]
   let result: CmdResult
@@ -187,22 +184,14 @@ export async function runGit(
 }
 
 /** Run a read-only git command and throw on a non-zero exit. */
-export async function gitOrThrow(
-  gitPath: string,
-  opts: RunOptions & { args: string[] },
-): Promise<string> {
+export async function gitOrThrow(gitPath: string, opts: RunOptions & { args: string[] }): Promise<string> {
   const r = await runGit(gitPath, { ...opts, args: ["--no-optional-locks", ...opts.args] })
   if (r.code !== 0) throw gitError(r, opts.args)
   return r.stdout
 }
 
-export function gitError(
-  r: CmdResult,
-  args: string[],
-): Error & { code?: string; detail?: unknown } {
-  const text =
-    [r.stderr, r.stdout].find((s) => s && s.trim())?.trim() ||
-    `git ${args.join(" ")} exited ${r.code}`
+export function gitError(r: CmdResult, args: string[]): Error & { code?: string; detail?: unknown } {
+  const text = [r.stderr, r.stdout].find((s) => s && s.trim())?.trim() || `git ${args.join(" ")} exited ${r.code}`
   const error = new Error(text) as Error & { code?: string; detail?: unknown }
   error.code = "git/command-failed"
   error.detail = { args, code: r.code }

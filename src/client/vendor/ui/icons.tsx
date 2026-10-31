@@ -563,19 +563,11 @@ const only = (set: Set<string>, c: string) => set.size > 0 && [...set].every((x)
 
 const prepared = new Map<string, Prepared | null>()
 
-function build(
-  lightSrc: string,
-  darkSrc: string | undefined,
-  keepColours: boolean,
-): Omit<Prepared, "hasIds"> {
+function build(lightSrc: string, darkSrc: string | undefined, keepColours: boolean): Omit<Prepared, "hasIds"> {
   const light = parse(lightSrc)
   const dark = darkSrc ? parse(darkSrc) : undefined
   const viewBox = light.viewBox
-  if (
-    !keepColours &&
-    only(colours(light.body), MONO_LIGHT) &&
-    (!dark || only(colours(dark.body), MONO_DARK))
-  ) {
+  if (!keepColours && only(colours(light.body), MONO_LIGHT) && (!dark || only(colours(dark.body), MONO_DARK))) {
     return { viewBox, html: light.body.replace(COLOR_RE, "currentColor"), mono: true }
   }
   if (!dark) return { viewBox, html: light.body, mono: false }
@@ -602,8 +594,7 @@ function prepare(path: string, large: boolean): Prepared | null {
 
 const EMPTY: Prepared = { viewBox: "0 0 16 16", html: "", hasIds: false, mono: true }
 
-const withIds = (p: Prepared, prefix: string) =>
-  p.hasIds ? p.html.replace(/__ID__/g, prefix) : p.html
+const withIds = (p: Prepared, prefix: string) => (p.hasIds ? p.html.replace(/__ID__/g, prefix) : p.html)
 
 // ---------------------------------------------------------------------------
 
@@ -757,8 +748,7 @@ const FILE_NAMES = table({
   "file-makefile": "makefile gnumakefile bsdmakefile makefile.am makefile.in kbuild",
   "file-cmake": "cmakelists.txt cmakecache.txt",
   "file-perl": "makefile.pl build.pl cpanfile",
-  "file-git":
-    ".gitignore .gitignore_global .gitattributes .gitmodules .gitconfig .git-blame-ignore-revs .mailmap",
+  "file-git": ".gitignore .gitignore_global .gitattributes .gitmodules .gitconfig .git-blame-ignore-revs .mailmap",
   "file-ignored":
     ".dockerignore .npmignore .prettierignore .eslintignore .stylelintignore .hgignore .ignore .rgignore " +
     ".fdignore .helmignore .vscodeignore .gcloudignore .slugignore .cfignore .bzrignore .containerignore",
@@ -768,8 +758,7 @@ const FILE_NAMES = table({
     ".coveragerc .hgrc hgrc credentials .jshintrc .gemrc .clang-format .clang-tidy .clangd .watchmanconfig .arcconfig",
   "file-npm": "package.json",
   "file-lock":
-    "package-lock.json npm-shrinkwrap.json pnpm-lock.yaml bun.lockb deno.lock go.sum go.work.sum " +
-    "package.resolved",
+    "package-lock.json npm-shrinkwrap.json pnpm-lock.yaml bun.lockb deno.lock go.sum go.work.sum " + "package.resolved",
   "file-cargo": "cargo.toml",
   "file-gomod": "go.mod",
   "file-gowork": "go.work",
@@ -807,10 +796,7 @@ const NAME_PATTERNS: readonly (readonly [RegExp, IconName])[] = [
   [/^requirements([.-][\w.-]*)?\.(txt|in)$/, "file-requirements"],
   [/^(ts|js)config(\.[\w-]+)?\.json$/, "file-config"],
   [/\.config\.[cm]?[jt]s$/, "file-config"],
-  [
-    /^\.(eslintrc|prettierrc|stylelintrc|babelrc|swcrc|lintstagedrc|commitlintrc|markdownlintrc)(\.|$)/,
-    "file-config",
-  ],
+  [/^\.(eslintrc|prettierrc|stylelintrc|babelrc|swcrc|lintstagedrc|commitlintrc|markdownlintrc)(\.|$)/, "file-config"],
 ]
 
 /** Lower-case extensions, including two-part ones (`gradle.kts`). */
@@ -823,8 +809,7 @@ const EXT_ICONS = table({
   "file-tsx": "tsx",
   "file-vue": "vue",
   "file-svelte": "svelte",
-  "file-json":
-    "json jsonc json5 jsonl ndjson geojson topojson webmanifest har avsc code-workspace code-snippets map",
+  "file-json": "json jsonc json5 jsonl ndjson geojson topojson webmanifest har avsc code-workspace code-snippets map",
   "file-md": "md mdx markdown mdown mkd mkdn mdwn ronn workbook",
   "file-rst": "rst",
   "file-yaml": "yaml yml",

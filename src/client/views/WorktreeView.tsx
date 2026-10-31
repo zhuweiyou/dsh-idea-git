@@ -21,11 +21,7 @@ export function WorktreeView() {
   return (
     <div className="dig-wt">
       <div className="dig-toolbar">
-        <IconButton
-          icon="refresh"
-          title={t("Refresh")}
-          onClick={() => void store.loadWorktrees()}
-        />
+        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadWorktrees()} />
         <button type="button" className="dig-btn" onClick={add}>
           ＋ {t("Add worktree…")}
         </button>
@@ -38,11 +34,7 @@ export function WorktreeView() {
         >
           {t("Prune")}
         </button>
-        <IconButton
-          icon="refresh"
-          title={t("Repair worktrees")}
-          onClick={() => void store.repairWorktree([])}
-        />
+        <IconButton icon="refresh" title={t("Repair worktrees")} onClick={() => void store.repairWorktree([])} />
         <span style={{ flex: 1 }} />
         <span className="dig-toolbar__hint">{t("{n} worktrees", { n: s.worktrees.length })}</span>
       </div>
@@ -74,18 +66,13 @@ export function WorktreeView() {
                   danger: true,
                   disabled: w.current,
                   run: () => {
-                    if (window.confirm(t("Remove this worktree?")))
-                      void store.removeWorktree(w.path)
+                    if (window.confirm(t("Remove this worktree?"))) void store.removeWorktree(w.path)
                   },
                 },
               ])
             }
           >
-            <Icon
-              name="folder"
-              size={14}
-              style={{ color: w.current ? "var(--accent)" : "var(--fg-subtle)" }}
-            />
+            <Icon name="folder" size={14} style={{ color: w.current ? "var(--accent)" : "var(--fg-subtle)" }} />
             <div className="dig-wtrow__main">
               <div className="dig-wtrow__path" title={w.path}>
                 {w.path}

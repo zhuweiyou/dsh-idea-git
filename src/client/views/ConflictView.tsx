@@ -4,9 +4,7 @@ import { useGit, Icon, IconButton } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
 
-type Seg =
-  | { type: "text"; text: string }
-  | { type: "conflict"; ours: string; theirs: string; base?: string }
+type Seg = { type: "text"; text: string } | { type: "conflict"; ours: string; theirs: string; base?: string }
 
 function parseConflicts(text: string): Seg[] {
   const lines = text.replace(/\r\n/g, "\n").split("\n")
@@ -69,10 +67,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
     const src = c.diff3 && c.diff3.includes("|||||||") ? c.diff3 : c.working
     return src ? parseConflicts(src) : []
   }, [c?.working, c?.diff3, c?.loading])
-  const conflictCount = React.useMemo(
-    () => segs.filter((x) => x.type === "conflict").length,
-    [segs],
-  )
+  const conflictCount = React.useMemo(() => segs.filter((x) => x.type === "conflict").length, [segs])
   const [choices, setChoices] = React.useState<Record<number, "ours" | "theirs" | "both">>({})
   const [resultEditing, setResultEditing] = React.useState(false)
   const [resultText, setResultText] = React.useState("")
@@ -103,8 +98,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
     }
     return parts.join("\n")
   }
-  const allChosen =
-    conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => choices[i])
+  const allChosen = conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => choices[i])
   const apply = () => {
     void store.resolveConflictContent(c.file, resultEditing ? resultText : buildResult())
   }
@@ -118,18 +112,10 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
           {conflictCount ? ` · ${conflictCount}` : ""}
         </span>
         <span style={{ flex: 1 }} />
-        <button
-          type="button"
-          className="dig-btn"
-          onClick={() => void store.resolveSide(c.file, "ours")}
-        >
+        <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, "ours")}>
           {t("Accept Ours")}
         </button>
-        <button
-          type="button"
-          className="dig-btn"
-          onClick={() => void store.resolveSide(c.file, "theirs")}
-        >
+        <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, "theirs")}>
           {t("Accept Theirs")}
         </button>
         <button type="button" className="dig-btn" onClick={() => setShowBase((v) => !v)}>
@@ -161,11 +147,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
         ) : conflictCount === 0 ? (
           <div className="dig-empty" style={{ flexDirection: "column", gap: 8 }}>
             <span>{t("No conflict markers in the working file.")}</span>
-            <button
-              type="button"
-              className="dig-btn"
-              onClick={() => void store.resolveSide(c.file, "mark")}
-            >
+            <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, "mark")}>
               {t("Mark Resolved")}
             </button>
           </div>

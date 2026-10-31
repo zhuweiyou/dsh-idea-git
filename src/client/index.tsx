@@ -46,9 +46,7 @@ function resolveDirectory(props: any): string {
   try {
     const workspaces = props.useWorkspaces ? props.useWorkspaces((v: any) => v) : null
     const sessions = props.useSessions ? props.useSessions((v: any) => v) : null
-    const ws = (workspaces?.items || []).find((x: any) =>
-      (x.sessionIds || []).includes(props.sessionId),
-    )
+    const ws = (workspaces?.items || []).find((x: any) => (x.sessionIds || []).includes(props.sessionId))
     return ws?.path || sessions?.byId?.[props.sessionId]?.cwd || ""
   } catch {
     return ""
@@ -190,10 +188,7 @@ export function apply(ctx: any) {
   }, "idea-git: locale")
 
   ctx.slots.inject("conversation.input.left", () =>
-    ctx.slots.register(
-      { name: "conversation.input.left", id: "idea-git-entry", order: 41 },
-      GitEntryButton,
-    ),
+    ctx.slots.register({ name: "conversation.input.left", id: "idea-git-entry", order: 41 }, GitEntryButton),
   )
   const PanelSlot = () => (
     <ViewBoundary>

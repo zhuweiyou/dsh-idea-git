@@ -87,11 +87,7 @@ export function SettingsSection() {
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t("Git executable")}</span>
         <span className="dig-settings__value">
-          {info === null
-            ? t("Loading")
-            : info.found
-              ? `${info.path}  ·  ${info.version}`
-              : t("Not found")}
+          {info === null ? t("Loading") : info.found ? `${info.path}  ·  ${info.version}` : t("Not found")}
         </span>
       </div>
       <div className="dig-settings__row dig-settings__row--edit">
@@ -111,11 +107,7 @@ export function SettingsSection() {
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t("Git LFS")}</span>
         <span className="dig-settings__value">
-          {lfs === null
-            ? t("Loading")
-            : lfs.installed
-              ? lfs.version || t("Installed")
-              : t("Not found")}
+          {lfs === null ? t("Loading") : lfs.installed ? lfs.version || t("Installed") : t("Not found")}
         </span>
       </div>
       <div className="dig-settings__row">

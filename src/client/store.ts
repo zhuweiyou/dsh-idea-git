@@ -124,8 +124,7 @@ function readTab(): TabId {
       localStorage.setItem("dig.commitSub", v)
       return "changes"
     }
-    if (v === "changes" || v === "log" || v === "console" || v === "worktree" || v === "submodule")
-      return v
+    if (v === "changes" || v === "log" || v === "console" || v === "worktree" || v === "submodule") return v
   } catch {}
   return "changes"
 }
@@ -330,9 +329,7 @@ export async function loadLog(reset: boolean) {
       ...targetPayload(),
       limit: 200,
       skip,
-      ...(state.logFilterFile || state.logPath
-        ? { file: state.logFilterFile || state.logPath }
-        : {}),
+      ...(state.logFilterFile || state.logPath ? { file: state.logFilterFile || state.logPath } : {}),
       ...(state.logBranch ? { branch: state.logBranch } : {}),
       ...(state.logHeadOnly ? { headOnly: true } : {}),
       sort: state.logSort,
@@ -409,8 +406,7 @@ async function withBusy(label: string, fn: () => Promise<void>) {
     await fn()
   } catch (e: any) {
     const unknown =
-      e?.code === "idea-git/unknown-method" ||
-      /unknown-method|Unknown method|未知方法/.test(String(e?.message || ""))
+      e?.code === "idea-git/unknown-method" || /unknown-method|Unknown method|未知方法/.test(String(e?.message || ""))
     set({
       error:
         (e?.message || String(e)) +
@@ -507,14 +503,11 @@ export function checkout(branch: string, create = false) {
 }
 
 export function remoteOp(op: "fetch" | "pull" | "push") {
-  return withBusy(
-    op === "fetch" ? "Fetching…" : op === "pull" ? "Pulling…" : "Pushing…",
-    async () => {
-      const r = await api.rpc<{ ok: boolean; output: string }>("remote", { ...targetPayload(), op })
-      if (!r || !r.ok) throw new Error(r?.output || `${op} failed`)
-      await refreshAll()
-    },
-  )
+  return withBusy(op === "fetch" ? "Fetching…" : op === "pull" ? "Pulling…" : "Pushing…", async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>("remote", { ...targetPayload(), op })
+    if (!r || !r.ok) throw new Error(r?.output || `${op} failed`)
+    await refreshAll()
+  })
 }
 
 export async function loadConsole() {
@@ -543,12 +536,7 @@ export function closeDiff() {
   set({ diff: null, blame: null })
 }
 
-export async function openDiff(req: {
-  title: string
-  path?: string
-  staged?: boolean
-  commit?: string
-}) {
+export async function openDiff(req: { title: string; path?: string; staged?: boolean; commit?: string }) {
   set({
     diff: {
       title: req.title,
@@ -941,8 +929,7 @@ export function clearPathFilter() {
 
 export function amendMessage(commitId: string, message: string) {
   return withBusy("Amending…", async () => {
-    if (state.commits[0]?.id !== commitId)
-      throw new Error(t("Only the latest commit message can be edited"))
+    if (state.commits[0]?.id !== commitId) throw new Error(t("Only the latest commit message can be edited"))
     await api.rpc("commit", { ...targetPayload(), message, amend: true })
     await refreshAll()
   })
@@ -1006,8 +993,7 @@ export async function selectCompareFile(file: string) {
         },
       })
   } catch {
-    if (state.compare)
-      set({ compare: { ...state.compare, diff: { loading: false, oldText: "", newText: "" } } })
+    if (state.compare) set({ compare: { ...state.compare, diff: { loading: false, oldText: "", newText: "" } } })
   }
 }
 
@@ -1258,9 +1244,10 @@ export async function loadSubmodules() {
   if (!state.target) return
   try {
     set({
-      submodules: await api.rpc<
-        Array<{ path: string; sha: string; state: string; describe: string }>
-      >("submoduleStatus", targetPayload()),
+      submodules: await api.rpc<Array<{ path: string; sha: string; state: string; describe: string }>>(
+        "submoduleStatus",
+        targetPayload(),
+      ),
     })
   } catch {}
 }
@@ -1434,10 +1421,7 @@ type RebaseRow = {
 
 /** Port of OpenIDEA rebasePlan.autosquash: move fixup!/squash! commits right after their target. */
 function autosquashRows(rows: RebaseRow[]): RebaseRow[] {
-  const targetOf = (
-    r: RebaseRow,
-    idx: number,
-  ): { target: RebaseRow; action: "fixup" | "squash" } | null => {
+  const targetOf = (r: RebaseRow, idx: number): { target: RebaseRow; action: "fixup" | "squash" } | null => {
     const m = /^(fixup|squash)! (.+)$/.exec(r.summary)
     if (!m) return null
     const subject = (m[2] || "").trim()
@@ -1451,18 +1435,12 @@ function autosquashRows(rows: RebaseRow[]): RebaseRow[] {
     const t = targetOf(r, idx)
     if (!t) return
     let root = t.target
-    for (
-      let next = targetOf(root, rows.indexOf(root));
-      next;
-      next = targetOf(root, rows.indexOf(root))
-    )
+    for (let next = targetOf(root, rows.indexOf(root)); next; next = targetOf(root, rows.indexOf(root)))
       root = next.target
     moved.set(root.commit, [...(moved.get(root.commit) || []), { ...r, action: t.action }])
   })
   const placed = new Set([...moved.values()].flat().map((r) => r.commit))
-  return rows
-    .filter((r) => !placed.has(r.commit))
-    .flatMap((r) => [r, ...(moved.get(r.commit) || [])])
+  return rows.filter((r) => !placed.has(r.commit)).flatMap((r) => [r, ...(moved.get(r.commit) || [])])
 }
 
 export function openRebasePlan(commitId: string) {

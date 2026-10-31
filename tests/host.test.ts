@@ -45,8 +45,7 @@ test("host integration", async () => {
     bases.push(base)
     const repo = path.join(base, "repo")
     fs.mkdirSync(repo)
-    const g = (args, cwd = repo) =>
-      execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] }).toString()
+    const g = (args, cwd = repo) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] }).toString()
     g(["init", "-q"])
     g(["config", "user.email", "t@t.io"])
     g(["config", "user.name", "T"])
@@ -82,23 +81,17 @@ test("host integration", async () => {
       )
       ok(
         "addIgnore gitignore",
-        (await call("addIgnore", { ...D(repo), files: ["b.txt"], destination: "gitignore" })).ok ===
-          true,
+        (await call("addIgnore", { ...D(repo), files: ["b.txt"], destination: "gitignore" })).ok === true,
       )
-      ok(
-        ".gitignore written",
-        fs.readFileSync(path.join(repo, ".gitignore"), "utf8").includes("/b.txt"),
-      )
+      ok(".gitignore written", fs.readFileSync(path.join(repo, ".gitignore"), "utf8").includes("/b.txt"))
       ok(
         "addIgnore exclude",
-        (await call("addIgnore", { ...D(repo), files: ["c.log"], destination: "exclude" })).ok ===
-          true,
+        (await call("addIgnore", { ...D(repo), files: ["c.log"], destination: "exclude" })).ok === true,
       )
       ok("unstage", (await call("unstage", { ...D(repo), paths: ["sub/a.txt"] })).ok === true)
       ok(
         "stage-all then commit",
-        (await call("commit", { ...D(repo), message: "c2", paths: ["sub/a.txt"], amend: false }))
-          .ok === true || true,
+        (await call("commit", { ...D(repo), message: "c2", paths: ["sub/a.txt"], amend: false })).ok === true || true,
       )
     }
 
@@ -116,15 +109,9 @@ test("host integration", async () => {
       g(["commit", "-qm", "second"])
       let r = await call("log", D(repo))
       ok("log count", r.value.commits.length === 2)
-      ok(
-        "log headOnly",
-        (await call("log", { ...D(repo), headOnly: true })).value.commits.length >= 1,
-      )
+      ok("log headOnly", (await call("log", { ...D(repo), headOnly: true })).value.commits.length >= 1)
       ok("log sort topo", (await call("log", { ...D(repo), sort: "topo" })).ok)
-      ok(
-        "log file filter",
-        (await call("log", { ...D(repo), file: "a.txt" })).value.commits.length === 2,
-      )
+      ok("log file filter", (await call("log", { ...D(repo), file: "a.txt" })).value.commits.length === 2)
       const sha = (await call("log", D(repo))).value.commits[0].id
       ok("commitFiles", (await call("commitFiles", { ...D(repo), commit: sha })).value.length === 1)
       r = await call("fileDiff", { ...D(repo), file: "a.txt" })
@@ -144,10 +131,7 @@ test("host integration", async () => {
       fs.writeFileSync(path.join(repo, "a.txt"), "1\n")
       g(["add", "."])
       g(["commit", "-qm", "c1"])
-      ok(
-        "createBranch",
-        (await call("createBranch", { ...D(repo), name: "nb", checkout: false })).ok,
-      )
+      ok("createBranch", (await call("createBranch", { ...D(repo), name: "nb", checkout: false })).ok)
       ok("renameBranch", (await call("renameBranch", { ...D(repo), from: "nb", to: "nb2" })).ok)
       ok(
         "branches has nb2",
@@ -171,18 +155,12 @@ test("host integration", async () => {
       ok("tagCreate", (await call("tagCreate", { ...D(repo), name: "v1", commit: "HEAD" })).ok)
       ok("tags has v1", (await call("tags", D(repo))).value.includes("v1"))
       ok("tagDelete", (await call("tagDelete", { ...D(repo), name: "v1" })).ok)
-      ok(
-        "remoteAdd",
-        (await call("remoteAdd", { ...D(repo), name: "origin", url: base + "/r.git" })).ok,
-      )
+      ok("remoteAdd", (await call("remoteAdd", { ...D(repo), name: "origin", url: base + "/r.git" })).ok)
       ok(
         "remotes has origin",
         (await call("remotes", D(repo))).value.some((x) => x.name === "origin"),
       )
-      ok(
-        "remoteSetUrl",
-        (await call("remoteSetUrl", { ...D(repo), name: "origin", url: base + "/r2.git" })).ok,
-      )
+      ok("remoteSetUrl", (await call("remoteSetUrl", { ...D(repo), name: "origin", url: base + "/r2.git" })).ok)
       ok("remoteRemove", (await call("remoteRemove", { ...D(repo), name: "origin" })).ok)
     }
 
@@ -209,10 +187,7 @@ test("host integration", async () => {
       r = await call("refDiff", { ...D(repo), from: "HEAD", to: "WORKTREE", file: "a.txt" })
       ok("refDiff WORKTREE", r.value.newLabel === "Working Tree")
       r = await call("createPatch", { ...D(repo), commit: "feature" })
-      ok(
-        "createPatch commit",
-        r.ok && fs.existsSync(r.value.path) && fs.statSync(r.value.path).size > 0,
-      )
+      ok("createPatch commit", r.ok && fs.existsSync(r.value.path) && fs.statSync(r.value.path).size > 0)
       r = await call("createPatch", D(repo))
       ok("createPatch changes", r.ok || r.ok === false) // may be empty tree -> either ok/fail gracefully
       ok("cherryPick", (await call("cherryPick", { ...D(repo), commits: ["feature"] })).ok)
@@ -240,10 +215,7 @@ test("host integration", async () => {
         "reset hard requires confirm",
         (await call("reset", { ...D(repo), commit: "HEAD~1", mode: "hard" })).ok === false,
       )
-      ok(
-        "reset hard confirmed",
-        (await call("reset", { ...D(repo), commit: "HEAD", mode: "hard", confirm: true })).ok,
-      )
+      ok("reset hard confirmed", (await call("reset", { ...D(repo), commit: "HEAD", mode: "hard", confirm: true })).ok)
       // rebuild 3 commits for squash/drop
       fs.writeFileSync(path.join(repo, "d"), "x\n")
       g(["add", "."])
@@ -273,19 +245,10 @@ test("host integration", async () => {
       const wt = path.join(base, "wt1")
       ok("worktreeAdd", (await call("worktreeAdd", { ...D(repo), worktreePath: wt })).ok)
       ok("worktreeList", (await call("worktreeList", D(repo))).value.length === 2)
-      ok(
-        "worktreeLock",
-        (await call("worktreeLock", { ...D(repo), worktreePath: wt, lock: true })).ok,
-      )
-      ok(
-        "worktreeUnlock",
-        (await call("worktreeLock", { ...D(repo), worktreePath: wt, lock: false })).ok,
-      )
+      ok("worktreeLock", (await call("worktreeLock", { ...D(repo), worktreePath: wt, lock: true })).ok)
+      ok("worktreeUnlock", (await call("worktreeLock", { ...D(repo), worktreePath: wt, lock: false })).ok)
       ok("worktreePrune", (await call("worktreePrune", D(repo))).ok)
-      ok(
-        "worktreeRemove",
-        (await call("worktreeRemove", { ...D(repo), worktreePath: wt, confirm: true })).ok,
-      )
+      ok("worktreeRemove", (await call("worktreeRemove", { ...D(repo), worktreePath: wt, confirm: true })).ok)
     }
 
     /* ---------------- conflict resolution ---------------- */
@@ -312,10 +275,7 @@ test("host integration", async () => {
       ok("conflictVersions ours", cv.value.ours === "ours\n")
       ok("conflictVersions theirs", cv.value.theirs === "theirs\n")
       ok("conflictVersions base", cv.value.base === "base\n")
-      ok(
-        "resolveConflict ours",
-        (await call("resolveConflict", { ...D(repo), file: "a.txt", side: "ours" })).ok,
-      )
+      ok("resolveConflict ours", (await call("resolveConflict", { ...D(repo), file: "a.txt", side: "ours" })).ok)
     }
 
     /* ---------------- image diff + misc ---------------- */
@@ -336,10 +296,7 @@ test("host integration", async () => {
       fs.writeFileSync(path.join(repo, "p.png"), png2)
       const r = await call("fileDiff", { ...D(repo), file: "p.png" })
       ok("fileDiff image kind", r.value.kind === "image")
-      ok(
-        "fileDiff image base64",
-        (r.value.oldB64 || "").length > 0 && (r.value.newB64 || "").length > 0,
-      )
+      ok("fileDiff image base64", (r.value.oldB64 || "").length > 0 && (r.value.newB64 || "").length > 0)
       ok("gitVersion", (await call("gitVersion", {})).value.found === true)
       ok("lfsInfo boolean", typeof (await call("lfsInfo", {})).value.installed === "boolean")
       ok("lfsLsFiles array", Array.isArray((await call("lfsLsFiles", D(repo))).value))
@@ -348,8 +305,7 @@ test("host integration", async () => {
       ok("console entries", (await call("console", {})).value.entries.length > 0)
       ok(
         "clearConsole",
-        (await call("clearConsole", {})).value.ok === true &&
-          (await call("console", {})).value.entries.length === 0,
+        (await call("clearConsole", {})).value.ok === true && (await call("console", {})).value.entries.length === 0,
       )
       const ai = await call("aiCommit", { ...D(repo), locale: "zh" })
       ok("aiCommit without model errors gracefully", ai.ok === false)
@@ -386,10 +342,7 @@ test("host integration", async () => {
       const zhOpts = captured[captured.length - 1]
       const zhUser = zhOpts.messages[0].content[0].text
       ok("ai zh system Chinese", /简体中文/.test(zhOpts.system))
-      ok(
-        "ai includes text diff (a.txt)",
-        zhUser.includes("a.txt") && zhUser.includes("Diff included for"),
-      )
+      ok("ai includes text diff (a.txt)", zhUser.includes("a.txt") && zhUser.includes("Diff included for"))
       ok(
         "ai excludes lockfile from diff body",
         zhUser.includes("package-lock.json") && /Excluded.*package-lock/.test(zhUser),
@@ -412,10 +365,7 @@ test("host integration", async () => {
       ok("createPatch path", cp.ok && fs.existsSync(cp.value.path))
       g(["checkout", "--", "a.txt"])
       ok("applyPatch", (await call("applyPatch", { ...D(repo), path: cp.value.path })).ok)
-      ok(
-        "applyPatch restored content",
-        fs.readFileSync(path.join(repo, "a.txt"), "utf8") === "one\ntwo\n",
-      )
+      ok("applyPatch restored content", fs.readFileSync(path.join(repo, "a.txt"), "utf8") === "one\ntwo\n")
       ok("lfsTrack", (await call("lfsTrack", { ...D(repo), pattern: "*.psd" })).ok)
       ok(
         ".gitattributes has pattern",
@@ -442,10 +392,7 @@ test("host integration", async () => {
       g(["reset", "-q", "--hard", before])
       const out1 = path.join(base, "out1")
       const r1 = await call("saveCommitFiles", { ...D(repo), dir: out1, commit, paths: ["a.txt"] })
-      ok(
-        "save single file",
-        r1.ok && fs.existsSync(r1.value.path) && fs.readFileSync(r1.value.path, "utf8") === "A2\n",
-      )
+      ok("save single file", r1.ok && fs.existsSync(r1.value.path) && fs.readFileSync(r1.value.path, "utf8") === "A2\n")
       const out2 = path.join(base, "out2")
       const r2 = await call("saveCommitFiles", {
         ...D(repo),
@@ -454,10 +401,7 @@ test("host integration", async () => {
         paths: ["a.txt", "b.txt"],
       })
       ok("save zip", r2.ok && fs.existsSync(r2.value.path) && fs.statSync(r2.value.path).size > 0)
-      ok(
-        "partial cherry-pick",
-        (await call("cherryPickPaths", { ...D(repo), commit, paths: ["a.txt"] })).ok,
-      )
+      ok("partial cherry-pick", (await call("cherryPickPaths", { ...D(repo), commit, paths: ["a.txt"] })).ok)
     }
 
     /* ---------------- LFS download (smudge) ---------------- */
@@ -499,10 +443,7 @@ test("host integration", async () => {
           commit: sha,
           paths: ["x.bin", "a.txt"],
         })
-        ok(
-          "save LFS zip",
-          rz.ok && fs.existsSync(rz.value.path) && fs.statSync(rz.value.path).size > 0,
-        )
+        ok("save LFS zip", rz.ok && fs.existsSync(rz.value.path) && fs.statSync(rz.value.path).size > 0)
       }
     }
 
@@ -523,22 +464,15 @@ test("host integration", async () => {
       ok("worktreeMove", (await call("worktreeMove", { ...D(repo), worktreePath: wt, to: wt2 })).ok)
       ok(
         "worktree at new path",
-        (await call("worktreeList", D(repo))).value.some(
-          (w) => path.basename(w.path) === path.basename(wt2),
-        ),
+        (await call("worktreeList", D(repo))).value.some((w) => path.basename(w.path) === path.basename(wt2)),
       )
       ok("worktreeRepair", (await call("worktreeRepair", { ...D(repo), paths: [] })).ok)
-      ok(
-        "worktreeRemove moved",
-        (await call("worktreeRemove", { ...D(repo), worktreePath: wt2, confirm: true })).ok,
-      )
+      ok("worktreeRemove moved", (await call("worktreeRemove", { ...D(repo), worktreePath: wt2, confirm: true })).ok)
       ok("tagCreate", (await call("tagCreate", { ...D(repo), name: "v9", commit: "HEAD" })).ok)
       ok("tagPush", (await call("tagPush", { ...D(repo), name: "v9", remote: "origin" })).ok)
       ok(
         "tag on remote",
-        execFileSync("git", ["ls-remote", "--tags", bare], { cwd: repo })
-          .toString()
-          .includes("refs/tags/v9"),
+        execFileSync("git", ["ls-remote", "--tags", bare], { cwd: repo }).toString().includes("refs/tags/v9"),
       )
       const pi = await call("pullInto", {
         ...D(repo),
@@ -625,23 +559,13 @@ test("host integration", async () => {
         g(["merge", "feature"])
       } catch {}
       const w = await call("conflictWorking", { ...D(repo), file: "a.txt" })
-      ok(
-        "conflictWorking has markers",
-        w.value.content.includes("<<<<<<<") && w.value.content.includes(">>>>>>>"),
-      )
+      ok("conflictWorking has markers", w.value.content.includes("<<<<<<<") && w.value.content.includes(">>>>>>>"))
       ok(
         "resolveConflictContent",
-        (await call("resolveConflictContent", { ...D(repo), file: "a.txt", content: "resolved\n" }))
-          .ok,
+        (await call("resolveConflictContent", { ...D(repo), file: "a.txt", content: "resolved\n" })).ok,
       )
-      ok(
-        "resolved content written",
-        fs.readFileSync(path.join(repo, "a.txt"), "utf8") === "resolved\n",
-      )
-      ok(
-        "file no longer conflicted",
-        !(await call("status", D(repo))).value.files.some((f) => f.kind === "conflicted"),
-      )
+      ok("resolved content written", fs.readFileSync(path.join(repo, "a.txt"), "utf8") === "resolved\n")
+      ok("file no longer conflicted", !(await call("status", D(repo))).value.files.some((f) => f.kind === "conflicted"))
     }
 
     /* ---------------- LFS migrate ---------------- */
@@ -684,10 +608,7 @@ test("host integration", async () => {
       ok("shelfSave", (await call("shelfSave", { ...D(repo), name: "wip" })).ok)
       const list = (await call("shelfList", D(repo))).value
       ok("shelfList name", list.length === 1 && list[0].name === "wip")
-      ok(
-        "shelf apply pop",
-        (await call("stashApply", { ...D(repo), index: list[0].index, pop: true })).ok,
-      )
+      ok("shelf apply pop", (await call("stashApply", { ...D(repo), index: list[0].index, pop: true })).ok)
       ok("shelf empty after pop", (await call("shelfList", D(repo))).value.length === 0)
       ok("content restored", fs.readFileSync(path.join(repo, "a.txt"), "utf8") === "A\nB\n")
     }
@@ -735,10 +656,7 @@ test("host integration", async () => {
         files: { "src/a.rs": "f", "b.rs": "missing" },
       }
       const saved = (await call("changelistsSave", { ...D(repo), state: st })).value
-      ok(
-        "changelist drop invalid assignment",
-        !("b.rs" in saved.files) && saved.files["src/a.rs"] === "f",
-      )
+      ok("changelist drop invalid assignment", !("b.rs" in saved.files) && saved.files["src/a.rs"] === "f")
       const back = (await call("changelistsLoad", D(repo))).value
       ok("changelist persisted active", back.active === "f" && back.lists.length === 2)
       ok("changelist not in repo", !fs.existsSync(path.join(repo, ".dsh-idea-git")))
@@ -783,10 +701,7 @@ test("host integration", async () => {
       fs.writeFileSync(path.join(repo, "a.txt"), "base\n")
       g(["add", "."])
       g(["commit", "-qm", "c1"])
-      ok(
-        "readWorktreeFile",
-        (await call("readWorktreeFile", { ...D(repo), file: "a.txt" })).value.content === "base\n",
-      )
+      ok("readWorktreeFile", (await call("readWorktreeFile", { ...D(repo), file: "a.txt" })).value.content === "base\n")
       ok(
         "saveWorktreeFile",
         (
@@ -896,10 +811,7 @@ test("host integration", async () => {
         "tagCreate force overwrite",
         (await call("tagCreate", { ...D(repo), name: "v1", commit: "HEAD", force: true })).ok,
       )
-      ok(
-        "tag points to HEAD",
-        g(["rev-parse", "v1^{commit}"]).trim() === g(["rev-parse", "HEAD"]).trim(),
-      )
+      ok("tag points to HEAD", g(["rev-parse", "v1^{commit}"]).trim() === g(["rev-parse", "HEAD"]).trim())
     }
 
     /* ---------------- stash files ---------------- */
@@ -914,10 +826,7 @@ test("host integration", async () => {
       g(["add", "."])
       g(["stash", "push", "-q", "-u", "-m", "s1"])
       const files = (await call("stashFiles", { ...D(repo), index: 0 })).value
-      ok(
-        "stashFiles lists changes",
-        files.some((f) => f.path === "a.txt") && files.some((f) => f.path === "b.txt"),
-      )
+      ok("stashFiles lists changes", files.some((f) => f.path === "a.txt") && files.some((f) => f.path === "b.txt"))
     }
 
     /* ---------------- conflict diff3 ---------------- */
@@ -937,10 +846,7 @@ test("host integration", async () => {
         g(["merge", "feat"])
       } catch {}
       const r = await call("conflictDiff3", { ...D(repo), file: "a.txt" })
-      ok(
-        "conflictDiff3 has base section",
-        r.ok && r.value.text.includes("|||||||") && r.value.text.includes("base"),
-      )
+      ok("conflictDiff3 has base section", r.ok && r.value.text.includes("|||||||") && r.value.text.includes("base"))
     }
   } finally {
     for (const b of bases) {

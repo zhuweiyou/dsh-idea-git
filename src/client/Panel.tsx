@@ -29,11 +29,7 @@ const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: "submodule", label: "Submodules" },
 ]
 
-function errorText(
-  t: (s: string, p?: any) => string,
-  code: string | null,
-  fallback: string | null,
-): string {
+function errorText(t: (s: string, p?: any) => string, code: string | null, fallback: string | null): string {
   switch (code) {
     case "git/not-a-repository":
       return t("Not a Git repository")
@@ -65,14 +61,7 @@ function ResizeHandle() {
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
   }
-  return (
-    <div
-      className="dig-panel__grip"
-      role="separator"
-      aria-orientation="horizontal"
-      onPointerDown={startDrag}
-    />
-  )
+  return <div className="dig-panel__grip" role="separator" aria-orientation="horizontal" onPointerDown={startDrag} />
 }
 
 export class ViewBoundary extends React.Component<{ children: React.ReactNode }, { err: any }> {
@@ -165,9 +154,7 @@ function Body() {
         <Icon name="warning" size={22} style={{ color: "var(--warning)" }} />
         <div>{errorText(t, s.info.code || null, s.info.reason || null)}</div>
         {s.info.directory ? (
-          <div style={{ color: "var(--fg-subtle)", fontFamily: "var(--font-mono)" }}>
-            {s.info.directory}
-          </div>
+          <div style={{ color: "var(--fg-subtle)", fontFamily: "var(--font-mono)" }}>{s.info.directory}</div>
         ) : null}
         <button type="button" className="dig-btn" onClick={() => void store.refreshAll()}>
           {t("Retry")}
@@ -247,13 +234,7 @@ export function Panel() {
       if (ev.key !== "Escape") return
       // Do not hijack Esc while typing, or while a prompt dialog is open.
       const t = ev.target as HTMLElement | null
-      if (
-        t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.tagName === "SELECT" ||
-          t.isContentEditable)
-      )
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable))
         return
       if (document.querySelector(".dig-modal-mask")) return
       // Esc dismisses the top-most overlay first, otherwise closes the panel (same as the close button).
@@ -314,10 +295,7 @@ export function Panel() {
             <Dropdown
               align="right"
               trigger={() => (
-                <span
-                  className="dig-panel__branch"
-                  title={s.info?.branch?.upstream || branch || ""}
-                >
+                <span className="dig-panel__branch" title={s.info?.branch?.upstream || branch || ""}>
                   <Icon name="branch" size={13} />
                   {branch || "—"}
                   {s.info?.branch?.ahead ? <span> ↑{s.info.branch.ahead}</span> : null}
@@ -355,32 +333,12 @@ export function Panel() {
           ) : null}
           {s.info?.isRepo ? (
             <>
-              <IconButton
-                icon="cloud"
-                size={17}
-                title={t("Fetch")}
-                onClick={() => void store.remoteOp("fetch")}
-              />
-              <IconButton
-                icon="download"
-                size={17}
-                title={t("Pull")}
-                onClick={() => void store.remoteOp("pull")}
-              />
-              <IconButton
-                icon="upload"
-                size={17}
-                title={t("Push")}
-                onClick={() => void store.remoteOp("push")}
-              />
+              <IconButton icon="cloud" size={17} title={t("Fetch")} onClick={() => void store.remoteOp("fetch")} />
+              <IconButton icon="download" size={17} title={t("Pull")} onClick={() => void store.remoteOp("pull")} />
+              <IconButton icon="upload" size={17} title={t("Push")} onClick={() => void store.remoteOp("push")} />
             </>
           ) : null}
-          <IconButton
-            icon="refresh"
-            size={17}
-            title={t("Refresh")}
-            onClick={() => void store.refreshAll()}
-          />
+          <IconButton icon="refresh" size={17} title={t("Refresh")} onClick={() => void store.refreshAll()} />
           <IconButton
             icon={w.minimized ? "maximize" : "minimize"}
             size={17}
@@ -409,9 +367,7 @@ export function Panel() {
             </button>
           </div>
         ) : null}
-        {s.busy ? (
-          <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div>
-        ) : null}
+        {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div> : null}
         {s.toast ? <div className="dig-banner dig-banner--toast">{s.toast}</div> : null}
         {!w.minimized ? (
           <div className="dig-panel__body">

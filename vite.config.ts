@@ -5,7 +5,7 @@ import path from "node:path"
 const PKG_ID = "dsh-idea-git"
 
 const shared = {
-  fmt: { semi: false, singleQuote: false, tabWidth: 2, useTabs: false, printWidth: 100 },
+  fmt: { semi: false, singleQuote: false, tabWidth: 2, useTabs: false, printWidth: 120 },
   test: { include: ["tests/**/*.test.ts"], testTimeout: 180000, hookTimeout: 180000 },
   lint: { options: { typeAware: true, typeCheck: true } },
 }
@@ -23,9 +23,7 @@ const clientWrap: any = {
       const rootCss = top.find((f) => f.endsWith(".css"))
       if (rootCss) cssFile = path.join(dir, rootCss)
       else {
-        const assets = fs.existsSync(path.join(dir, "assets"))
-          ? fs.readdirSync(path.join(dir, "assets"))
-          : []
+        const assets = fs.existsSync(path.join(dir, "assets")) ? fs.readdirSync(path.join(dir, "assets")) : []
         const found = assets.find((f) => f.endsWith(".css"))
         if (found) cssFile = path.join(dir, "assets", found)
       }

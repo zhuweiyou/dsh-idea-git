@@ -46,16 +46,7 @@ export interface FileEntry {
   worktreeStatus: string
   staged: boolean
   unstaged: boolean
-  kind:
-    | "added"
-    | "modified"
-    | "deleted"
-    | "renamed"
-    | "copied"
-    | "untracked"
-    | "conflicted"
-    | "ignored"
-    | "typechange"
+  kind: "added" | "modified" | "deleted" | "renamed" | "copied" | "untracked" | "conflicted" | "ignored" | "typechange"
 }
 
 export interface StatusResult {
@@ -146,10 +137,7 @@ export async function resolveRepo(ctx: any, payload: any): Promise<RepoInfo> {
   const configured = usable(getSettings().gitPath)
   const gitPath = await resolveGitPath(configured)
   if (!gitPath)
-    throw new RepoError(
-      "git/not-found",
-      "Git was not found. Install Git or set its path in the plugin settings.",
-    )
+    throw new RepoError("git/not-found", "Git was not found. Install Git or set its path in the plugin settings.")
 
   const dir = targetDirectory(ctx, payload)
   if (!dir) throw new RepoError("git/no-target", "No workspace is open yet.")
@@ -369,11 +357,7 @@ export async function readLog(
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args, timeoutMs: 60_000 })
   if (r.code !== 0) {
     const msg = (r.stderr || "") + (r.stdout || "")
-    if (
-      /does not have any commits|your current branch .* does not have any commits|bad default revision/i.test(
-        msg,
-      )
-    ) {
+    if (/does not have any commits|your current branch .* does not have any commits|bad default revision/i.test(msg)) {
       return { commits: [], hasMore: false }
     }
     throw new Error(r.stderr.trim() || `git log exited with code ${r.code}`)
@@ -383,11 +367,7 @@ export async function readLog(
   return { commits: hasMore ? all.slice(0, limit) : all, hasMore }
 }
 
-export async function readCommitFiles(
-  info: RepoInfo,
-  commit: string,
-  signal?: AbortSignal,
-): Promise<FileEntry[]> {
+export async function readCommitFiles(info: RepoInfo, commit: string, signal?: AbortSignal): Promise<FileEntry[]> {
   const args = ["diff-tree", "--no-commit-id", "--name-status", "-r", "-M", "--root", commit]
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args })
   if (r.code !== 0) throw new Error(r.stderr.trim() || `git diff-tree exited with code ${r.code}`)
@@ -458,8 +438,7 @@ export async function readBranches(info: RepoInfo, signal?: AbortSignal): Promis
     signal,
     args: ["for-each-ref", "--format=" + fmt, "refs/heads", "refs/remotes"],
   })
-  if (r.code !== 0)
-    throw new Error(r.stderr.trim() || `git for-each-ref exited with code ${r.code}`)
+  if (r.code !== 0) throw new Error(r.stderr.trim() || `git for-each-ref exited with code ${r.code}`)
   const out: BranchItem[] = []
   for (const line of r.stdout.split("\n")) {
     if (!line.trim()) continue
@@ -497,10 +476,7 @@ export async function readTags(info: RepoInfo, signal?: AbortSignal): Promise<st
     .filter(Boolean)
 }
 
-export async function readRemotes(
-  info: RepoInfo,
-  signal?: AbortSignal,
-): Promise<Array<{ name: string; url: string }>> {
+export async function readRemotes(info: RepoInfo, signal?: AbortSignal): Promise<Array<{ name: string; url: string }>> {
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ["remote", "-v"] })
   if (r.code !== 0) return []
   const map = new Map<string, string>()
@@ -516,8 +492,7 @@ export async function readRemotes(
 /* ------------------------------------------------------------------ */
 
 function assertSafePaths(info: RepoInfo, paths: unknown): string[] {
-  if (!Array.isArray(paths) || paths.length === 0)
-    throw new RepoError("git/no-paths", "Missing file paths")
+  if (!Array.isArray(paths) || paths.length === 0) throw new RepoError("git/no-paths", "Missing file paths")
   const root = info.root
   return paths.map((p) => {
     if (typeof p !== "string" || p === "") throw new RepoError("git/bad-path", "Invalid path")
@@ -533,8 +508,7 @@ async function runWrite(info: RepoInfo, args: string[], signal?: AbortSignal): P
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args, timeoutMs: 120_000 })
   if (r.code !== 0)
     throw new Error(
-      [r.stderr, r.stdout].find((s) => s && s.trim())?.trim() ||
-        `git ${args[0]} exited with code ${r.code}`,
+      [r.stderr, r.stdout].find((s) => s && s.trim())?.trim() || `git ${args[0]} exited with code ${r.code}`,
     )
   return r.stdout
 }
@@ -556,8 +530,7 @@ export async function unstage(info: RepoInfo, paths: unknown, signal?: AbortSign
 }
 
 export async function discard(info: RepoInfo, payload: any, signal?: AbortSignal) {
-  if (payload?.confirm !== true)
-    throw new RepoError("git/needs-confirmation", "Discarding changes needs confirmation")
+  if (payload?.confirm !== true) throw new RepoError("git/needs-confirmation", "Discarding changes needs confirmation")
   const safe = assertSafePaths(info, payload?.paths)
   const untracked: string[] = []
   const tracked: string[] = []
@@ -581,8 +554,7 @@ export async function commit(info: RepoInfo, payload: any, signal?: AbortSignal)
   const args = ["commit", "-m", message]
   if (payload?.amend === true) args.push("--amend")
   if (payload?.signoff === true) args.push("--signoff")
-  if (typeof payload?.author === "string" && payload.author.trim())
-    args.push(`--author=${payload.author.trim()}`)
+  if (typeof payload?.author === "string" && payload.author.trim()) args.push(`--author=${payload.author.trim()}`)
   if (payload?.all === true) args.push("-a")
   if (payload?.amend !== true && Array.isArray(payload?.paths) && payload.paths.length)
     args.push("--", ...payload.paths.map(String))
@@ -675,11 +647,7 @@ function splitDiffHunks(diff: string): {
   return { preamble: pre.join("\n"), hunks }
 }
 
-export async function listHunks(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<HunkItem[]> {
+export async function listHunks(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<HunkItem[]> {
   const file = String(payload?.file ?? "")
   if (!file) throw new RepoError("git/bad-path", "Missing file")
   const args = ["diff", "-U3", "--no-color"]
@@ -688,9 +656,7 @@ export async function listHunks(
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args, maxBuffer: 8 * 1024 * 1024 })
   if (r.code !== 0) return []
   const { preamble, hunks } = splitDiffHunks(r.stdout)
-  return hunks
-    .map((h, i) => ({ index: i, header: h.header, patch: preamble + "\n" + h.text }))
-    .filter((h) => h.header)
+  return hunks.map((h, i) => ({ index: i, header: h.header, patch: preamble + "\n" + h.text })).filter((h) => h.header)
 }
 
 export async function applyHunks(info: RepoInfo, payload: any, signal?: AbortSignal) {
@@ -715,11 +681,7 @@ export async function applyHunks(info: RepoInfo, payload: any, signal?: AbortSig
   return { ok: true }
 }
 
-export async function diffText(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<string> {
+export async function diffText(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<string> {
   const args = ["diff", "--no-color"]
   if (payload?.staged === true) args.push("--cached")
   if (payload?.file) args.push("--", String(payload.file))
@@ -742,10 +704,7 @@ const MIME: Record<string, string> = {
 }
 
 function isLfsPointer(buf: Buffer): boolean {
-  return (
-    buf.length > 0 &&
-    buf.slice(0, 80).toString("utf8").startsWith("version https://git-lfs.github.com/spec/v1")
-  )
+  return buf.length > 0 && buf.slice(0, 80).toString("utf8").startsWith("version https://git-lfs.github.com/spec/v1")
 }
 
 async function smudgeLfs(info: RepoInfo, buf: Buffer): Promise<Buffer> {
@@ -762,12 +721,7 @@ async function smudgeLfs(info: RepoInfo, buf: Buffer): Promise<Buffer> {
   return buf
 }
 
-async function readBlob(
-  info: RepoInfo,
-  commit: string,
-  file: string,
-  signal?: AbortSignal,
-): Promise<Buffer | null> {
+async function readBlob(info: RepoInfo, commit: string, file: string, signal?: AbortSignal): Promise<Buffer | null> {
   const r = await runGitBytes(info.gitPath, {
     cwd: info.root,
     args: ["show", `${commit}:${file}`],
@@ -875,11 +829,7 @@ export async function lfsInfo(_ctx: any): Promise<{ installed: boolean; version?
   return { installed: r.code === 0, version: r.stdout.trim() || r.stderr.trim() }
 }
 
-export async function commitDiffText(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<string> {
+export async function commitDiffText(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<string> {
   const commit = String(payload?.commit ?? "")
   if (!commit) throw new RepoError("git/bad-commit", "Missing commit")
   const args = ["show", "--format=", "--no-color", "-M", commit]
@@ -979,9 +929,7 @@ export async function stashFiles(
   payload: any,
   signal?: AbortSignal,
 ): Promise<Array<{ path: string; kind: string }>> {
-  const ref = String(
-    payload?.ref ?? (payload?.index != null ? `stash@{${Number(payload.index)}}` : "stash@{0}"),
-  )
+  const ref = String(payload?.ref ?? (payload?.index != null ? `stash@{${Number(payload.index)}}` : "stash@{0}"))
   const r = await runGit(info.gitPath, {
     cwd: info.root,
     signal,
@@ -1114,8 +1062,7 @@ export async function addWorktree(info: RepoInfo, payload: any, signal?: AbortSi
 export async function removeWorktree(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const target = String(payload?.worktreePath ?? payload?.target ?? "").trim()
   if (!target) throw new RepoError("git/bad-path", "Missing worktree path")
-  if (payload?.confirm !== true)
-    throw new RepoError("git/needs-confirmation", "Removing a worktree needs confirmation")
+  if (payload?.confirm !== true) throw new RepoError("git/needs-confirmation", "Removing a worktree needs confirmation")
   const args = ["worktree", "remove"]
   if (payload?.force === true) args.push("--force")
   args.push(target)
@@ -1137,11 +1084,7 @@ export interface BlameLine {
   content: string
 }
 
-export async function readBlame(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<BlameLine[]> {
+export async function readBlame(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<BlameLine[]> {
   const filePath = String(payload?.file ?? "").trim()
   if (!filePath) throw new RepoError("git/bad-path", "Missing file path")
   const r = await runGit(info.gitPath, {
@@ -1324,11 +1267,7 @@ export async function addIgnore(info: RepoInfo, payload: any, _signal?: AbortSig
   return { added }
 }
 
-export async function conflictDiff3(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<{ text: string }> {
+export async function conflictDiff3(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ text: string }> {
   const file = String(payload?.file ?? "").trim()
   if (!file) throw new RepoError("git/bad-path", "Missing file")
   const show = async (rev: string): Promise<Buffer | null> => {
@@ -1424,10 +1363,7 @@ export async function compareRefs(
   const to = String(payload?.to ?? "HEAD")
   if (!fromRaw) throw new RepoError("git/bad-ref", "Missing from ref")
   const from = fromRaw === "ROOT" ? "4b825dc642cb6eb9a060e54bf8d69288fbee4904" : fromRaw
-  const args =
-    to === "WORKTREE"
-      ? ["diff", "--name-status", "-M", from]
-      : ["diff", "--name-status", "-M", from, to]
+  const args = to === "WORKTREE" ? ["diff", "--name-status", "-M", from] : ["diff", "--name-status", "-M", from, to]
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args })
   if (r.code !== 0) throw new Error(r.stderr.trim() || "compare failed")
   const files: Array<{ path: string; kind: string }> = []
@@ -1485,11 +1421,7 @@ export async function remoteUrl(info: RepoInfo): Promise<{ url: string | null }>
   return { url: r.code === 0 ? r.stdout.trim() : null }
 }
 
-export async function createPatch(
-  info: RepoInfo,
-  payload: any,
-  signal?: AbortSignal,
-): Promise<{ path: string }> {
+export async function createPatch(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ path: string }> {
   const commit = payload?.commit ? String(payload.commit) : null
   let out = ""
   if (commit) {
@@ -1525,11 +1457,7 @@ function shq(p: string): string {
   return "'" + p.replace(/\\/g, "/").replace(/'/g, "'\\''") + "'"
 }
 
-async function listRange(
-  info: RepoInfo,
-  base: string | null,
-  signal?: AbortSignal,
-): Promise<string[]> {
+async function listRange(info: RepoInfo, base: string | null, signal?: AbortSignal): Promise<string[]> {
   const range = base ? `${base}..HEAD` : "HEAD"
   const r = await runGit(info.gitPath, {
     cwd: info.root,
@@ -1550,20 +1478,12 @@ interface PlanEntry {
 }
 
 /** Port of OpenIDEA ops.rs interactive_rebase: write a todo (with exec amend lines) and run rebase -i. */
-async function runRebasePlan(
-  info: RepoInfo,
-  base: string | null,
-  entries: PlanEntry[],
-  signal?: AbortSignal,
-) {
+async function runRebasePlan(info: RepoInfo, base: string | null, entries: PlanEntry[], signal?: AbortSignal) {
   if (!entries.length) throw new RepoError("git/bad-commit", "No commits to rebase")
   const firstKept = entries.findIndex((e) => e.action !== "drop")
   if (firstKept < 0) throw new RepoError("git/bad-range", "At least one commit must be kept")
   if (entries[firstKept].action === "squash" || entries[firstKept].action === "fixup") {
-    throw new RepoError(
-      "git/bad-range",
-      "The first commit cannot be squashed or fixed up into a previous one",
-    )
+    throw new RepoError("git/bad-range", "The first commit cannot be squashed or fixed up into a previous one")
   }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dig-rebase-"))
   const todo: string[] = []
@@ -1571,17 +1491,13 @@ async function runRebasePlan(
     const e = entries[i]
     const verb = e.action === "reword" ? "pick" : e.action
     todo.push(`${verb} ${e.commit}`)
-    const nextJoins =
-      entries[i + 1] && (entries[i + 1].action === "squash" || entries[i + 1].action === "fixup")
+    const nextJoins = entries[i + 1] && (entries[i + 1].action === "squash" || entries[i + 1].action === "fixup")
     const msg = (e.message ?? "").trim()
     if (msg && (e.action === "reword" || e.action === "squash" || e.action === "pick")) {
-      if (nextJoins)
-        throw new RepoError("git/bad-range", "Set the message on the last commit of a squash group")
+      if (nextJoins) throw new RepoError("git/bad-range", "Set the message on the last commit of a squash group")
       const mf = path.join(dir, `msg-${i}`)
       fs.writeFileSync(mf, msg)
-      todo.push(
-        `exec git commit --amend --allow-empty --no-verify --quiet --cleanup=strip -F ${shq(mf)}`,
-      )
+      todo.push(`exec git commit --amend --allow-empty --no-verify --quiet --cleanup=strip -F ${shq(mf)}`)
     }
   }
   const todoFile = path.join(dir, "todo")
@@ -1620,11 +1536,7 @@ import { createHash } from 'node:crypto'\nfs.copyFileSync(${JSON.stringify(todoF
   }
 }
 
-async function parentOf(
-  info: RepoInfo,
-  commit: string,
-  signal?: AbortSignal,
-): Promise<string | null> {
+async function parentOf(info: RepoInfo, commit: string, signal?: AbortSignal): Promise<string | null> {
   const r = await runGit(info.gitPath, {
     cwd: info.root,
     signal,
@@ -1639,9 +1551,7 @@ export async function editCommitMessage(info: RepoInfo, payload: any, signal?: A
   const message = String(payload?.message ?? "")
   if (!commit) throw new RepoError("git/bad-commit", "Missing commit")
   if (!message.trim()) throw new RepoError("git/empty-message", "Empty message")
-  const head = (
-    await runGit(info.gitPath, { cwd: info.root, signal, args: ["rev-parse", "HEAD"] })
-  ).stdout.trim()
+  const head = (await runGit(info.gitPath, { cwd: info.root, signal, args: ["rev-parse", "HEAD"] })).stdout.trim()
   if (commit === head) {
     await runWrite(info, ["commit", "--amend", "-m", message], signal)
     return { ok: true }
@@ -1698,8 +1608,7 @@ export async function squashRange(info: RepoInfo, payload: any, signal?: AbortSi
         ...(i === selected.length - 1 && combined ? { message: combined } : {}),
       })
   })
-  for (const c of commits.slice(first + 1))
-    if (!idSet.has(c)) entries.push({ commit: c, action: "pick" })
+  for (const c of commits.slice(first + 1)) if (!idSet.has(c)) entries.push({ commit: c, action: "pick" })
   return runRebasePlan(info, base, entries, signal)
 }
 
@@ -1709,8 +1618,7 @@ export async function dropCommit(info: RepoInfo, payload: any, signal?: AbortSig
   const base = await parentOf(info, commit, signal)
   if (!base) throw new RepoError("git/bad-commit", "Cannot drop the root commit")
   const commits = await listRange(info, base, signal)
-  if (!commits.includes(commit))
-    throw new RepoError("git/bad-range", "Commit not in current branch")
+  if (!commits.includes(commit)) throw new RepoError("git/bad-range", "Commit not in current branch")
   const entries: PlanEntry[] = commits.map((c) => ({
     commit: c,
     action: c === commit ? "drop" : "pick",
@@ -1748,8 +1656,7 @@ export async function squashHead(info: RepoInfo, payload: any, signal?: AbortSig
 }
 
 export async function dropHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
-  if (payload?.confirm !== true)
-    throw new RepoError("git/needs-confirmation", "Dropping a commit needs confirmation")
+  if (payload?.confirm !== true) throw new RepoError("git/needs-confirmation", "Dropping a commit needs confirmation")
   await runWrite(info, ["reset", "--hard", "HEAD~1"], signal)
   return { ok: true }
 }
@@ -1877,8 +1784,7 @@ export async function saveCommitFiles(info: RepoInfo, payload: any, signal?: Abo
   const dir = String(payload?.dir ?? "").trim()
   const commit = String(payload?.commit ?? "")
   const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
-  if (!dir || !commit || !paths.length)
-    throw new RepoError("git/bad-request", "Missing dir/commit/paths")
+  if (!dir || !commit || !paths.length) throw new RepoError("git/bad-request", "Missing dir/commit/paths")
   fs.mkdirSync(dir, { recursive: true })
   if (paths.length === 1) {
     const file = paths[0]
@@ -1939,16 +1845,14 @@ export async function cherryPickPaths(info: RepoInfo, payload: any, signal?: Abo
     args: ["diff", "--no-color", base, commit, "--", ...paths],
     maxBuffer: 32 * 1024 * 1024,
   })
-  if (diff.code !== 0 || !diff.stdout.trim())
-    throw new Error("No changes to cherry-pick for the selected files")
+  if (diff.code !== 0 || !diff.stdout.trim()) throw new Error("No changes to cherry-pick for the selected files")
   const check = await runGit(info.gitPath, {
     cwd: info.root,
     signal,
     args: ["apply", "--check", "--index", "-"],
     input: diff.stdout,
   })
-  if (check.code !== 0)
-    throw new Error(check.stderr.trim() || "Selected changes do not apply cleanly")
+  if (check.code !== 0) throw new Error(check.stderr.trim() || "Selected changes do not apply cleanly")
   const apply = await runGit(info.gitPath, {
     cwd: info.root,
     signal,
@@ -1961,9 +1865,7 @@ export async function cherryPickPaths(info: RepoInfo, payload: any, signal?: Abo
     signal,
     args: ["log", "-1", "--pretty=%B", commit],
   })
-  const message =
-    (msg.stdout.trim() || `cherry-pick ${commit.slice(0, 7)}`) +
-    `\n\n(partial: ${paths.length} file(s))`
+  const message = (msg.stdout.trim() || `cherry-pick ${commit.slice(0, 7)}`) + `\n\n(partial: ${paths.length} file(s))`
   await runWrite(info, ["commit", "-m", message], signal)
   return { ok: true }
 }
@@ -1975,10 +1877,7 @@ export interface SubmoduleItem {
   describe: string
 }
 
-export async function readSubmodules(
-  info: RepoInfo,
-  signal?: AbortSignal,
-): Promise<SubmoduleItem[]> {
+export async function readSubmodules(info: RepoInfo, signal?: AbortSignal): Promise<SubmoduleItem[]> {
   const r = await runGit(info.gitPath, {
     cwd: info.root,
     signal,
@@ -1992,8 +1891,7 @@ export async function readSubmodules(
     const rest = line.slice(1).trim()
     const m = /^([0-9a-f]+)\s+(\S+)(?:\s+\((.*)\))?$/.exec(rest)
     if (!m) continue
-    const state =
-      flag === "-" ? "uninitialized" : flag === "+" ? "modified" : flag === "U" ? "conflict" : "ok"
+    const state = flag === "-" ? "uninitialized" : flag === "+" ? "modified" : flag === "U" ? "conflict" : "ok"
     out.push({ sha: m[1], path: m[2], state, describe: m[3] || "" })
   }
   return out
@@ -2106,9 +2004,7 @@ export async function changelistsSave(info: RepoInfo, payload: any): Promise<Cha
 /* Diagnostics                                                         */
 /* ------------------------------------------------------------------ */
 
-export async function gitVersionInfo(
-  ctx: any,
-): Promise<{ found: boolean; path?: string; version?: string }> {
+export async function gitVersionInfo(ctx: any): Promise<{ found: boolean; path?: string; version?: string }> {
   const configured = (() => {
     try {
       return usable(ctx.get?.("ideaGitConfig")?.gitPath)

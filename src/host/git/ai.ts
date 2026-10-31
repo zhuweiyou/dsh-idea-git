@@ -12,8 +12,7 @@ import { runGit } from "./exec.js"
 import type { RepoInfo } from "./service.js"
 
 function selection(ctx: any, sessionId?: string): { provider?: string; model?: string } {
-  const ok = (s: any) =>
-    s && s.provider && s.model ? { provider: s.provider, model: s.model } : {}
+  const ok = (s: any) => (s && s.provider && s.model ? { provider: s.provider, model: s.model } : {})
   if (sessionId) {
     try {
       const session = ctx.get?.("sessions")?.get?.(sessionId)
@@ -24,10 +23,7 @@ function selection(ctx: any, sessionId?: string): { provider?: string; model?: s
       } catch {}
       if (session) {
         try {
-          const h =
-            typeof session.requestHeader === "function"
-              ? session.requestHeader()
-              : session.requestHeader
+          const h = typeof session.requestHeader === "function" ? session.requestHeader() : session.requestHeader
           const got = ok(h?.config) || ok(session?.header?.config)
           if (got.provider) return got
         } catch {}
@@ -97,12 +93,7 @@ async function lfsNames(info: RepoInfo, signal?: AbortSignal): Promise<Set<strin
 function classify(f: FileStat, lfs: Set<string>): "text" | "excluded" {
   if (f.adds === null || f.dels === null) return "excluded"
   if (lfs.has(f.path)) return "excluded"
-  if (
-    BINARY_EXT.test(f.path) ||
-    ARTIFACT.test(f.path) ||
-    LOCKFILES.test(f.path) ||
-    MINIFIED.test(f.path)
-  )
+  if (BINARY_EXT.test(f.path) || ARTIFACT.test(f.path) || LOCKFILES.test(f.path) || MINIFIED.test(f.path))
     return "excluded"
   if (f.adds + f.dels > BIG_FILE_LINES) return "excluded"
   return "text"
@@ -115,17 +106,11 @@ export async function generateCommitMessage(
   signal?: AbortSignal,
 ): Promise<{ message: string }> {
   const llm = ctx.get?.("llm") ?? ctx.llm
-  if (!llm || typeof llm.stream !== "function")
-    throw new Error("No model service is available in the current profile.")
-  const provided =
-    payload?.provider && payload?.model
-      ? { provider: payload.provider, model: payload.model }
-      : null
+  if (!llm || typeof llm.stream !== "function") throw new Error("No model service is available in the current profile.")
+  const provided = payload?.provider && payload?.model ? { provider: payload.provider, model: payload.model } : null
   const sel = provided || selection(ctx, payload?.sessionId)
   if (!sel.provider || !sel.model)
-    throw new Error(
-      "Cannot read the current session model; select a model in that session and retry.",
-    )
+    throw new Error("Cannot read the current session model; select a model in that session and retry.")
 
   let staged = true
   let files = await numstat(info, true, signal)
@@ -139,9 +124,7 @@ export async function generateCommitMessage(
   const texts = files.filter((f) => classify(f, lfs) === "text")
   const excluded = files.filter((f) => classify(f, lfs) === "excluded")
 
-  const chosen = [...texts]
-    .sort((a, b) => a.adds! + a.dels! - (b.adds! + b.dels!))
-    .slice(0, MAX_FILES)
+  const chosen = [...texts].sort((a, b) => a.adds! + a.dels! - (b.adds! + b.dels!)).slice(0, MAX_FILES)
   const chosenPaths = chosen.map((f) => f.path)
   let diff = ""
   if (chosenPaths.length) {
@@ -185,8 +168,7 @@ export async function generateCommitMessage(
   const system = zh
     ? "你是一名严谨的 Git 提交信息撰写助手。请完全使用简体中文输出。根据给定的文本差异，输出一条提交信息：第一行是不超过 72 个字符的摘要，必要时空一行再用要点描述细节。只输出提交信息本身，不要解释，不要 Markdown 代码围栏，不要编造差异中不存在的信息；二进制/大文件仅按文件名说明其被修改。"
     : "You are a precise Git commit-message assistant. Write entirely in English. Given the text diff, output one commit message: a subject line of at most 72 characters, then optionally a blank line and bullet points. Output only the message — no explanation, no markdown fences, no invented facts; mention binary/large files by name only."
-  const user =
-    header + "\n\n" + (zh ? "代码差异：\n\n" : "Diff:\n\n") + (diff || "(no text diff available)")
+  const user = header + "\n\n" + (zh ? "代码差异：\n\n" : "Diff:\n\n") + (diff || "(no text diff available)")
 
   let text = ""
   try {
@@ -205,9 +187,7 @@ export async function generateCommitMessage(
         throw new Error(chunk.reason.failure?.message || "AI generation failed")
     }
   } catch (error) {
-    throw new Error(
-      "AI generation failed: " + (error instanceof Error ? error.message : String(error)),
-    )
+    throw new Error("AI generation failed: " + (error instanceof Error ? error.message : String(error)))
   }
   return { message: text.trim() }
 }

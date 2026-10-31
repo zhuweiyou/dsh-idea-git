@@ -58,11 +58,7 @@ interface BNode {
   children?: BNode[]
 }
 
-function buildBranchTree(
-  branches: BranchItem[],
-  prefix = "",
-  favs: Set<string> = new Set(),
-): BNode[] {
+function buildBranchTree(branches: BranchItem[], prefix = "", favs: Set<string> = new Set()): BNode[] {
   const dirs = new Map<string, BranchItem[]>()
   const leaves: BNode[] = []
   for (const b of branches) {
@@ -81,9 +77,7 @@ function buildBranchTree(
     nodes.push({ name: head, path, dir: true, children: buildBranchTree(list, path, favs) })
   }
   const rank = (b: BranchItem) => (b.current ? 0 : favs.has(b.name) ? 1 : 2)
-  const sorted = [...leaves].sort(
-    (a, b) => rank(a.branch!) - rank(b.branch!) || a.name.localeCompare(b.name),
-  )
+  const sorted = [...leaves].sort((a, b) => rank(a.branch!) - rank(b.branch!) || a.name.localeCompare(b.name))
   const top = sorted.filter((n) => rank(n.branch!) < 2)
   const rest = sorted.filter((n) => rank(n.branch!) === 2)
   return [...top, ...nodes, ...rest]
@@ -215,10 +209,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const match = (b: BranchItem) => !q || b.name.toLowerCase().includes(q)
   const locals = s.branches.filter((b) => !b.remote)
   const remotes = s.branches.filter((b) => b.remote && match(b))
-  const localTree = React.useMemo(
-    () => buildBranchTree(locals.filter(match), "", favSet()),
-    [s.branches, q, favTick],
-  )
+  const localTree = React.useMemo(() => buildBranchTree(locals.filter(match), "", favSet()), [s.branches, q, favTick])
   // remote groups: remote name -> its branches (full names, e.g. origin/feature/x)
   const remoteGroups = React.useMemo(() => {
     const g = new Map<string, BranchItem[]>()
@@ -231,8 +222,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   }, [remotes])
   const remoteTrees = React.useMemo(() => {
     const m = new Map<string, BNode[]>()
-    for (const [remote, list] of remoteGroups)
-      m.set(remote, buildBranchTree(list, remote, favSet()))
+    for (const [remote, list] of remoteGroups) m.set(remote, buildBranchTree(list, remote, favSet()))
     return m
   }, [remoteGroups, favTick])
   const expanded = React.useMemo(() => {
@@ -262,12 +252,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const refreshFav = () => setFavTick((x) => x + 1)
   return (
     <div className="dig-branches">
-      <div
-        className="dig-branches__rail"
-        role="toolbar"
-        aria-orientation="vertical"
-        aria-label={t("Branches")}
-      >
+      <div className="dig-branches__rail" role="toolbar" aria-orientation="vertical" aria-label={t("Branches")}>
         <IconButton icon="chevronLeft" size={13} title={t("Hide Branches")} onClick={onHide} />
         <IconButton
           icon="plus"
@@ -313,24 +298,12 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
               const on = !isFavorite(r)
               toggleFavorite(r)
               refreshFav()
-              store.setToast(
-                on ? t("Added to Favorites") + ": " + r : t("Removed from Favorites") + ": " + r,
-              )
+              store.setToast(on ? t("Added to Favorites") + ": " + r : t("Removed from Favorites") + ": " + r)
             }
           }}
         />
-        <IconButton
-          icon="cloud"
-          size={13}
-          title={t("Fetch")}
-          onClick={() => void store.remoteOp("fetch")}
-        />
-        <IconButton
-          icon="refresh"
-          size={13}
-          title={t("Refresh")}
-          onClick={() => void store.refreshAll()}
-        />
+        <IconButton icon="cloud" size={13} title={t("Fetch")} onClick={() => void store.remoteOp("fetch")} />
+        <IconButton icon="refresh" size={13} title={t("Refresh")} onClick={() => void store.refreshAll()} />
       </div>
       <div className="dig-branches__main">
         <div className="dig-branches__search">
@@ -351,12 +324,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
               </div>
               {favBranches.map((b) => (
                 <div key={"fav:" + b.ref} style={{ paddingLeft: 8 }}>
-                  <BranchRow
-                    b={b}
-                    t={t}
-                    label={b.name.split("/").pop()}
-                    onSelect={setSelectedName}
-                  />
+                  <BranchRow b={b} t={t} label={b.name.split("/").pop()} onSelect={setSelectedName} />
                 </div>
               ))}
             </>
@@ -429,10 +397,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                   ])
                 }}
               >
-                <Icon
-                  name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"}
-                  size={12}
-                />
+                <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={12} />
                 <span>{remote}</span>
               </div>
               {!collapsed.has("remote:" + remote) ? (
@@ -463,9 +428,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 title={tag}
                 onClick={(e) => {
                   setSelectedName(tag)
-                  for (const el of Array.from(
-                    document.querySelectorAll(".dig-branchrow[data-selected]"),
-                  ))
+                  for (const el of Array.from(document.querySelectorAll(".dig-branchrow[data-selected]")))
                     el.removeAttribute("data-selected")
                   ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
                 }}
@@ -487,8 +450,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                       label: t("Delete"),
                       danger: true,
                       run: () => {
-                        if (window.confirm(t("Delete tag {name}?", { name: tag })))
-                          void store.deleteTag(tag)
+                        if (window.confirm(t("Delete tag {name}?", { name: tag }))) void store.deleteTag(tag)
                       },
                     },
                   ])
@@ -584,12 +546,7 @@ function FileNodes({
 }) {
   const openDiff = (path: string) =>
     range
-      ? void store.openRangeDiff(
-          range.from,
-          range.to,
-          path,
-          range.from + ".." + range.to + ": " + path,
-        )
+      ? void store.openRangeDiff(range.from, range.to, path, range.from + ".." + range.to + ": " + path)
       : void store.openDiff({ title: shortId + ": " + path, commit, path })
   return (
     <>
@@ -609,11 +566,7 @@ function FileNodes({
                     {
                       label: t("Cherry-Pick Selected"),
                       run: () => {
-                        if (
-                          window.confirm(
-                            t("Cherry-pick {n} selected file(s)?", { n: paths.length }),
-                          )
-                        )
+                        if (window.confirm(t("Cherry-pick {n} selected file(s)?", { n: paths.length })))
                           void store.cherryPickSelected(commit, paths)
                       },
                     },
@@ -648,14 +601,9 @@ function FileNodes({
         }
         const f = n.file!
         const sel = selected.has(f.path)
-        const letter =
-          f.kind === "added" ? "A" : f.kind === "deleted" ? "D" : f.kind === "renamed" ? "R" : "M"
+        const letter = f.kind === "added" ? "A" : f.kind === "deleted" ? "D" : f.kind === "renamed" ? "R" : "M"
         const color =
-          f.kind === "added"
-            ? "var(--vcs-added)"
-            : f.kind === "deleted"
-              ? "var(--vcs-deleted)"
-              : "var(--vcs-modified)"
+          f.kind === "added" ? "var(--vcs-added)" : f.kind === "deleted" ? "var(--vcs-deleted)" : "var(--vcs-modified)"
         return (
           <div
             key={"f:" + n.path}
@@ -797,9 +745,7 @@ function DetailsPane() {
       <div className="dig-details__msg">
         <div className="dig-details__subject">{commit.subject}</div>
         {commit.message && commit.message !== commit.subject ? (
-          <div className="dig-details__body">
-            {commit.message.slice(commit.subject.length).trim()}
-          </div>
+          <div className="dig-details__body">{commit.message.slice(commit.subject.length).trim()}</div>
         ) : null}
         <div className="dig-details__meta">
           <span className="dig-details__hash">{commit.shortId}</span> {commit.author} &lt;
@@ -812,11 +758,7 @@ function DetailsPane() {
 
 /* -------------------- filter bar + list -------------------- */
 /* -------------------- context menus (ported from OpenIDEA) -------------------- */
-function commitMenuItems(
-  c: CommitItem,
-  selection: CommitItem[],
-  t: (x: string, p?: any) => string,
-) {
+function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, p?: any) => string) {
   const multi = selection.length > 1
   if (multi) {
     return [
@@ -1028,11 +970,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
       run: () => {
         const on = !isFavorite(b.name)
         toggleFavorite(b.name)
-        store.setToast(
-          on
-            ? t("Added to Favorites") + ": " + b.name
-            : t("Removed from Favorites") + ": " + b.name,
-        )
+        store.setToast(on ? t("Added to Favorites") + ": " + b.name : t("Removed from Favorites") + ": " + b.name)
         void store.refreshAll()
       },
     },
@@ -1041,8 +979,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     {
       label: t("Merge '{name}' into Current", { name: b.name }),
       run: () => {
-        if (window.confirm(t("Merge {name} into current branch?", { name: b.name })))
-          void store.mergeBranch(b.name)
+        if (window.confirm(t("Merge {name} into current branch?", { name: b.name }))) void store.mergeBranch(b.name)
       },
     },
     ...(b.remote
@@ -1085,19 +1022,14 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
             label: t("Delete"),
             danger: true,
             run: () => {
-              if (window.confirm(t("Delete branch {name}?", { name: b.name })))
-                void store.deleteBranch(b.name)
+              if (window.confirm(t("Delete branch {name}?", { name: b.name }))) void store.deleteBranch(b.name)
             },
           },
           {
             label: t("Force Delete"),
             danger: true,
             run: () => {
-              if (
-                window.confirm(
-                  t("Force delete branch {name}? Unmerged commits will be lost.", { name: b.name }),
-                )
-              )
+              if (window.confirm(t("Force delete branch {name}? Unmerged commits will be lost.", { name: b.name })))
                 void store.deleteBranch(b.name, true)
             },
           },
@@ -1122,10 +1054,7 @@ function CommitRow({
       className="dig-crow"
       data-selected={selected ? "true" : undefined}
       onClick={(e) =>
-        void store.selectCommit(
-          commit.id,
-          e.shiftKey ? "range" : e.metaKey || e.ctrlKey ? "toggle" : "single",
-        )
+        void store.selectCommit(commit.id, e.shiftKey ? "range" : e.metaKey || e.ctrlKey ? "toggle" : "single")
       }
       title={commit.subject}
       onContextMenu={(e) => openContextMenu(e, commitMenuItems(commit, selection, t))}
@@ -1207,18 +1136,14 @@ function CommitList({
   }, [s.logHasMore, s.logLoading])
   return (
     <div className="dig-commitlist" ref={scrollRef}>
-      {filtered.length === 0 ? (
-        <div className="dig-empty">{s.logLoading ? t("Loading") : t("No commits")}</div>
-      ) : null}
+      {filtered.length === 0 ? <div className="dig-empty">{s.logLoading ? t("Loading") : t("No commits")}</div> : null}
       {filtered.map((c, i) => (
         <CommitRow
           key={c.id}
           commit={c}
           row={rows[i]}
           selected={s.selectedCommit === c.id || s.selection.includes(c.id)}
-          selection={
-            s.selection.includes(c.id) ? s.commits.filter((x) => s.selection.includes(x.id)) : [c]
-          }
+          selection={s.selection.includes(c.id) ? s.commits.filter((x) => s.selection.includes(x.id)) : [c]}
         />
       ))}
       {s.logLoading ? <div className="dig-empty">{t("Loading")}</div> : null}
@@ -1251,10 +1176,7 @@ function FilterBar({
 }) {
   const s = useGit()
   const t = useT()
-  const authors = React.useMemo(
-    () => [...new Set(s.commits.map((c) => c.author))].sort().slice(0, 40),
-    [s.commits],
-  )
+  const authors = React.useMemo(() => [...new Set(s.commits.map((c) => c.author))].sort().slice(0, 40), [s.commits])
   const dateOpts: Array<{ v: number | null; label: string }> = [
     { v: null, label: t("All time") },
     { v: 1, label: t("Today") },
@@ -1300,11 +1222,7 @@ function FilterBar({
         trigger={() => (
           <span className="dig-filterbtn" data-active={author ? "true" : undefined}>
             {author || t("User")}
-            <Icon
-              name="chevronDown"
-              size={12}
-              style={{ marginLeft: 2, color: "var(--fg-subtle)" }}
-            />
+            <Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: "var(--fg-subtle)" }} />
           </span>
         )}
       >
@@ -1338,14 +1256,8 @@ function FilterBar({
         align="right"
         trigger={() => (
           <span className="dig-filterbtn" data-active={dateDays != null ? "true" : undefined}>
-            {dateDays != null
-              ? dateOpts.find((o) => o.v === dateDays)?.label || t("Date")
-              : t("Date")}
-            <Icon
-              name="chevronDown"
-              size={12}
-              style={{ marginLeft: 2, color: "var(--fg-subtle)" }}
-            />
+            {dateDays != null ? dateOpts.find((o) => o.v === dateDays)?.label || t("Date") : t("Date")}
+            <Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: "var(--fg-subtle)" }} />
           </span>
         )}
       >
@@ -1371,11 +1283,7 @@ function FilterBar({
         trigger={() => (
           <span className="dig-filterbtn" data-active={s.logPath ? "true" : undefined}>
             {s.logPath ? s.logPath : t("Paths")}
-            <Icon
-              name="chevronDown"
-              size={12}
-              style={{ marginLeft: 2, color: "var(--fg-subtle)" }}
-            />
+            <Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: "var(--fg-subtle)" }} />
           </span>
         )}
       >
@@ -1421,11 +1329,7 @@ function FilterBar({
               : s.logSort === "topo"
                 ? t("Sort: Topology")
                 : t("Sort: Date (new→old)")}
-            <Icon
-              name="chevronDown"
-              size={12}
-              style={{ marginLeft: 2, color: "var(--fg-subtle)" }}
-            />
+            <Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: "var(--fg-subtle)" }} />
           </span>
         )}
       >
@@ -1462,11 +1366,7 @@ function FilterBar({
         )}
       </Dropdown>
       <span style={{ flex: 1 }} />
-      <IconButton
-        icon="refresh"
-        title={t("Refresh log")}
-        onClick={() => void store.loadLog(true)}
-      />
+      <IconButton icon="refresh" title={t("Refresh log")} onClick={() => void store.loadLog(true)} />
     </div>
   )
 }
@@ -1474,9 +1374,7 @@ function FilterBar({
 export function LogView() {
   const s = useGit()
   const t = useT()
-  const [showBranches, setShowBranches] = React.useState(
-    () => localStorage.getItem("dig.showBranches") !== "0",
-  )
+  const [showBranches, setShowBranches] = React.useState(() => localStorage.getItem("dig.showBranches") !== "0")
   const hideBranches = () => {
     setShowBranches(false)
     try {
@@ -1512,11 +1410,7 @@ export function LogView() {
         <div className="dig-historybar">
           <span className="dig-chip">
             {t("Branch")}: {s.logBranch}
-            <button
-              type="button"
-              className="dig-chip__x"
-              onClick={() => store.clearBranchHistory()}
-            >
+            <button type="button" className="dig-chip__x" onClick={() => store.clearBranchHistory()}>
               ✕
             </button>
           </span>
@@ -1538,13 +1432,7 @@ export function LogView() {
         <span style={{ width: 120 }}>{t("Author")}</span>
         <span style={{ width: 130 }}>{t("Date")}</span>
       </div>
-      <CommitList
-        text={text}
-        regex={regex}
-        caseSensitive={caseSensitive}
-        author={author}
-        dateDays={dateDays}
-      />
+      <CommitList text={text} regex={regex} caseSensitive={caseSensitive} author={author} dateDays={dateDays} />
     </div>
   )
   const right = <DetailsPane />
