@@ -412,6 +412,9 @@ const zh: Record<string, string> = {
   'Partially staged': '部分已暂存',
   'Staging hunk…': '暂存块中…',
   'Unstaging hunk…': '取消暂存块中…',
+  'Edit Result…': '编辑结果…',
+  'Result': '结果',
+  'Base': '基线',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

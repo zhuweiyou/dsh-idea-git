@@ -36,22 +36,24 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: 'light'
   const segs = React.useMemo(() => (c && !c.loading && c.working ? parseConflicts(c.working) : []), [c?.working, c?.loading])
   const conflictCount = React.useMemo(() => segs.filter((x) => x.type === 'conflict').length, [segs])
   const [choices, setChoices] = React.useState<Record<number, 'ours' | 'theirs' | 'both'>>({})
-  React.useEffect(() => { setChoices({}) }, [c?.file])
+  const [resultEditing, setResultEditing] = React.useState(false)
+  const [resultText, setResultText] = React.useState('')
+  const [showBase, setShowBase] = React.useState(false)
+  React.useEffect(() => { setChoices({}); setResultEditing(false); setShowBase(false) }, [c?.file])
   if (!c) return null
 
-  const allChosen = conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => choices[i])
-  const apply = () => {
+  const buildResult = () => {
     const parts: string[] = []
     let k = 0
     for (const seg of segs) {
       if (seg.type === 'text') parts.push(seg.text)
-      else {
-        const ch = choices[k] || 'both'
-        parts.push(ch === 'ours' ? seg.ours : ch === 'theirs' ? seg.theirs : [seg.ours, seg.theirs].filter((x) => x !== '').join('\n'))
-        k++
-      }
+      else { const ch = choices[k] || 'both'; parts.push(ch === 'ours' ? seg.ours : ch === 'theirs' ? seg.theirs : [seg.ours, seg.theirs].filter((x) => x !== '').join('\n')); k++ }
     }
-    void store.resolveConflictContent(c.file, parts.join('\n'))
+    return parts.join('\n')
+  }
+  const allChosen = conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => choices[i])
+  const apply = () => {
+    void store.resolveConflictContent(c.file, resultEditing ? resultText : buildResult())
   }
 
   return (
@@ -62,7 +64,9 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: 'light'
         <span style={{ flex: 1 }} />
         <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, 'ours')}>{t('Accept Ours')}</button>
         <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, 'theirs')}>{t('Accept Theirs')}</button>
-        <button type="button" className="dig-btn dig-btn--primary" disabled={!allChosen} onClick={apply}>{t('Apply & Mark Resolved')}</button>
+        <button type="button" className="dig-btn" onClick={() => setShowBase((v) => !v)}>{t('Base')}</button>
+        <button type="button" className="dig-btn" onClick={() => { setResultText(buildResult()); setResultEditing(true) }}>{t('Edit Result…')}</button>
+        <button type="button" className="dig-btn dig-btn--primary" disabled={!allChosen && !resultEditing} onClick={apply}>{t('Apply & Mark Resolved')}</button>
         <IconButton icon="close" title={t('Close')} onClick={() => store.closeConflict()} />
       </div>
       <div className="dig-diff__body">
@@ -101,6 +105,18 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: 'light'
           </div>
         )}
       </div>
+      {showBase ? (
+        <div className="dig-edit-overlay">
+          <div className="dig-edit-overlay__bar"><span>{t('Base')}: {c.file}</span><span style={{ flex: 1 }} /><button type="button" className="dig-btn" onClick={() => setShowBase(false)}>{t('Close')}</button></div>
+          <pre className="dig-merge__text" style={{ flex: 1, overflow: 'auto', margin: 0 }}>{c.base || ''}</pre>
+        </div>
+      ) : null}
+      {resultEditing ? (
+        <div className="dig-edit-overlay">
+          <div className="dig-edit-overlay__bar"><span>{t('Result')}: {c.file}</span><span style={{ flex: 1 }} /><button type="button" className="dig-btn" onClick={() => setResultEditing(false)}>{t('Cancel')}</button><button type="button" className="dig-btn dig-btn--primary" onClick={() => { store.resolveConflictContent(c.file, resultText); setResultEditing(false) }}>{t('Apply & Mark Resolved')}</button></div>
+          <textarea className="dig-edit-overlay__text" value={resultText} spellCheck={false} onChange={(e) => setResultText(e.target.value)} />
+        </div>
+      ) : null}
     </div>
   )
 }
