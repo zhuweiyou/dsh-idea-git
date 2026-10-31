@@ -1,6 +1,15 @@
 /** Client-side protocol types mirroring the Host RPC surface. */
 
-export type FileKind = 'added' | 'modified' | 'deleted' | 'renamed' | 'copied' | 'untracked' | 'conflicted' | 'ignored' | 'typechange'
+export type FileKind =
+  | "added"
+  | "modified"
+  | "deleted"
+  | "renamed"
+  | "copied"
+  | "untracked"
+  | "conflicted"
+  | "ignored"
+  | "typechange"
 
 export interface FileEntry {
   path: string

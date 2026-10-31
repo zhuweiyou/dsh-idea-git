@@ -1,0 +1,7 @@
+node_modules/
+dist/
+lib/
+src/client/vendor/ui/icons-data.ts
+src/client/vendor/ui/expui/
+src/client/vendor/ui/openidea/
+*.svg

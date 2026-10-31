@@ -1,5 +1,5 @@
 /** Window shell state (open/minimized/maximized/height/theme + current target). */
-import React from 'react'
+import React from "react"
 
 export interface Target {
   sessionId: string
@@ -11,12 +11,12 @@ export interface WindowState {
   minimized: boolean
   maximized: boolean
   height: number
-  theme: 'light' | 'dark'
+  theme: "light" | "dark"
   target: Target | null
 }
 
 function readHeight(): number {
-  const v = Number(localStorage.getItem('dig.panelHeight'))
+  const v = Number(localStorage.getItem("dig.panelHeight"))
   return v > 0 ? v : 340
 }
 
@@ -25,7 +25,7 @@ let state: WindowState = {
   minimized: false,
   maximized: false,
   height: readHeight(),
-  theme: 'dark',
+  theme: "dark",
   target: null,
 }
 const subs = new Set<() => void>()
@@ -48,18 +48,20 @@ export function restoreWindow(snap: WindowState | null | undefined) {
 function set(patch: Partial<WindowState>) {
   state = { ...state, ...patch }
   subs.forEach((f) => {
-    try { f() } catch {}
+    try {
+      f()
+    } catch {}
   })
 }
 export function useWindow(): WindowState {
   return React.useSyncExternalStore(subscribeWindow, getWindow)
 }
 
-export function setTheme(theme: 'light' | 'dark') {
+export function setTheme(theme: "light" | "dark") {
   if (state.theme !== theme) set({ theme })
 }
 export function setHeight(height: number) {
-  localStorage.setItem('dig.panelHeight', String(Math.round(height)))
+  localStorage.setItem("dig.panelHeight", String(Math.round(height)))
   set({ height })
 }
 export function setTarget(target: Target | null) {

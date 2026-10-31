@@ -19,11 +19,11 @@
  * - Element ids (clip paths) are made unique per instance: WebKit can't resolve
  *   references into `display: none` subtrees, so ids must never be shared.
  */
-import { useId, useMemo, type CSSProperties } from "react";
-import clsx from "clsx";
-import styles from "./icons.module.css";
+import { useId, useMemo, type CSSProperties } from "react"
+import clsx from "clsx"
+import styles from "./icons.module.css"
 
-import { RAW } from './icons-data';
+import { RAW } from "./icons-data"
 
 const ICONS = {
   // Files & folders
@@ -449,9 +449,9 @@ const ICONS = {
   function: "nodes/function",
   field: "nodes/field",
   variable: "nodes/variable",
-} as const satisfies Record<string, string>;
+} as const satisfies Record<string, string>
 
-type BaseName = keyof typeof ICONS;
+type BaseName = keyof typeof ICONS
 
 // ---------------------------------------------------------------------------
 // IDEA symbol kinds. Kinds with an expui node icon render it; the rest fall back
@@ -479,7 +479,7 @@ export type SymbolKind =
   | "keyword"
   | "snippet"
   | "file"
-  | "text";
+  | "text"
 
 const SYMBOL_ICONS: Partial<Record<SymbolKind, string>> = {
   class: "nodes/class",
@@ -503,49 +503,49 @@ const SYMBOL_ICONS: Partial<Record<SymbolKind, string>> = {
   snippet: "nodes/template",
   file: "fileTypes/text",
   text: "fileTypes/text",
-};
+}
 
-export type IconName = BaseName | `symbol-${SymbolKind}`;
+export type IconName = BaseName | `symbol-${SymbolKind}`
 
-export const ICON_NAMES = Object.keys(ICONS) as BaseName[];
+export const ICON_NAMES = Object.keys(ICONS) as BaseName[]
 
 function iconPath(name: string): string | undefined {
-  if (name.startsWith("symbol-")) return SYMBOL_ICONS[name.slice(7) as SymbolKind];
-  return (ICONS as Record<string, string>)[name];
+  if (name.startsWith("symbol-")) return SYMBOL_ICONS[name.slice(7) as SymbolKind]
+  return (ICONS as Record<string, string>)[name]
 }
 
 // ---------------------------------------------------------------------------
 // SVG processing
 
-const MONO_LIGHT = "#6c707e";
-const MONO_DARK = "#ced0d6";
-const COLOR_RE = /#[0-9a-f]{3,8}\b/gi;
+const MONO_LIGHT = "#6c707e"
+const MONO_DARK = "#ced0d6"
+const COLOR_RE = /#[0-9a-f]{3,8}\b/gi
 
 interface Variant {
-  viewBox: string;
-  body: string;
+  viewBox: string
+  body: string
 }
 
 interface Prepared {
-  viewBox: string;
+  viewBox: string
   /** Markup; element ids carry an `__ID__` placeholder prefix when `hasIds`. */
-  html: string;
-  hasIds: boolean;
-  mono: boolean;
+  html: string
+  hasIds: boolean
+  mono: boolean
 }
 
 function raw(path: string): string | undefined {
-  return RAW[path.startsWith("openidea/") ? `./${path}.svg` : `./expui/${path}.svg`];
+  return RAW[path.startsWith("openidea/") ? `./${path}.svg` : `./expui/${path}.svg`]
 }
 
 function parse(svg: string): Variant {
-  const open = svg.indexOf("<svg");
-  const start = svg.indexOf(">", open) + 1;
-  const end = svg.lastIndexOf("</svg>");
-  const tag = svg.slice(open, start);
-  const w = /\bwidth="([\d.]+)"/.exec(tag)?.[1] ?? "16";
-  const h = /\bheight="([\d.]+)"/.exec(tag)?.[1] ?? w;
-  const viewBox = /\bviewBox="([^"]+)"/.exec(tag)?.[1] ?? `0 0 ${w} ${h}`;
+  const open = svg.indexOf("<svg")
+  const start = svg.indexOf(">", open) + 1
+  const end = svg.lastIndexOf("</svg>")
+  const tag = svg.slice(open, start)
+  const w = /\bwidth="([\d.]+)"/.exec(tag)?.[1] ?? "16"
+  const h = /\bheight="([\d.]+)"/.exec(tag)?.[1] ?? w
+  const viewBox = /\bviewBox="([^"]+)"/.exec(tag)?.[1] ?? `0 0 ${w} ${h}`
   const body = svg
     .slice(start, end)
     .replace(/<!--[\s\S]*?-->/g, "")
@@ -554,67 +554,76 @@ function parse(svg: string): Variant {
     .replace(/\bid="([^"]+)"/g, 'id="__ID__$1"')
     .replace(/url\(#([^)]+)\)/g, "url(#__ID__$1)")
     .replace(/href="#([^"]+)"/g, 'href="#__ID__$1"')
-    .trim();
-  return { viewBox, body };
+    .trim()
+  return { viewBox, body }
 }
 
-const colours = (s: string) => new Set((s.match(COLOR_RE) ?? []).map((c) => c.toLowerCase()));
-const only = (set: Set<string>, c: string) => set.size > 0 && [...set].every((x) => x === c);
+const colours = (s: string) => new Set((s.match(COLOR_RE) ?? []).map((c) => c.toLowerCase()))
+const only = (set: Set<string>, c: string) => set.size > 0 && [...set].every((x) => x === c)
 
-const prepared = new Map<string, Prepared | null>();
+const prepared = new Map<string, Prepared | null>()
 
-function build(lightSrc: string, darkSrc: string | undefined, keepColours: boolean): Omit<Prepared, "hasIds"> {
-  const light = parse(lightSrc);
-  const dark = darkSrc ? parse(darkSrc) : undefined;
-  const viewBox = light.viewBox;
-  if (!keepColours && only(colours(light.body), MONO_LIGHT) && (!dark || only(colours(dark.body), MONO_DARK))) {
-    return { viewBox, html: light.body.replace(COLOR_RE, "currentColor"), mono: true };
+function build(
+  lightSrc: string,
+  darkSrc: string | undefined,
+  keepColours: boolean,
+): Omit<Prepared, "hasIds"> {
+  const light = parse(lightSrc)
+  const dark = darkSrc ? parse(darkSrc) : undefined
+  const viewBox = light.viewBox
+  if (
+    !keepColours &&
+    only(colours(light.body), MONO_LIGHT) &&
+    (!dark || only(colours(dark.body), MONO_DARK))
+  ) {
+    return { viewBox, html: light.body.replace(COLOR_RE, "currentColor"), mono: true }
   }
-  if (!dark) return { viewBox, html: light.body, mono: false };
+  if (!dark) return { viewBox, html: light.body, mono: false }
   const html =
     `<g class="${styles.light}">${light.body.replace(/__ID__/g, "__ID__l")}</g>` +
-    `<g class="${styles.dark}">${dark.body.replace(/__ID__/g, "__ID__d")}</g>`;
-  return { viewBox, html, mono: false };
+    `<g class="${styles.dark}">${dark.body.replace(/__ID__/g, "__ID__d")}</g>`
+  return { viewBox, html, mono: false }
 }
 
 function prepare(path: string, large: boolean): Prepared | null {
-  const key = `${path}|${large ? 20 : 16}`;
-  let out = prepared.get(key);
-  if (out !== undefined) return out;
-  const base = large && raw(`${path}@20x20`) ? `${path}@20x20` : path;
-  const lightSrc = raw(base);
-  out = null;
+  const key = `${path}|${large ? 20 : 16}`
+  let out = prepared.get(key)
+  if (out !== undefined) return out
+  const base = large && raw(`${path}@20x20`) ? `${path}@20x20` : path
+  const lightSrc = raw(base)
+  out = null
   if (lightSrc) {
-    const b = build(lightSrc, raw(`${base}_dark`), path.startsWith("breakpoints/"));
-    out = { ...b, hasIds: b.html.includes("__ID__") };
+    const b = build(lightSrc, raw(`${base}_dark`), path.startsWith("breakpoints/"))
+    out = { ...b, hasIds: b.html.includes("__ID__") }
   }
-  prepared.set(key, out);
-  return out;
+  prepared.set(key, out)
+  return out
 }
 
-const EMPTY: Prepared = { viewBox: "0 0 16 16", html: "", hasIds: false, mono: true };
+const EMPTY: Prepared = { viewBox: "0 0 16 16", html: "", hasIds: false, mono: true }
 
-const withIds = (p: Prepared, prefix: string) => (p.hasIds ? p.html.replace(/__ID__/g, prefix) : p.html);
+const withIds = (p: Prepared, prefix: string) =>
+  p.hasIds ? p.html.replace(/__ID__/g, prefix) : p.html
 
 // ---------------------------------------------------------------------------
 
 export interface IconProps {
   /** Icon name; unknown names render the generic file icon. `symbol-<kind>` renders a symbol node icon. */
-  name: IconName | (string & {});
-  size?: number;
-  className?: string;
-  style?: CSSProperties;
+  name: IconName | (string & {})
+  size?: number
+  className?: string
+  style?: CSSProperties
   /** Accessible label; icons are decorative (aria-hidden) without one. */
-  label?: string;
+  label?: string
 }
 
 export function Icon({ name, size = 16, className, style, label }: IconProps) {
-  const uid = useId();
-  const path = iconPath(name);
-  const p = (path && prepare(path, size >= 18)) || prepare(ICONS.file, size >= 18) || EMPTY;
-  const html = useMemo(() => withIds(p, `i${uid.replace(/[^a-zA-Z0-9_-]/g, "")}-`), [p, uid]);
+  const uid = useId()
+  const path = iconPath(name)
+  const p = (path && prepare(path, size >= 18)) || prepare(ICONS.file, size >= 18) || EMPTY
+  const html = useMemo(() => withIds(p, `i${uid.replace(/[^a-zA-Z0-9_-]/g, "")}-`), [p, uid])
   if (!path && name.startsWith("symbol-")) {
-    return <SymbolBadge kind={name.slice(7)} className={className} style={style} />;
+    return <SymbolBadge kind={name.slice(7)} className={className} style={style} />
   }
   return (
     <svg
@@ -630,19 +639,19 @@ export function Icon({ name, size = 16, className, style, label }: IconProps) {
       focusable="false"
       dangerouslySetInnerHTML={{ __html: html }}
     />
-  );
+  )
 }
 
-let markupSeq = 0;
+let markupSeq = 0
 
 /** SVG markup for non-React (CodeMirror DOM) callers; `null` when the name is unknown. */
 export function iconMarkup(name: string, size = 16, className?: string): string | null {
-  const path = iconPath(name);
-  const p = path && prepare(path, size >= 18);
-  if (!p) return null;
-  const cls = clsx(styles.icon, p.mono && styles.mono, className);
-  const html = withIds(p, `m${++markupSeq}-`);
-  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="${p.viewBox}" fill="none" aria-hidden="true" focusable="false">${html}</svg>`;
+  const path = iconPath(name)
+  const p = path && prepare(path, size >= 18)
+  if (!p) return null
+  const cls = clsx(styles.icon, p.mono && styles.mono, className)
+  const html = withIds(p, `m${++markupSeq}-`)
+  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="${p.viewBox}" fill="none" aria-hidden="true" focusable="false">${html}</svg>`
 }
 
 /**
@@ -651,7 +660,7 @@ export function iconMarkup(name: string, size = 16, className?: string): string 
  * carry padding or compose several shapes and need the full 14px to look the same size.
  */
 export function gutterIconMarkup(name: string): string | null {
-  return iconMarkup(name, name === "gutter-run" ? 12 : 14);
+  return iconMarkup(name, name === "gutter-run" ? 12 : 14)
 }
 
 /**
@@ -660,18 +669,18 @@ export function gutterIconMarkup(name: string): string | null {
  * CodeMirror callers need no React renderer.
  */
 export function iconMarkupOrFallback(name: string, size = 16): string {
-  const html = iconMarkup(name, size);
-  if (html !== null) return html;
+  const html = iconMarkup(name, size)
+  if (html !== null) return html
   if (name.startsWith("symbol-")) {
-    const kind = name.slice(7).replace(/[^\w-]/g, "");
-    const letter = symbolLetter(kind).replace(/[&<>]/g, (c) => `&#${c.charCodeAt(0)};`);
-    return `<span class="${styles.symbol}" data-kind="${kind}" aria-hidden="true">${letter}</span>`;
+    const kind = name.slice(7).replace(/[^\w-]/g, "")
+    const letter = symbolLetter(kind).replace(/[&<>]/g, (c) => `&#${c.charCodeAt(0)};`)
+    return `<span class="${styles.symbol}" data-kind="${kind}" aria-hidden="true">${letter}</span>`
   }
-  return iconMarkup("file", size) ?? "";
+  return iconMarkup("file", size) ?? ""
 }
 
 export function hasIcon(name: string): boolean {
-  return iconPath(name) !== undefined || name.startsWith("symbol-");
+  return iconPath(name) !== undefined || name.startsWith("symbol-")
 }
 
 // ---------------------------------------------------------------------------
@@ -700,10 +709,10 @@ const SYMBOL_LETTERS: Record<SymbolKind, string> = {
   snippet: "~",
   file: "F",
   text: "t",
-};
+}
 
 export function symbolLetter(kind: string): string {
-  return SYMBOL_LETTERS[kind as SymbolKind] ?? kind.charAt(0) ?? "?";
+  return SYMBOL_LETTERS[kind as SymbolKind] ?? kind.charAt(0) ?? "?"
 }
 
 /** Symbol kind icon (expui `nodes/*`), or a letter badge for kinds without one. */
@@ -713,19 +722,19 @@ export function SymbolBadge({
   className,
   style,
 }: {
-  kind: SymbolKind | (string & {});
-  size?: number;
-  className?: string;
-  style?: CSSProperties;
+  kind: SymbolKind | (string & {})
+  size?: number
+  className?: string
+  style?: CSSProperties
 }) {
   if (SYMBOL_ICONS[kind as SymbolKind]) {
-    return <Icon name={`symbol-${kind}`} size={size} className={className} style={style} />;
+    return <Icon name={`symbol-${kind}`} size={size} className={className} style={style} />
   }
   return (
     <span className={clsx(styles.symbol, className)} style={style} data-kind={kind} aria-hidden>
       {symbolLetter(kind)}
     </span>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -735,11 +744,11 @@ export function SymbolBadge({
 
 /** `icon: "a b c"` → `{ a: icon, b: icon, c: icon }`. */
 function table(groups: Partial<Record<IconName, string>>): Record<string, IconName> {
-  const out: Record<string, IconName> = {};
+  const out: Record<string, IconName> = {}
   for (const [icon, keys] of Object.entries(groups) as [IconName, string][]) {
-    for (const key of keys.split(/\s+/)) if (key) out[key] = icon;
+    for (const key of keys.split(/\s+/)) if (key) out[key] = icon
   }
-  return out;
+  return out
 }
 
 /** Lower-case file names. */
@@ -748,7 +757,8 @@ const FILE_NAMES = table({
   "file-makefile": "makefile gnumakefile bsdmakefile makefile.am makefile.in kbuild",
   "file-cmake": "cmakelists.txt cmakecache.txt",
   "file-perl": "makefile.pl build.pl cpanfile",
-  "file-git": ".gitignore .gitignore_global .gitattributes .gitmodules .gitconfig .git-blame-ignore-revs .mailmap",
+  "file-git":
+    ".gitignore .gitignore_global .gitattributes .gitmodules .gitconfig .git-blame-ignore-revs .mailmap",
   "file-ignored":
     ".dockerignore .npmignore .prettierignore .eslintignore .stylelintignore .hgignore .ignore .rgignore " +
     ".fdignore .helmignore .vscodeignore .gcloudignore .slugignore .cfignore .bzrignore .containerignore",
@@ -758,7 +768,8 @@ const FILE_NAMES = table({
     ".coveragerc .hgrc hgrc credentials .jshintrc .gemrc .clang-format .clang-tidy .clangd .watchmanconfig .arcconfig",
   "file-npm": "package.json",
   "file-lock":
-    "package-lock.json npm-shrinkwrap.json pnpm-lock.yaml bun.lockb deno.lock go.sum go.work.sum " + "package.resolved",
+    "package-lock.json npm-shrinkwrap.json pnpm-lock.yaml bun.lockb deno.lock go.sum go.work.sum " +
+    "package.resolved",
   "file-cargo": "cargo.toml",
   "file-gomod": "go.mod",
   "file-gowork": "go.work",
@@ -785,7 +796,7 @@ const FILE_NAMES = table({
   "file-manifest": "manifest.mf",
   "file-readme": "readme readme.txt",
   "file-text": "authors notice codeowners contributors changelog",
-});
+})
 
 /** Name patterns, tried in order (lower-case names). */
 const NAME_PATTERNS: readonly (readonly [RegExp, IconName])[] = [
@@ -796,8 +807,11 @@ const NAME_PATTERNS: readonly (readonly [RegExp, IconName])[] = [
   [/^requirements([.-][\w.-]*)?\.(txt|in)$/, "file-requirements"],
   [/^(ts|js)config(\.[\w-]+)?\.json$/, "file-config"],
   [/\.config\.[cm]?[jt]s$/, "file-config"],
-  [/^\.(eslintrc|prettierrc|stylelintrc|babelrc|swcrc|lintstagedrc|commitlintrc|markdownlintrc)(\.|$)/, "file-config"],
-];
+  [
+    /^\.(eslintrc|prettierrc|stylelintrc|babelrc|swcrc|lintstagedrc|commitlintrc|markdownlintrc)(\.|$)/,
+    "file-config",
+  ],
+]
 
 /** Lower-case extensions, including two-part ones (`gradle.kts`). */
 const EXT_ICONS = table({
@@ -809,7 +823,8 @@ const EXT_ICONS = table({
   "file-tsx": "tsx",
   "file-vue": "vue",
   "file-svelte": "svelte",
-  "file-json": "json jsonc json5 jsonl ndjson geojson topojson webmanifest har avsc code-workspace code-snippets map",
+  "file-json":
+    "json jsonc json5 jsonl ndjson geojson topojson webmanifest har avsc code-workspace code-snippets map",
   "file-md": "md mdx markdown mdown mkd mkdn mdwn ronn workbook",
   "file-rst": "rst",
   "file-yaml": "yaml yml",
@@ -888,34 +903,34 @@ const EXT_ICONS = table({
   "file-regexp": "regexp",
   "file-idl": "idl",
   "file-binary": "class bin dat so dylib dll o a wasm pyc",
-});
+})
 
 /** Source files for languages without a file-type icon. */
-const CODE_EXT = new Set(["astro", "nim", "wit", "wat", "sol", "v", "sv"]);
+const CODE_EXT = new Set(["astro", "nim", "wit", "wat", "sol", "v", "sv"])
 
-let iconOverride: ((fileName: string) => IconName | null) | null = null;
+let iconOverride: ((fileName: string) => IconName | null) | null = null
 
 /** Lets the user's file type associations (Settings › File Types) pick icons first. */
 export function setFileIconOverride(resolve: ((fileName: string) => IconName | null) | null) {
-  iconOverride = resolve;
+  iconOverride = resolve
 }
 
 /** Picks a file-type icon from a file name. */
 export function fileIconName(fileName: string): IconName {
-  const custom = iconOverride?.(fileName);
-  if (custom) return custom;
-  const lower = fileName.toLowerCase();
-  const named = FILE_NAMES[lower] ?? NAME_PATTERNS.find(([re]) => re.test(lower))?.[1];
-  if (named) return named;
-  const dot = lower.lastIndexOf(".");
-  if (dot <= 0) return "file-text";
-  const ext = lower.slice(dot + 1);
-  const prev = lower.lastIndexOf(".", dot - 1);
-  const ext2 = prev > 0 ? lower.slice(prev + 1) : undefined;
-  const icon = (ext2 && EXT_ICONS[ext2]) || EXT_ICONS[ext];
-  if (icon) return icon;
-  if (CODE_EXT.has(ext)) return "file-code";
-  return "file-unknown";
+  const custom = iconOverride?.(fileName)
+  if (custom) return custom
+  const lower = fileName.toLowerCase()
+  const named = FILE_NAMES[lower] ?? NAME_PATTERNS.find(([re]) => re.test(lower))?.[1]
+  if (named) return named
+  const dot = lower.lastIndexOf(".")
+  if (dot <= 0) return "file-text"
+  const ext = lower.slice(dot + 1)
+  const prev = lower.lastIndexOf(".", dot - 1)
+  const ext2 = prev > 0 ? lower.slice(prev + 1) : undefined
+  const icon = (ext2 && EXT_ICONS[ext2]) || EXT_ICONS[ext]
+  if (icon) return icon
+  if (CODE_EXT.has(ext)) return "file-code"
+  return "file-unknown"
 }
 
 export type FolderKind =
@@ -932,38 +947,38 @@ export type FolderKind =
   | "generatedSource"
   | "generatedTest"
   | "compiled"
-  | "javadoc";
+  | "javadoc"
 
 /** Folder icon by role (expui has no separate "open" folder glyph). */
 export function folderIconName(kind: FolderKind = "plain"): IconName {
   switch (kind) {
     case "source":
-      return "folder-source";
+      return "folder-source"
     case "test":
-      return "folder-test";
+      return "folder-test"
     case "resources":
-      return "folder-resources";
+      return "folder-resources"
     case "testResources":
-      return "folder-test-resources";
+      return "folder-test-resources"
     case "excluded":
-      return "folder-excluded";
+      return "folder-excluded"
     case "library":
-      return "folder-library";
+      return "folder-library"
     case "github":
-      return "folder-github";
+      return "folder-github"
     case "module":
-      return "module";
+      return "module"
     case "package":
-      return "package";
+      return "package"
     case "generatedSource":
-      return "folder-generated-source";
+      return "folder-generated-source"
     case "generatedTest":
-      return "folder-generated-test";
+      return "folder-generated-test"
     case "compiled":
-      return "folder-compiled";
+      return "folder-compiled"
     case "javadoc":
-      return "folder-javadoc";
+      return "folder-javadoc"
     default:
-      return "folder";
+      return "folder"
   }
 }

@@ -12,9 +12,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/vendor/*"]
+      "@/*": ["./src/vendor/*"]
     },
     "types": ["node"]
   },

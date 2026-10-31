@@ -1,38 +1,29 @@
 {
   "name": "dsh-idea-git",
   "version": "0.1.0",
-  "type": "module",
   "description": "IDEA-style Git tool window for DeepSeek Harness: changes & commit, commit graph log, console, diff, branches/remotes, stash/worktrees and AI commit messages.",
-  "author": "zhuweiyou <i@zhuweiyou.com> (https://github.com/zhuweiyou)",
-  "license": "MIT",
   "keywords": [
-    "dsh",
-    "deepseek-harness",
+    "blame",
+    "commit-graph",
     "cordis",
-    "plugin",
+    "deepseek-harness",
+    "diff",
+    "dsh",
     "git",
     "idea",
-    "diff",
-    "blame",
     "lfs",
-    "worktree",
-    "commit-graph"
+    "plugin",
+    "worktree"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zhuweiyou/dsh-idea-git.git"
-  },
   "homepage": "https://github.com/zhuweiyou/dsh-idea-git#readme",
   "bugs": {
     "url": "https://github.com/zhuweiyou/dsh-idea-git/issues"
   },
-  "main": "lib/index.js",
-  "exports": {
-    ".": "./lib/index.js",
-    "./client": "./dist/client.js",
-    "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg",
-    "./package.json": "./package.json"
+  "license": "MIT",
+  "author": "zhuweiyou <i@zhuweiyou.com> (https://github.com/zhuweiyou)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhuweiyou/dsh-idea-git.git"
   },
   "files": [
     "lib",
@@ -42,6 +33,33 @@
     "icon.svg",
     "README.md"
   ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./dist/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp build --mode host && vp build --mode client",
+    "typecheck": "vp check --no-fmt --no-lint",
+    "test": "vp test run",
+    "lint": "vp lint src",
+    "format": "vp fmt . --write",
+    "format:check": "vp fmt . --check",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "clsx": "^2.1.1",
+    "typescript": "^5.7.0",
+    "vite-plus": "catalog:"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -57,24 +75,5 @@
         "@deepseek-ai/dsh-client-ui-workspace"
       ]
     }
-  },
-  "scripts": {
-    "build": "node scripts/build.mjs",
-    "build:host": "node scripts/build-host.mjs",
-    "build:client": "node scripts/build-client.mjs",
-    "typecheck": "tsc --noEmit",
-    "test:host": "node scripts/test-host.mjs",
-    "test": "node scripts/test-host.mjs",
-    "prepack": "npm run build",
-    "prepublishOnly": "npm run build && npm run test:host"
-  },
-  "devDependencies": {
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "clsx": "^2.1.1",
-    "esbuild": "^0.25.0",
-    "typescript": "^5.7.0",
-    "vite-plus": "^1.4.0"
   }
 }

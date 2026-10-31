@@ -15,7 +15,10 @@ function crc32(buf: Buffer): number {
   return (c ^ 0xffffffff) >>> 0
 }
 
-export interface ZipEntry { name: string; data: Buffer }
+export interface ZipEntry {
+  name: string
+  data: Buffer
+}
 
 export function zipStore(entries: ZipEntry[]): Buffer {
   const parts: Buffer[] = []
@@ -26,7 +29,7 @@ export function zipStore(entries: ZipEntry[]): Buffer {
   const dosDate = ((2020 - 1980) << 9) | (1 << 5) | 1
 
   for (const e of entries) {
-    const name = Buffer.from(e.name, 'utf8')
+    const name = Buffer.from(e.name, "utf8")
     const crc = crc32(e.data)
     const size = e.data.length
     const local = Buffer.alloc(30)

@@ -5,20 +5,24 @@ IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行�
 ## 安装
 
 ### Desktop 版
+
 在 DSH 桌面端的插件安装入口里直接填写插件名称 `dsh-idea-git` 即可。
 
 ### Web 版
+
 ```sh
 dsh plugin --profile web add dsh-idea-git
 ```
 
 ## 入口
+
 - **GIT 按钮**：会话输入框左侧（“完全权限”右侧），hover 高亮、打开态与控件 hover 一致，点击 toggle。
 - **底部面板**：IDEA 式停靠（打开时把内容上推，不悬浮遮挡）；双击标题栏切换最大化；上边缘透明热区可调高度。
 - 标签页：**Commit / 日志 / 控制台 / 工作树 / 子模块 / 储藏 / 货架**。
 - 面板状态**按工作区隔离**：切换工作区各自保留开合、标签、提交信息与内容；多仓库可在面板头切换目标仓库。
 
 ## 功能
+
 - **改动与提交**：变更列表分组（可新建/重命名/备注/删除/设活动、拖拽文件或文件夹归类）、
   目录/扁平切换、勾选（文件与分组三态）、**Hunk 级暂存/部分提交**（`partial` 徽标）、
   回滚、Update、提交信息（历史复用、AI 生成）、作者/Sign-off、提交信息检查、
@@ -40,5 +44,6 @@ dsh plugin --profile web add dsh-idea-git
 - **体验**：所有图标按钮即时 tooltip、右键菜单、命令按钮禁用态固定配色、错误横幅与操作 toast。
 
 ## 主题与语言
+
 - [x] `data-theme` 跟随 DSH `colorScheme`，并订阅 `theme/change`
 - [x] 文案「英文源 + 中文词典」跟随 DSH `locale`
