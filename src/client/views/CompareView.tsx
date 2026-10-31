@@ -77,6 +77,35 @@ export function CompareView({ bottom, theme }: { bottom: number; theme: "light" 
             <div className="dig-empty">{t("Select a file")}</div>
           ) : c.diff.loading ? (
             <div className="dig-empty">{t("Loading")}</div>
+          ) : c.diff.kind === "image" ? (
+            <div className="dig-imgdiff">
+              <div className="dig-imgpane">
+                <div className="dig-imgpane__label">{c.diff.oldLabel || c.from}</div>
+                {c.diff.oldB64 ? (
+                  <img
+                    className="dig-imgpane__img"
+                    src={`data:${c.diff.mime || "application/octet-stream"};base64,${c.diff.oldB64}`}
+                    alt="old"
+                  />
+                ) : (
+                  <div className="dig-empty">{t("No image")}</div>
+                )}
+              </div>
+              <div className="dig-imgpane">
+                <div className="dig-imgpane__label">{c.diff.newLabel || c.to}</div>
+                {c.diff.newB64 ? (
+                  <img
+                    className="dig-imgpane__img"
+                    src={`data:${c.diff.mime || "application/octet-stream"};base64,${c.diff.newB64}`}
+                    alt="new"
+                  />
+                ) : (
+                  <div className="dig-empty">{t("No image")}</div>
+                )}
+              </div>
+            </div>
+          ) : c.diff.kind === "binary" ? (
+            <div className="dig-empty">{t("Binary file")}</div>
           ) : (
             <div className="dig-diff__split">
               {rows.map((r, i) => (

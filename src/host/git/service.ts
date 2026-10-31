@@ -1583,28 +1583,52 @@ export async function refDiff(info: RepoInfo, payload: any, signal?: AbortSignal
   const to = String(payload?.to ?? "HEAD")
   const file = String(payload?.file ?? "")
   if (!fromRaw || !file) throw new RepoError("git/bad-ref", "Missing ref/file")
-  const show = async (rev: string): Promise<string> => {
-    if (rev === "ROOT") return ""
-    const r = await runGitBytes(info.gitPath, {
-      cwd: info.root,
-      args: ["show", `${rev}:${file}`],
-      signal,
-    })
-    return r.code === 0 ? r.stdout.toString("utf8") : ""
+  let usedLfs = false
+  const showBytes = async (rev: string): Promise<Buffer> => {
+    if (rev === "ROOT") return Buffer.alloc(0)
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ["show", `${rev}:${file}`], signal })
+    if (r.code !== 0) return Buffer.alloc(0)
+    if (isLfsPointer(r.stdout)) {
+      usedLfs = true
+      return smudgeLfs(info, r.stdout)
+    }
+    return r.stdout
   }
-  let newText: string
+  const oldBuf = await showBytes(fromRaw)
+  let newBuf: Buffer
   if (to === "WORKTREE") {
     try {
-      newText = fs.readFileSync(path.resolve(info.root, file), "utf8")
+      newBuf = fs.readFileSync(path.resolve(info.root, file))
     } catch {
-      newText = ""
+      newBuf = Buffer.alloc(0)
     }
-  } else newText = await show(to)
+    if (isLfsPointer(newBuf)) {
+      usedLfs = true
+      newBuf = await smudgeLfs(info, newBuf)
+    }
+  } else newBuf = await showBytes(to)
+  const ext = path.extname(file).toLowerCase()
+  const oldLabel = fromRaw
+  const newLabel = to === "WORKTREE" ? "Working Tree" : to
+  if (IMAGE_EXT.has(ext)) {
+    return {
+      kind: "image",
+      mime: MIME[ext] || "application/octet-stream",
+      oldB64: oldBuf.length ? oldBuf.toString("base64") : "",
+      newB64: newBuf.length ? newBuf.toString("base64") : "",
+      oldLabel,
+      newLabel,
+      lfs: usedLfs,
+    }
+  }
+  if (oldBuf.includes(0) || newBuf.includes(0)) return { kind: "binary", oldLabel, newLabel, lfs: usedLfs }
   return {
-    oldText: await show(fromRaw),
-    newText,
-    oldLabel: fromRaw,
-    newLabel: to === "WORKTREE" ? "Working Tree" : to,
+    kind: "text",
+    oldText: oldBuf.toString("utf8"),
+    newText: newBuf.toString("utf8"),
+    oldLabel,
+    newLabel,
+    lfs: usedLfs,
   }
 }
 

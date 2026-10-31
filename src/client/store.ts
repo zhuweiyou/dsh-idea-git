@@ -113,7 +113,18 @@ export interface GitState {
     loading: boolean
     files: Array<{ path: string; kind: string }>
     sel?: string
-    diff?: { loading: boolean; oldText: string; newText: string }
+    diff?: {
+      loading: boolean
+      oldText: string
+      newText: string
+      kind?: "text" | "image" | "binary"
+      oldB64?: string
+      newB64?: string
+      mime?: string
+      oldLabel?: string
+      newLabel?: string
+      lfs?: boolean
+    }
   } | null
   diff: {
     title: string
@@ -1017,7 +1028,17 @@ export async function selectCompareFile(file: string) {
   if (!c) return
   set({ compare: { ...c, sel: file, diff: { loading: true, oldText: "", newText: "" } } })
   try {
-    const r = await api.rpc<{ oldText: string; newText: string }>("refDiff", {
+    const r = await api.rpc<{
+      oldText: string
+      newText: string
+      kind?: "text" | "image" | "binary"
+      oldB64?: string
+      newB64?: string
+      mime?: string
+      oldLabel?: string
+      newLabel?: string
+      lfs?: boolean
+    }>("refDiff", {
       ...targetPayload(),
       from: c.from,
       to: c.to,
@@ -1027,7 +1048,18 @@ export async function selectCompareFile(file: string) {
       set({
         compare: {
           ...state.compare,
-          diff: { loading: false, oldText: r.oldText, newText: r.newText },
+          diff: {
+            loading: false,
+            oldText: r.oldText,
+            newText: r.newText,
+            kind: r.kind,
+            oldB64: r.oldB64,
+            newB64: r.newB64,
+            mime: r.mime,
+            oldLabel: r.oldLabel,
+            newLabel: r.newLabel,
+            lfs: r.lfs,
+          },
         },
       })
   } catch {
@@ -1172,14 +1204,23 @@ export async function openRangeDiff(from: string, to: string, file: string, titl
       newText: string
       oldLabel: string
       newLabel: string
+      kind?: "text" | "image" | "binary"
+      oldB64?: string
+      newB64?: string
+      mime?: string
+      lfs?: boolean
     }>("refDiff", { ...targetPayload(), from, to, file })
     set({
       diff: {
         title,
         loading: false,
-        kind: "text",
+        kind: r.kind || "text",
         oldText: r.oldText,
         newText: r.newText,
+        oldB64: r.oldB64,
+        newB64: r.newB64,
+        mime: r.mime,
+        lfs: r.lfs,
         oldLabel: r.oldLabel,
         newLabel: r.newLabel,
       },

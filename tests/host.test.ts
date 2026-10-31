@@ -974,7 +974,18 @@ test("host integration", async () => {
             cmp.ok && cmp.value.left.some((c) => c.subject === "feat1") && cmp.value.right.length === 0,
           )
         }
-      } finally {
+      
+  /* ---------------- refDiff image ---------------- */
+  console.log("\n[refdiff-image]")
+  {
+    const { repo, g } = makeRepo()
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64")
+    fs.writeFileSync(path.join(repo, "pic.png"), png); g(["add", "."]); g(["commit", "-qm", "img1"])
+    fs.writeFileSync(path.join(repo, "pic.png"), Buffer.concat([png, Buffer.from([0])])); g(["commit", "-qam", "img2"])
+    const r = await call("refDiff", { ...D(repo), from: "HEAD^", to: "HEAD", file: "pic.png" })
+    ok("refDiff image kind", r.ok && r.value.kind === "image" && !!r.value.oldB64 && !!r.value.newB64)
+  }
+} finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })
         } catch {}
