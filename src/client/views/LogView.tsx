@@ -7,6 +7,7 @@ import { askText, askMultiline } from "../lib/prompt"
 import { SplitPane } from "../lib/Split"
 import { computeGraph, emptyGraphState, laneColor, type GraphRow } from "../lib/graph"
 import * as store from "../store"
+import { confirmThen } from "../lib/confirm"
 import type { BranchItem, CommitItem, FileEntry } from "../types"
 
 const ROW = 26
@@ -275,8 +276,10 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           title={t("Delete Branch")}
           onClick={() => {
             const r = selectedName
-            if (r && !isRemoteRef() && window.confirm(t("Delete branch {name}?", { name: r })))
-              void store.deleteBranch(r)
+            if (r && !isRemoteRef())
+              confirmThen(t("Delete branch {name}?", { name: r }), () => {
+                void store.deleteBranch(r)
+              })
           }}
         />
         <IconButton
@@ -390,8 +393,9 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                       label: t("Remove Remote"),
                       danger: true,
                       run: () => {
-                        if (window.confirm(t("Remove remote {name}?", { name: remote })))
+                        confirmThen(t("Remove remote {name}?", { name: remote }), () => {
                           void store.removeRemote(remote)
+                        })
                       },
                     },
                   ])
@@ -450,7 +454,9 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                       label: t("Delete"),
                       danger: true,
                       run: () => {
-                        if (window.confirm(t("Delete tag {name}?", { name: tag }))) void store.deleteTag(tag)
+                        confirmThen(t("Delete tag {name}?", { name: tag }), () => {
+                          void store.deleteTag(tag)
+                        })
                       },
                     },
                   ])
@@ -566,8 +572,9 @@ function FileNodes({
                     {
                       label: t("Cherry-Pick Selected"),
                       run: () => {
-                        if (window.confirm(t("Cherry-pick {n} selected file(s)?", { n: paths.length })))
+                        confirmThen(t("Cherry-pick {n} selected file(s)?", { n: paths.length }), () => {
                           void store.cherryPickSelected(commit, paths)
+                        })
                       },
                     },
                     {
@@ -633,8 +640,9 @@ function FileNodes({
                 {
                   label: t("Cherry-Pick Selected"),
                   run: () => {
-                    if (window.confirm(t("Cherry-pick {n} selected file(s)?", { n: paths.length })))
+                    confirmThen(t("Cherry-pick {n} selected file(s)?", { n: paths.length }), () => {
                       void store.cherryPickSelected(commit, paths)
+                    })
                   },
                 },
                 {
@@ -772,15 +780,17 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
       {
         label: t("Revert Commits"),
         run: () => {
-          if (window.confirm(t("Revert {n} commits?", { n: selection.length })))
+          confirmThen(t("Revert {n} commits?", { n: selection.length }), () => {
             void store.revertCommits(selection.map((x) => x.id))
+          })
         },
       },
       {
         label: t("Squash Commits"),
         run: () => {
-          if (window.confirm(t("Squash {n} selected commits into one?", { n: selection.length })))
+          confirmThen(t("Squash {n} selected commits into one?", { n: selection.length }), () => {
             void store.squashRange(selection.map((x) => x.id))
+          })
         },
       },
       { label: t("Drop Commits"), disabled: true },
@@ -801,15 +811,17 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
     {
       label: t("Fixup…"),
       run: () => {
-        if (window.confirm(t("Commit local changes as fixup! {subject}?", { subject: c.subject })))
+        confirmThen(t("Commit local changes as fixup! {subject}?", { subject: c.subject }), () => {
           void store.fixupCommit(c.subject)
+        })
       },
     },
     {
       label: t("Squash Into…"),
       run: () => {
-        if (window.confirm(t("Commit local changes as squash! {subject}?", { subject: c.subject })))
+        confirmThen(t("Commit local changes as squash! {subject}?", { subject: c.subject }), () => {
           void store.squashInto(c.subject)
+        })
       },
     },
     { separator: true },
@@ -819,40 +831,51 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
     {
       label: t("Reset Current Branch to Here (Soft)"),
       run: () => {
-        if (window.confirm(t("Reset to this commit (soft)?"))) void store.resetTo(c.id, "soft")
+        confirmThen(t("Reset to this commit (soft)?"), () => {
+          void store.resetTo(c.id, "soft")
+        })
       },
     },
     {
       label: t("Reset Current Branch to Here (Mixed)"),
       run: () => {
-        if (window.confirm(t("Reset to this commit (mixed)?"))) void store.resetTo(c.id, "mixed")
+        confirmThen(t("Reset to this commit (mixed)?"), () => {
+          void store.resetTo(c.id, "mixed")
+        })
       },
     },
     {
       label: t("Reset Current Branch to Here (Hard)"),
       danger: true,
       run: () => {
-        if (window.confirm(t("Hard reset to this commit? Uncommitted changes will be lost.")))
+        confirmThen(t("Hard reset to this commit? Uncommitted changes will be lost."), () => {
           void store.resetTo(c.id, "hard")
+        })
       },
     },
     {
       label: t("Revert Commit"),
       run: () => {
-        if (window.confirm(t("Revert this commit?"))) void store.revertCommit(c.id)
+        confirmThen(t("Revert this commit?"), () => {
+          void store.revertCommit(c.id)
+        })
       },
     },
     {
       label: t("Undo Commit"),
       run: () => {
-        if (window.confirm(t("Undo the latest commit (keep changes)?"))) void store.undoLastCommit()
+        confirmThen(t("Undo the latest commit (keep changes)?"), () => {
+          void store.undoLastCommit()
+        })
       },
     },
     {
       label: t("Squash into Parent"),
       disabled: store.getState().commits[0]?.id !== c.id || c.parents.length === 0,
       run: () => {
-        if (window.confirm(t("Squash this commit into its parent?"))) void store.squashHead()
+        confirmThen(t("Squash this commit into its parent?"), () => {
+          void store.squashHead()
+        })
       },
     },
     {
@@ -860,10 +883,10 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
       danger: true,
       run: () => {
         const isHead = store.getState().commits[0]?.id === c.id
-        if (window.confirm(t("Drop this commit? Its changes will be discarded."))) {
+        confirmThen(t("Drop this commit? Its changes will be discarded."), () => {
           if (isHead) void store.dropHead()
           else void store.dropCommit(c.id)
-        }
+        })
       },
     },
     { separator: true },
@@ -950,8 +973,9 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
       label: t("Checkout and Rebase onto '{cur}'", { cur }),
       disabled: b.remote,
       run: () => {
-        if (window.confirm(t("Checkout '{name}' and rebase onto '{cur}'?", { name: b.name, cur })))
+        confirmThen(t("Checkout '{name}' and rebase onto '{cur}'?", { name: b.name, cur }), () => {
           void store.checkoutAndRebase(b.name, cur)
+        })
       },
     },
     {
@@ -979,7 +1003,9 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     {
       label: t("Merge '{name}' into Current", { name: b.name }),
       run: () => {
-        if (window.confirm(t("Merge {name} into current branch?", { name: b.name }))) void store.mergeBranch(b.name)
+        confirmThen(t("Merge {name} into current branch?", { name: b.name }), () => {
+          void store.mergeBranch(b.name)
+        })
       },
     },
     ...(b.remote
@@ -1007,8 +1033,9 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
           {
             label: t("Rebase '{cur}' onto '{name}'", { cur, name: b.name }),
             run: () => {
-              if (window.confirm(t("Rebase '{cur}' onto '{name}'?", { cur, name: b.name })))
+              confirmThen(t("Rebase '{cur}' onto '{name}'?", { cur, name: b.name }), () => {
                 void store.rebaseBranch(b.name)
+              })
             },
           },
           {
@@ -1022,15 +1049,18 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
             label: t("Delete"),
             danger: true,
             run: () => {
-              if (window.confirm(t("Delete branch {name}?", { name: b.name }))) void store.deleteBranch(b.name)
+              confirmThen(t("Delete branch {name}?", { name: b.name }), () => {
+                void store.deleteBranch(b.name)
+              })
             },
           },
           {
             label: t("Force Delete"),
             danger: true,
             run: () => {
-              if (window.confirm(t("Force delete branch {name}? Unmerged commits will be lost.", { name: b.name })))
+              confirmThen(t("Force delete branch {name}? Unmerged commits will be lost.", { name: b.name }), () => {
                 void store.deleteBranch(b.name, true)
+              })
             },
           },
         ]),

@@ -3,6 +3,7 @@ import React from "react"
 import { useGit, Icon, IconButton } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
+import { confirmThen } from "../lib/confirm"
 import { askText } from "../lib/prompt"
 import { openContextMenu } from "../lib/contextMenu"
 
@@ -29,7 +30,9 @@ export function WorktreeView() {
           type="button"
           className="dig-btn"
           onClick={() => {
-            if (window.confirm(t("Prune stale worktree records?"))) void store.pruneWorktrees()
+            confirmThen(t("Prune stale worktree records?"), () => {
+              void store.pruneWorktrees()
+            })
           }}
         >
           {t("Prune")}
@@ -66,7 +69,9 @@ export function WorktreeView() {
                   danger: true,
                   disabled: w.current,
                   run: () => {
-                    if (window.confirm(t("Remove this worktree?"))) void store.removeWorktree(w.path)
+                    confirmThen(t("Remove this worktree?"), () => {
+                      void store.removeWorktree(w.path)
+                    })
                   },
                 },
               ])
@@ -90,7 +95,9 @@ export function WorktreeView() {
                 icon="trash"
                 title={t("Remove worktree")}
                 onClick={() => {
-                  if (window.confirm(t("Remove this worktree?"))) void store.removeWorktree(w.path)
+                  confirmThen(t("Remove this worktree?"), () => {
+                    void store.removeWorktree(w.path)
+                  })
                 }}
               />
             )}

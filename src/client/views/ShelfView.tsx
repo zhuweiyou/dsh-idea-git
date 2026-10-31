@@ -4,6 +4,7 @@ import { useGit, Icon, IconButton, Button, formatDate } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import { askText } from "../lib/prompt"
 import * as store from "../store"
+import { confirmThen } from "../lib/confirm"
 
 export function ShelfView() {
   const s = useGit()
@@ -46,7 +47,9 @@ export function ShelfView() {
                 icon="trash"
                 title={t("Drop")}
                 onClick={() => {
-                  if (window.confirm(t("Drop this shelf?"))) void store.shelfDrop(it.index)
+                  confirmThen(t("Drop this shelf?"), () => {
+                    void store.shelfDrop(it.index)
+                  })
                 }}
               />
             </div>

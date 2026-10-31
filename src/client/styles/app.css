@@ -2738,13 +2738,31 @@ body.dig-docked #root {
 
 /* Match OpenIDEA cm.ts diff painting: translucent line band + strong word segment + solid gutter. */
 .dig-dsrow--rep .dig-dsrow__cell--old,
-.dig-dsrow--del .dig-dsrow__cell--old { background: color-mix(in srgb, var(--diff-deleted) 28%, transparent) !important; }
+.dig-dsrow--del .dig-dsrow__cell--old {
+  background: color-mix(in srgb, var(--diff-deleted) 28%, transparent) !important;
+}
 .dig-dsrow--rep .dig-dsrow__cell--new,
-.dig-dsrow--add .dig-dsrow__cell--new { background: color-mix(in srgb, var(--diff-inserted) 28%, transparent) !important; }
-.dig-durow--del { background: color-mix(in srgb, var(--diff-deleted) 40%, transparent) !important; }
-.dig-durow--add { background: color-mix(in srgb, var(--diff-inserted) 40%, transparent) !important; }
-.dig-word--deleted { background: color-mix(in srgb, var(--diff-deleted) 85%, transparent) !important; color: inherit !important; }
-.dig-word--inserted { background: color-mix(in srgb, var(--diff-inserted) 85%, transparent) !important; color: inherit !important; }
+.dig-dsrow--add .dig-dsrow__cell--new {
+  background: color-mix(in srgb, var(--diff-inserted) 28%, transparent) !important;
+}
+.dig-durow--del {
+  background: color-mix(in srgb, var(--diff-deleted) 40%, transparent) !important;
+}
+.dig-durow--add {
+  background: color-mix(in srgb, var(--diff-inserted) 40%, transparent) !important;
+}
+.dig-word--deleted {
+  background: color-mix(in srgb, var(--diff-deleted) 85%, transparent) !important;
+  color: inherit !important;
+}
+.dig-word--inserted {
+  background: color-mix(in srgb, var(--diff-inserted) 85%, transparent) !important;
+  color: inherit !important;
+}
 .dig-dsrow--rep .dig-dsrow__no,
-.dig-dsrow--del .dig-dsrow__no { box-shadow: inset 3px 0 0 var(--diff-deleted); }
-.dig-dsrow--add .dig-dsrow__no:last-of-type { box-shadow: inset -3px 0 0 var(--diff-inserted); }
+.dig-dsrow--del .dig-dsrow__no {
+  box-shadow: inset 3px 0 0 var(--diff-deleted);
+}
+.dig-dsrow--add .dig-dsrow__no:last-of-type {
+  box-shadow: inset -3px 0 0 var(--diff-inserted);
+}

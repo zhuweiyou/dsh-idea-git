@@ -20,6 +20,7 @@ import { ContextMenuHost } from "./lib/contextMenu"
 import { syncAll } from "./services"
 import { saveCurrentWorkspace } from "./workspaceState"
 import { PromptHost, askText } from "./lib/prompt"
+import { ConfirmHost } from "./lib/confirm"
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: "changes", label: "Commit" },
@@ -379,6 +380,7 @@ export function Panel() {
       </div>
       <ContextMenuHost />
       <PromptHost theme={w.theme} />
+      <ConfirmHost />
       <RebasePlanDialog theme={w.theme} />
     </>
   )

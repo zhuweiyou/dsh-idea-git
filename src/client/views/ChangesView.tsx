@@ -18,6 +18,7 @@ import { useT, getActiveLocale } from "../lib/i18n"
 import { askText } from "../lib/prompt"
 import { openContextMenu, copyText } from "../lib/contextMenu"
 import * as store from "../store"
+import { confirmThen } from "../lib/confirm"
 import type { FileEntry } from "../types"
 
 interface TreeNode {
@@ -70,7 +71,9 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
       label: t("Rollback…"),
       danger: true,
       run: () => {
-        if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path }))) void store.discard([path])
+        confirmThen(t("Discard changes to {path}? This cannot be undone.", { path }), () => {
+          void store.discard([path])
+        })
       },
     },
     { label: t("Stage"), disabled: !canStage, run: () => void store.stage([path]) },
@@ -111,8 +114,9 @@ function dirMenuItems(node: { path: string }, gs: any, t: (x: string, p?: any) =
       danger: true,
       disabled: !files.length,
       run: () => {
-        if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path: node.path })))
+        confirmThen(t("Discard changes to {path}? This cannot be undone.", { path: node.path }), () => {
           void store.discard(paths)
+        })
       },
     },
     {
@@ -234,8 +238,9 @@ function FileRow({
             title={t("Discard Changes")}
             size={13}
             onClick={() => {
-              if (window.confirm(t("Discard changes to {path}? This cannot be undone.", { path: file.path })))
+              confirmThen(t("Discard changes to {path}? This cannot be undone.", { path: file.path }), () => {
                 void store.discard([file.path])
+              })
             }}
           />
         ) : null}
@@ -465,7 +470,9 @@ function Group({
                     danger: true,
                     disabled: listId === "default",
                     run: () => {
-                      if (window.confirm(t("Delete this changelist?"))) store.deleteChangelist(listId)
+                      confirmThen(t("Delete this changelist?"), () => {
+                        store.deleteChangelist(listId)
+                      })
                     },
                   },
                   { separator: true },
@@ -484,7 +491,9 @@ function Group({
                     danger: true,
                     disabled: !paths.length,
                     run: () => {
-                      if (window.confirm(t("Rollback all changes? This cannot be undone."))) void store.discard(paths)
+                      confirmThen(t("Rollback all changes? This cannot be undone."), () => {
+                        void store.discard(paths)
+                      })
                     },
                   },
                 ])
@@ -727,8 +736,9 @@ export function ChangesView() {
           title={t("Rollback All")}
           disabled={s.files.length === 0}
           onClick={() => {
-            if (window.confirm(t("Rollback all changes? This cannot be undone.")))
+            confirmThen(t("Rollback all changes? This cannot be undone."), () => {
               void store.discard(s.files.map((f) => f.path))
+            })
           }}
         />
         <IconButton icon="download" title={t("Update")} onClick={() => void store.remoteOp("pull")} />
@@ -843,7 +853,9 @@ export function ChangesView() {
                     danger
                     onClick={() => {
                       close()
-                      if (window.confirm(t("Delete this changelist?"))) store.deleteChangelist(active)
+                      confirmThen(t("Delete this changelist?"), () => {
+                        store.deleteChangelist(active)
+                      })
                     }}
                   >
                     {t("Delete Changelist")}
@@ -921,8 +933,9 @@ export function ChangesView() {
                   close()
                   const pat = await askText(t("LFS migrate include (e.g. *.psd)"))
                   if (!pat) return
-                  if (window.confirm(t("Migrate {pat} into LFS? This rewrites history.", { pat })))
+                  confirmThen(t("Migrate {pat} into LFS? This rewrites history.", { pat }), () => {
                     void store.lfsMigrate(pat)
+                  })
                 }}
               >
                 {t("LFS Migrate…")}
@@ -947,7 +960,9 @@ export function ChangesView() {
             const active = cl?.active || "default"
             if (active !== "default") {
               e.preventDefault()
-              if (window.confirm(t("Delete this changelist?"))) store.deleteChangelist(active)
+              confirmThen(t("Delete this changelist?"), () => {
+                store.deleteChangelist(active)
+              })
             }
           } else if (e.key === "F4") {
             e.preventDefault()

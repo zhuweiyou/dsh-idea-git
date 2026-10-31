@@ -3,6 +3,7 @@ import React from "react"
 import { useGit, Icon, IconButton, Button, formatDate } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
+import { confirmThen } from "../lib/confirm"
 import { openContextMenu } from "../lib/contextMenu"
 
 export function StashView() {
@@ -63,7 +64,9 @@ export function StashView() {
                 icon="trash"
                 title={t("Drop")}
                 onClick={() => {
-                  if (window.confirm(t("Drop this stash?"))) void store.stashDrop(st.index)
+                  confirmThen(t("Drop this stash?"), () => {
+                    void store.stashDrop(st.index)
+                  })
                 }}
               />
             </div>
