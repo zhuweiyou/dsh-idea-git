@@ -623,7 +623,21 @@ export function toggleInclude(path: string) {
 export function setIncludeAll(paths: string[], value: boolean) {
   const next = { ...state.include }
   for (const p of paths) next[p] = value
-  set({ include: next })
+  const ex = { ...state.excludedHunks }
+  if (value) for (const p of paths) delete ex[p]
+  set({ include: next, excludedHunks: ex })
+}
+
+/** File checkbox: off -> include; partially included -> include all hunks; included -> exclude. */
+export function setFileInclusion(path: string) {
+  const inc = state.include[path] !== false
+  const ex = state.excludedHunks[path] || []
+  if (inc && ex.length) {
+    const next = { ...state.excludedHunks }; delete next[path]
+    set({ excludedHunks: next })
+    return
+  }
+  set({ include: { ...state.include, [path]: !inc } })
 }
 
 

@@ -2044,3 +2044,5 @@ body.dig-docked #root { height: 100% !important; }
 .dig-errorpane__msg { white-space: pre-wrap; font-family: var(--font-mono); font-size: var(--fs-small); color: var(--fg-secondary); background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
 .dig-errorpane__actions { display: flex; gap: 8px; margin-top: 10px; }
 .dig-hunkcheck { width: 12px; height: 12px; margin-left: 2px; vertical-align: middle; accent-color: var(--accent); cursor: pointer; }
+.dig-check__box[data-indeterminate='true'] { background: var(--accent); box-shadow: none; }
+.dig-dash { display: block; width: 8px; height: 2px; background: #fff; }

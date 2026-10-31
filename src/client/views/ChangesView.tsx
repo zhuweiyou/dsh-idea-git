@@ -90,12 +90,14 @@ function FileRow({ file, selected, onSelect }: { file: FileEntry; selected?: boo
   const canStage = file.unstaged || (!file.staged && file.kind !== 'conflicted')
   const canUnstage = file.staged
   const included = gs.include[file.path] !== false
+  const excludedCount = (gs.excludedHunks?.[file.path] || []).length
+  const incState = !included ? 'off' : excludedCount ? 'mixed' : 'on'
   return (
     <div className="dig-filerow" title={file.path} draggable data-selected={selected ? 'true' : undefined}
       onDragStart={(e) => { try { e.dataTransfer.setData('application/x-dsh-changes', file.path); e.dataTransfer.effectAllowed = 'move' } catch {} }}
       onClick={() => { onSelect?.(file.path); store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged }) }}
       onContextMenu={(e) => openContextMenu(e, fileMenuItems(file, root, t))}>
-      <span className="dig-check__box" data-on={included ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); store.toggleInclude(file.path) }}>{included ? <Icon name="check" size={10} /> : null}</span>
+      <span className="dig-check__box" data-on={incState === 'on' ? 'true' : undefined} data-indeterminate={incState === 'mixed' ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); store.setFileInclusion(file.path) }}>{incState === 'on' ? <Icon name="check" size={10} /> : incState === 'mixed' ? <span className="dig-dash" /> : null}</span>
       <span className="dig-filerow__icon" style={{ color: fileIconColor(file.path) }}>
         <Icon name="file" size={18} />
       </span>
@@ -172,7 +174,8 @@ function Group({ title, files, groupByDir, listId, active, selected, onSelect, s
   const gs = useGit()
   const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
-  const allOn = files.length > 0 && files.every((f) => gs.include[f.path] !== false)
+  const fullyOn = files.length > 0 && files.every((f) => gs.include[f.path] !== false && !(gs.excludedHunks?.[f.path] || []).length)
+  const anyOn = files.some((f) => gs.include[f.path] !== false)
   const tree = React.useMemo(() => buildTree(files), [files])
   React.useEffect(() => {
     const all = new Set<string>()
@@ -217,7 +220,7 @@ function Group({ title, files, groupByDir, listId, active, selected, onSelect, s
             { label: t('Rollback…'), danger: true, disabled: !paths.length, run: () => { if (window.confirm(t('Rollback all changes? This cannot be undone.'))) void store.discard(paths) } },
           ])
         } : undefined}>
-        <span className="dig-check__box" data-on={allOn ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={() => store.setIncludeAll(files.map((f) => f.path), !allOn)}>{allOn ? <Icon name="check" size={10} /> : null}</span>
+        <span className="dig-check__box" data-on={fullyOn ? 'true' : undefined} data-indeterminate={anyOn && !fullyOn ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={() => store.setIncludeAll(files.map((f) => f.path), !fullyOn)}>{fullyOn ? <Icon name="check" size={10} /> : anyOn && !fullyOn ? <span className="dig-dash" /> : null}</span>
         <span className="dig-group__title">{title}</span>{comment ? <span className="dig-group__comment" title={comment}>{comment}</span> : null}
         <span className="dig-group__count">{files.length}</span>
       </div>
