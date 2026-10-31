@@ -2746,10 +2746,10 @@ body.dig-docked #root {
   background: color-mix(in srgb, var(--diff-inserted) 28%, transparent) !important;
 }
 .dig-durow--del {
-  background: color-mix(in srgb, var(--diff-deleted) 40%, transparent) !important;
+  background: color-mix(in srgb, var(--diff-deleted) 70%, transparent) !important;
 }
 .dig-durow--add {
-  background: color-mix(in srgb, var(--diff-inserted) 40%, transparent) !important;
+  background: color-mix(in srgb, var(--diff-inserted) 70%, transparent) !important;
 }
 .dig-word--deleted {
   background: color-mix(in srgb, var(--diff-deleted) 85%, transparent) !important;

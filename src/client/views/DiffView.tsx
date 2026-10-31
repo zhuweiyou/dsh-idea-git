@@ -201,7 +201,13 @@ function SplitView({
             <span className="dig-dsrow__no">{it.row.oldNo ?? ""}</span>
             <span className="dig-dsrow__cell dig-dsrow__cell--old">
               {it.row.oldNo != null ? (
-                <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === "words"} lang={lang} />
+                <Fragments
+                  text={it.row.oldText}
+                  other={it.row.newText}
+                  enabled={highlight === "words"}
+                  lang={lang}
+                  tone="deleted"
+                />
               ) : null}
             </span>
             <span className="dig-dsrow__no">
@@ -218,7 +224,13 @@ function SplitView({
             </span>
             <span className="dig-dsrow__cell dig-dsrow__cell--new">
               {it.row.newNo != null ? (
-                <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === "words"} lang={lang} />
+                <Fragments
+                  text={it.row.newText}
+                  other={it.row.oldText}
+                  enabled={highlight === "words"}
+                  lang={lang}
+                  tone="inserted"
+                />
               ) : null}
             </span>
           </div>
