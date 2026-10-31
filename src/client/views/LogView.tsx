@@ -990,6 +990,13 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
       run: () => void store.openCompare(b.name, "HEAD", b.name),
     },
     {
+      label: t("Compare with Revision…"),
+      run: async () => {
+        const ref = await askText(t("Branch or revision"), "HEAD")
+        if (ref) void store.openCompare(b.name, ref, `${b.name} ↔ ${ref}`)
+      },
+    },
+    {
       label: isFavorite(b.name) ? t("Remove from Favorites") : t("Add to Favorites"),
       run: () => {
         const on = !isFavorite(b.name)
@@ -1350,6 +1357,37 @@ function FilterBar({
       >
         {s.logHeadOnly ? t("Current branch") : t("All branches")}
       </button>
+      <Dropdown
+        align="right"
+        trigger={() => (
+          <span className="dig-filterbtn" title={t("View Options")}>
+            {t("View")} ▾
+          </span>
+        )}
+      >
+        {(close) => (
+          <>
+            <MenuItem
+              checked={s.logFirstParent}
+              onClick={() => {
+                close()
+                store.setLogFirstParent(!s.logFirstParent)
+              }}
+            >
+              {t("First parent only")}
+            </MenuItem>
+            <MenuItem
+              checked={s.logNoMerges}
+              onClick={() => {
+                close()
+                store.setLogNoMerges(!s.logNoMerges)
+              }}
+            >
+              {t("No merges")}
+            </MenuItem>
+          </>
+        )}
+      </Dropdown>
       <Dropdown
         align="right"
         trigger={() => (

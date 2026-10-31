@@ -848,7 +848,20 @@ test("host integration", async () => {
       const r = await call("conflictDiff3", { ...D(repo), file: "a.txt" })
       ok("conflictDiff3 has base section", r.ok && r.value.text.includes("|||||||") && r.value.text.includes("base"))
     }
-  } finally {
+  
+  /* ---------------- ignore file editing ---------------- */
+  console.log("\n[ignore-edit]")
+  {
+    const { repo } = makeRepo()
+    const r0 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
+    ok("read ignore default", r0.ok && r0.value.content === "")
+    ok("write ignore", (await call("writeIgnoreFile", { ...D(repo), destination: "gitignore", content: "node_modules/\n" })).ok)
+    const r1 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
+    ok("ignore persisted", r1.value.content.includes("node_modules/"))
+    const r2 = await call("readIgnoreFile", { ...D(repo), destination: "exclude" })
+    ok("exclude path", r2.value.path.includes(".git/info/exclude"))
+  }
+} finally {
     for (const b of bases) {
       try {
         fs.rmSync(b, { recursive: true, force: true })

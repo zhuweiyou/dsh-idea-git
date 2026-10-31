@@ -79,6 +79,8 @@ export interface GitState {
   logPath: string | null
   logHeadOnly: boolean
   logSort: "date" | "reverse" | "topo"
+  logFirstParent: boolean
+  logNoMerges: boolean
   conflict: {
     file: string
     loading: boolean
@@ -174,6 +176,8 @@ const initial: GitState = {
   logPath: null,
   logHeadOnly: false,
   logSort: "date",
+  logFirstParent: false,
+  logNoMerges: false,
   diff: null,
   rev: 0,
 }
@@ -333,6 +337,8 @@ export async function loadLog(reset: boolean) {
       ...(state.logBranch ? { branch: state.logBranch } : {}),
       ...(state.logHeadOnly ? { headOnly: true } : {}),
       sort: state.logSort,
+      ...(state.logFirstParent ? { firstParent: true } : {}),
+      ...(state.logNoMerges ? { noMerges: true } : {}),
     })
     set({
       commits: reset ? r.commits : [...state.commits, ...r.commits],
@@ -1050,6 +1056,14 @@ export function setLogSort(v: "date" | "reverse" | "topo") {
   set({ logSort: v, commits: [], selectedCommit: null, commitFiles: [] })
   void loadLog(true)
 }
+export function setLogFirstParent(v: boolean) {
+  set({ logFirstParent: v, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+export function setLogNoMerges(v: boolean) {
+  set({ logNoMerges: v, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
 
 export function squashHead() {
   return withBusy("Squashing…", async () => {
@@ -1565,4 +1579,19 @@ export function toggleHunkExcluded(file: string, index: number) {
   if (cur.size) next[file] = [...cur]
   else delete next[file]
   set({ excludedHunks: next })
+}
+
+export async function readIgnoreFile(destination: "gitignore" | "exclude") {
+  return api.rpc<{ path: string; content: string }>("readIgnoreFile", { ...targetPayload(), destination })
+}
+export async function saveIgnoreFile(destination: "gitignore" | "exclude", content: string) {
+  await api.rpc("writeIgnoreFile", { ...targetPayload(), destination, content })
+  await refreshStatus()
+  setToast("Saved " + (destination === "exclude" ? ".git/info/exclude" : ".gitignore"))
+}
+export function applyPatchText(text: string) {
+  return withBusy("Applying patch…", async () => {
+    await api.rpc("applyPatch", { ...targetPayload(), text })
+    await refreshAll()
+  })
 }

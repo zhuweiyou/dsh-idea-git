@@ -450,6 +450,15 @@ const zh: Record<string, string> = {
   'Light': '浅色',
   'Dark': '深色',
   'Simplified Chinese': '简体中文',
+  'View': '视图',
+  'First parent only': '仅第一父提交',
+  'No merges': '不显示合并',
+  'Branch or revision': '分支或修订',
+  'Compare with Revision…': '与修订比较…',
+  'Paste patch content': '粘贴补丁内容',
+  'Apply Patch (Paste)…': '应用补丁（粘贴）…',
+  'Edit .gitignore…': '编辑 .gitignore…',
+  'Edit .git/info/exclude…': '编辑 .git/info/exclude…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

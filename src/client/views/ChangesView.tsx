@@ -15,7 +15,7 @@ import {
   fileIconColor,
 } from "../lib/ui"
 import { useT, getActiveLocale } from "../lib/i18n"
-import { askText } from "../lib/prompt"
+import { askText, askMultiline } from "../lib/prompt"
 import { openContextMenu, copyText } from "../lib/contextMenu"
 import * as store from "../store"
 import { confirmThen } from "../lib/confirm"
@@ -892,6 +892,35 @@ export function ChangesView() {
                 }}
               >
                 {t("Apply Patch…")}
+              </MenuItem>
+              <MenuItem
+                onClick={async () => {
+                  close()
+                  const text = await askMultiline(t("Paste patch content"))
+                  if (text) void store.applyPatchText(text)
+                }}
+              >
+                {t("Apply Patch (Paste)…")}
+              </MenuItem>
+              <MenuItem
+                onClick={async () => {
+                  close()
+                  const r = await store.readIgnoreFile("gitignore")
+                  const text = await askMultiline(".gitignore", r.content)
+                  if (text !== null) void store.saveIgnoreFile("gitignore", text)
+                }}
+              >
+                {t("Edit .gitignore…")}
+              </MenuItem>
+              <MenuItem
+                onClick={async () => {
+                  close()
+                  const r = await store.readIgnoreFile("exclude")
+                  const text = await askMultiline(".git/info/exclude", r.content)
+                  if (text !== null) void store.saveIgnoreFile("exclude", text)
+                }}
+              >
+                {t("Edit .git/info/exclude…")}
               </MenuItem>
               <MenuItem
                 onClick={() => {

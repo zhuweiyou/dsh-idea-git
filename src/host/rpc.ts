@@ -40,6 +40,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case "addIgnore":
         return withRepo(ctx, payload, signal, (info) => svc.addIgnore(info, payload, signal))
 
+      case "readIgnoreFile":
+        return withRepo(ctx, payload, signal, (info) => svc.readIgnoreFile(info, payload))
+
+      case "writeIgnoreFile":
+        return withRepo(ctx, payload, signal, (info) => svc.writeIgnoreFile(info, payload))
+
       case "cherryPick":
         return withRepo(ctx, payload, signal, (info) => svc.cherryPick(info, payload, signal))
 

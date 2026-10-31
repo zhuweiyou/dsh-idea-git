@@ -349,6 +349,8 @@ export async function readLog(
   const order = payload?.sort === "topo" ? "--topo-order" : "--date-order"
   const args = ["log", order]
   if (payload?.sort === "reverse") args.push("--reverse")
+  if (payload?.firstParent === true) args.push("--first-parent")
+  if (payload?.noMerges === true) args.push("--no-merges")
   args.push(`--max-count=${limit + 1}`, `--skip=${skip}`, `--pretty=format:${pretty}`)
   if (payload?.headOnly === true) args.push("HEAD")
   else if (usable(payload?.branch)) args.push(String(payload.branch))
@@ -1243,6 +1245,24 @@ export async function renameBranch(info: RepoInfo, payload: any, signal?: AbortS
   if (!from || !to) throw new RepoError("git/bad-branch", "Missing branch name")
   await runWrite(info, ["branch", "-m", from, to], signal)
   return { ok: true }
+}
+
+export async function readIgnoreFile(info: RepoInfo, payload: any): Promise<{ path: string; content: string }> {
+  const dest = payload?.destination === "exclude" ? "exclude" : "gitignore"
+  const file = dest === "exclude" ? path.join(info.root, ".git", "info", "exclude") : path.join(info.root, ".gitignore")
+  try {
+    return { path: file, content: fs.readFileSync(file, "utf8") }
+  } catch {
+    return { path: file, content: "" }
+  }
+}
+
+export async function writeIgnoreFile(info: RepoInfo, payload: any): Promise<{ ok: boolean; path: string }> {
+  const dest = payload?.destination === "exclude" ? "exclude" : "gitignore"
+  const file = dest === "exclude" ? path.join(info.root, ".git", "info", "exclude") : path.join(info.root, ".gitignore")
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, String(payload?.content ?? ""))
+  return { ok: true, path: file }
 }
 
 export async function addIgnore(info: RepoInfo, payload: any, _signal?: AbortSignal) {
