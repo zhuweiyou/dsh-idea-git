@@ -56,7 +56,7 @@ function ResizeHandle() {
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
   }
-  return <div className="dig-panel__handle" role="separator" aria-orientation="horizontal" onPointerDown={startDrag} />
+  return <div className="dig-panel__grip" role="separator" aria-orientation="horizontal" onPointerDown={startDrag} />
 }
 
 function Body() {
@@ -141,6 +141,7 @@ export function Panel() {
       {!w.maximized && s.conflict ? <ConflictView bottom={bottom} theme={w.theme} /> : null}
       {!w.maximized && s.compare ? <CompareView bottom={bottom} theme={w.theme} /> : null}
     <div className="dig-theme dig-panel" data-theme={w.theme} style={{ height }}>
+      {!w.maximized && !w.minimized ? <ResizeHandle /> : null}
       <div className="dig-panel__header" onDoubleClick={() => toggleMaximized()}>
         <span className="dig-panel__brand">
           <Icon name="git" size={15} /> Git
