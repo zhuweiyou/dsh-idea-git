@@ -349,6 +349,7 @@ function Group({
 }) {
   const gs = useGit()
   const t = useT()
+  const [collapsed, setCollapsed] = React.useState(false)
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
   const fullyOn =
     files.length > 0 && files.every((f) => gs.include[f.path] !== false && !(gs.excludedHunks?.[f.path] || []).length)
@@ -418,7 +419,8 @@ function Group({
     >
       <div
         className="dig-group__head"
-        style={listId ? { cursor: "context-menu" } : undefined}
+        style={{ cursor: "pointer" }}
+        onClick={() => setCollapsed((v) => !v)}
         onContextMenu={
           listId
             ? (e) => {
@@ -501,17 +503,23 @@ function Group({
             : undefined
         }
       >
+        <Icon
+          name={collapsed ? "chevronRight" : "chevronDown"}
+          size={12}
+          style={{ flex: "none", color: "var(--fg-subtle)" }}
+        />
         <span
           className="dig-check__box"
           data-on={fullyOn ? "true" : undefined}
           data-indeterminate={anyOn && !fullyOn ? "true" : undefined}
           style={{ flex: "none", cursor: "pointer" }}
-          onClick={() =>
+          onClick={(e) => {
+            e.stopPropagation()
             store.setIncludeAll(
               files.map((f) => f.path),
               !fullyOn,
             )
-          }
+          }}
         >
           {fullyOn ? <Icon name="check" size={10} /> : anyOn && !fullyOn ? <span className="dig-dash" /> : null}
         </span>
@@ -523,7 +531,7 @@ function Group({
         ) : null}
         <span className="dig-group__count">{files.length}</span>
       </div>
-      {groupByDir ? (
+      {collapsed ? null : groupByDir ? (
         <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} />
       ) : (
         files
