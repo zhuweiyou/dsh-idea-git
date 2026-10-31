@@ -85,11 +85,23 @@ export function Panel() {
     return () => clearInterval(timer)
   }, [w.open])
   React.useEffect(() => {
-    if (!(s.diff || s.blame)) return
-    const onKey = (ev: KeyboardEvent) => { if (ev.key === 'Escape') store.closeDiff() }
+    if (!w.open) return
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key !== 'Escape') return
+      // Do not hijack Esc while typing, or while a prompt dialog is open.
+      const t = ev.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+      if (document.querySelector('.dig-modal-mask')) return
+      // Esc dismisses the top-most overlay first, otherwise closes the panel (same as the close button).
+      if (s.diff || s.blame) { ev.preventDefault(); store.closeDiff(); return }
+      if (s.conflict) { ev.preventDefault(); store.closeConflict(); return }
+      if (s.compare) { ev.preventDefault(); store.closeCompare(); return }
+      ev.preventDefault()
+      closePanel()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [s.diff, s.blame])
+  }, [w.open, s.diff, s.blame, s.conflict, s.compare])
   if (!w.open) return null
 
   const height = w.maximized ? '100vh' : w.minimized ? 40 : w.height
