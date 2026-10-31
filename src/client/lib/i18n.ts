@@ -383,6 +383,15 @@ const zh: Record<string, string> = {
   'Edit': '编辑',
   'Save & Stage': '保存并暂存',
   'Editing worktree file': '编辑工作区文件',
+  'Hide Branches': '隐藏分支',
+  'New Branch…': '新建分支…',
+  'Update Selected': '更新所选',
+  'Delete Branch': '删除分支',
+  'Navigate Log to Selected Branch': '在日志中定位所选分支',
+  'Add to Favorites': '添加到收藏',
+  'Remove from Favorites': '取消收藏',
+  'Show Branches': '显示分支',
+  'Set Active Changelist': '设为活动变更列表',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

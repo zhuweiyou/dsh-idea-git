@@ -1871,3 +1871,12 @@ button.dig-filterbtn,
 .dig-edit-overlay { position: absolute; inset: 0; background: var(--bg-app); display: flex; flex-direction: column; z-index: 5; }
 .dig-edit-overlay__bar { height: 36px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--border); font-size: var(--fs-small); }
 .dig-edit-overlay__text { flex: 1; width: 100%; box-sizing: border-box; resize: none; border: 0; outline: none; padding: 8px 10px; font-family: var(--font-mono); font-size: var(--fs-small); background: var(--bg-input); color: var(--fg); }
+
+/* branches vertical action rail */
+.dig-branches { flex-direction: row; }
+.dig-branches__rail { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; border-right: 1px solid var(--border); }
+.dig-branches__main { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.dig-log__restore { flex: none; width: 22px; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; cursor: pointer; color: var(--fg-subtle); }
+.dig-log__restore:hover { color: var(--fg); }
+.dig-group[data-inactive='true'] .dig-group__title { color: var(--fg-subtle); }
+.dig-group[data-inactive='true'] .dig-dfile { opacity: .75; }

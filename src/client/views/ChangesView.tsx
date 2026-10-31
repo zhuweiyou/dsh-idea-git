@@ -158,8 +158,9 @@ function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth
   )
 }
 
-function Group({ title, files, groupByDir }: { title: string; files: FileEntry[]; groupByDir: boolean }) {
+function Group({ title, files, groupByDir, listId, active }: { title: string; files: FileEntry[]; groupByDir: boolean; listId?: string; active?: boolean }) {
   const gs = useGit()
+  const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
   const allOn = files.length > 0 && files.every((f) => gs.include[f.path] !== false)
   const tree = React.useMemo(() => buildTree(files), [files])
@@ -175,8 +176,22 @@ function Group({ title, files, groupByDir }: { title: string; files: FileEntry[]
     return next
   })
   return (
-    <div className="dig-group">
-      <div className="dig-group__head">
+    <div className="dig-group" data-inactive={listId && active === false ? 'true' : undefined}>
+      <div className="dig-group__head" style={listId ? { cursor: 'context-menu' } : undefined}
+        onContextMenu={listId ? (e) => {
+          const paths = files.map((f) => f.path)
+          openContextMenu(e, [
+            { label: t('New Changelist'), run: async () => { const n = await askText(t('New Changelist')); if (n) store.newChangelist(n) } },
+            { label: t('Rename Changelist'), run: async () => { const n = await askText(t('Rename Changelist'), title.replace(/ \*$/, '')); if (n) store.renameChangelist(listId, n) } },
+            { separator: true },
+            ...(active ? [] : [{ label: t('Set Active Changelist'), run: () => store.setActiveChangelist(listId) }]),
+            { label: t('Delete Changelist'), danger: true, disabled: listId === 'default', run: () => { if (window.confirm(t('Delete this changelist?'))) store.deleteChangelist(listId) } },
+            { separator: true },
+            { label: t('Stage'), disabled: !files.some((f) => f.unstaged || !f.staged), run: () => void store.stage(files.filter((f) => f.unstaged || !f.staged).map((f) => f.path)) },
+            { label: t('Unstage'), disabled: !files.some((f) => f.staged), run: () => void store.unstage(files.filter((f) => f.staged).map((f) => f.path)) },
+            { label: t('Rollback…'), danger: true, disabled: !paths.length, run: () => { if (window.confirm(t('Rollback all changes? This cannot be undone.'))) void store.discard(paths) } },
+          ])
+        } : undefined}>
         <span className="dig-check__box" data-on={allOn ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={() => store.setIncludeAll(files.map((f) => f.path), !allOn)}>{allOn ? <Icon name="check" size={10} /> : null}</span>
         <span className="dig-group__title">{title}</span>
         <span className="dig-group__count">{files.length}</span>
@@ -312,7 +327,7 @@ export function ChangesView() {
               return lists.map((l) => {
                 const fs2 = forList(l.id)
                 if (!fs2.length && !multi) return null
-                return <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={fs2} groupByDir={groupByDir} />
+                return <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={fs2} groupByDir={groupByDir} listId={l.id} active={l.id === active} />
               })
             })()}
           </>

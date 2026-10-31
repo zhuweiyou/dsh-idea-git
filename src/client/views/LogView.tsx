@@ -65,6 +65,8 @@ function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => 
     <div
       key={b.ref}
       className="dig-branchrow"
+      data-ref={b.ref}
+      data-remote={b.remote ? 'true' : undefined}
       data-current={b.current ? 'true' : undefined}
       title={b.name}
       onClick={(e) => {
@@ -73,7 +75,7 @@ function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => 
       }}
       onContextMenu={(e) => openContextMenu(e, branchMenuItems(b, t))}
     >
-      <Icon name="branch" size={15} style={{ color: b.current ? 'var(--warning)' : 'var(--fg-subtle)' }} />
+      <Icon name={isFavorite(b.name) ? 'star' : 'branch'} size={15} style={{ color: b.current ? 'var(--warning)' : 'var(--fg-subtle)' }} />
       <span className="dig-branchrow__name">{label ?? b.name}</span>
       {b.ahead || b.behind ? <span className="dig-branchrow__sync">{b.ahead ? `↑${b.ahead}` : ''}{b.behind ? `↓${b.behind}` : ''}</span> : null}
     </div>
@@ -102,9 +104,16 @@ function BranchNodes({ nodes, depth, expanded, toggle, t }: { nodes: BNode[]; de
   )
 }
 
-function BranchesPanel() {
+const FAV_KEY = 'dig.branchFavorites'
+function favSet(): Set<string> { try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')) } catch { return new Set() } }
+function isFavorite(name: string) { return favSet().has(name) }
+function toggleFavorite(name: string) { const s = favSet(); if (s.has(name)) s.delete(name); else s.add(name); localStorage.setItem(FAV_KEY, JSON.stringify([...s])) }
+
+function BranchesPanel({ onHide }: { onHide: () => void }) {
   const s = useGit()
   const t = useT()
+  const [favTick, setFavTick] = React.useState(0)
+  React.useEffect(() => {}, [favTick])
   const [query, setQuery] = React.useState('')
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set())
   const q = query.trim().toLowerCase()
@@ -137,8 +146,22 @@ function BranchesPanel() {
   }, [localTree, remoteTrees, collapsed])
   const toggle = (p: string) => setCollapsed((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const current = locals.find((b) => b.current)
+  const selectedRef = () => (document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-ref') || ''
+  const isRemoteRef = () => !!(document.querySelector('.dig-branches .dig-branchrow[data-selected]') as HTMLElement | null)?.getAttribute('data-remote')
+  const refreshFav = () => setFavTick((x) => x + 1)
   return (
     <div className="dig-branches">
+      <div className="dig-branches__rail" role="toolbar" aria-orientation="vertical" aria-label={t('Branches')}>
+        <IconButton icon="chevronLeft" size={13} title={t('Hide Branches')} onClick={onHide} />
+        <IconButton icon="plus" size={13} title={t('New Branch…')} onClick={async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, selectedRef() || 'HEAD') }} />
+        <IconButton icon="download" size={13} title={t('Update Selected')} onClick={() => void store.remoteOp('pull')} />
+        <IconButton icon="trash" size={13} title={t('Delete Branch')} onClick={() => { const r = selectedRef(); if (r && !isRemoteRef() && window.confirm(t('Delete branch {name}?', { name: r }))) void store.deleteBranch(r) }} />
+        <IconButton icon="target" size={13} title={t('Navigate Log to Selected Branch')} onClick={() => { const r = selectedRef(); if (r) store.openBranchHistory(r) }} />
+        <IconButton icon={isFavorite(selectedRef()) ? 'star' : 'starOutline'} size={13} title={isFavorite(selectedRef()) ? t('Remove from Favorites') : t('Add to Favorites')} onClick={() => { const r = selectedRef(); if (r) { toggleFavorite(r); refreshFav() } }} />
+        <IconButton icon="cloud" size={13} title={t('Fetch')} onClick={() => void store.remoteOp('fetch')} />
+        <IconButton icon="refresh" size={13} title={t('Refresh')} onClick={() => void store.refreshAll()} />
+      </div>
+      <div className="dig-branches__main">
       <div className="dig-branches__search">
         <Icon name="search" size={13} style={{ color: 'var(--fg-subtle)' }} />
         <input className="dig-branches__input" placeholder={t('Branch or tag')} value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -179,6 +202,7 @@ function BranchesPanel() {
             <span className="dig-branchrow__name">{tag}</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   )
@@ -519,7 +543,9 @@ function FilterBar({ text, setText, regex, setRegex, caseSensitive, setCase, aut
 export function LogView() {
   const s = useGit()
   const t = useT()
-  const [showBranches] = React.useState(() => localStorage.getItem('dig.showBranches') !== '0')
+  const [showBranches, setShowBranches] = React.useState(() => localStorage.getItem('dig.showBranches') !== '0')
+  const hideBranches = () => { setShowBranches(false); try { localStorage.setItem('dig.showBranches', '0') } catch {} }
+  const showBranchesNow = () => { setShowBranches(true); try { localStorage.setItem('dig.showBranches', '1') } catch {} }
   const [text, setText] = React.useState('')
   const [regex, setRegex] = React.useState(false)
   const [caseSensitive, setCase] = React.useState(false)
@@ -546,10 +572,10 @@ export function LogView() {
     </div>
   )
   const right = <DetailsPane />
-  if (!showBranches) return <div className="dig-hlayout">{center}</div>
+  if (!showBranches) return <div className="dig-hlayout"><div className="dig-log__restore" title={t('Show Branches')} onClick={showBranchesNow}><Icon name="chevronRight" size={14} /></div>{center}</div>
   return (
     <div className="dig-hlayout">
-      <SplitPane orientation="horizontal" first={<BranchesPanel />} second={<SplitPane orientation="horizontal" first={center} second={right} initial={Math.max(320, (typeof window !== 'undefined' ? window.innerWidth : 900) - 780)} min={240} storageKey="logDetails" />} initial={240} min={160} max={420} storageKey="branches" />
+      <SplitPane orientation="horizontal" first={<BranchesPanel onHide={hideBranches} />} second={<SplitPane orientation="horizontal" first={center} second={right} initial={Math.max(320, (typeof window !== 'undefined' ? window.innerWidth : 900) - 780)} min={240} storageKey="logDetails" />} initial={240} min={160} max={420} storageKey="branches" />
     </div>
   )
 }
