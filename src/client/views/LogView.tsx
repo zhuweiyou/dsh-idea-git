@@ -422,6 +422,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     { separator: true },
     { label: t('Show History'), run: () => store.openBranchHistory(b.name) },
     { label: t('Compare with Current'), disabled: b.current, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
+    { label: isFavorite(b.name) ? t('Remove from Favorites') : t('Add to Favorites'), run: () => { toggleFavorite(b.name); void store.refreshAll() } },
     { label: t('Copy Branch Name'), run: () => copyText(b.name) },
     { separator: true },
     { label: t("Merge '{name}' into Current", { name: b.name }), run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },
