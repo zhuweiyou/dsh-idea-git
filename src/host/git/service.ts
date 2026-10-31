@@ -972,6 +972,7 @@ export async function tagCreate(info: RepoInfo, payload: any, signal?: AbortSign
   const name = String(payload?.name ?? '').trim()
   if (!name) throw new RepoError('git/bad-tag', 'Missing tag name')
   const args = ['tag']
+  if (payload?.force === true) args.push('-f')
   if (payload?.message) args.push('-a', '-m', String(payload.message))
   args.push(name)
   if (payload?.commit) args.push(String(payload.commit))

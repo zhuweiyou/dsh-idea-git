@@ -503,6 +503,17 @@ try {
     const work = g(['diff', '--unified=0'])
     ok('second hunk remains unstaged', work.includes('CHANGED-18'))
   }
+
+  /* ---------------- tag force ---------------- */
+  console.log('\n[tag-force]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    ok('tagCreate', (await call('tagCreate', { ...D(repo), name: 'v1', commit: 'HEAD' })).ok)
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'B\n'); g(['commit', '-qam', 'c2'])
+    ok('tagCreate force overwrite', (await call('tagCreate', { ...D(repo), name: 'v1', commit: 'HEAD', force: true })).ok)
+    ok('tag points to HEAD', g(['rev-parse', 'v1^{commit}']).trim() === g(['rev-parse', 'HEAD']).trim())
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

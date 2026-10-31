@@ -198,7 +198,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           </div>
         ))}
         {s.tags.length ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="tag" size={15} /><span>{t('Tags')}</span></div> : null}
-        {s.tags.map((tag) => (
+        {s.tags.filter((t) => !q || t.toLowerCase().includes(q)).map((tag) => (
           <div key={tag} className="dig-branchrow" style={{ paddingLeft: 22 }} title={tag}
             onClick={(e) => { setSelectedName(tag); for (const el of Array.from(document.querySelectorAll('.dig-branchrow[data-selected]'))) el.removeAttribute('data-selected'); (e.currentTarget as HTMLElement).setAttribute('data-selected', 'true') }}
             onContextMenu={(e) => openContextMenu(e, [
@@ -401,6 +401,7 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
     { separator: true },
     { label: t('New Branch from Here…'), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, c.id) } },
     { label: t('New Tag Here…'), run: async () => { const n = await askText(t('New tag name')); if (!n) return; const msg = await askMultiline(t('Tag message (optional)'), ''); void store.createTag(n, c.id, msg || undefined) } },
+    { label: t('New Tag (Force)…'), run: async () => { const n = await askText(t('New tag name')); if (!n) return; const msg = await askMultiline(t('Tag message (optional)'), ''); void store.createTag(n, c.id, msg || undefined, true) } },
     { separator: true },
     { label: t('Cherry-Pick'), run: () => void store.cherryPick([c.id]) },
     { separator: true },

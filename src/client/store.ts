@@ -585,9 +585,9 @@ export function cherryPick(commits: string[]) {
   })
 }
 
-export function createTag(name: string, commit: string, message?: string) {
+export function createTag(name: string, commit: string, message?: string, force = false) {
   return withBusy('Tagging…', async () => {
-    await api.rpc('tagCreate', { ...targetPayload(), name, commit, message })
+    await api.rpc('tagCreate', { ...targetPayload(), name, commit, message, force })
     await refreshTags()
   })
 }
