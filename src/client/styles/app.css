@@ -1821,3 +1821,13 @@ button.dig-filterbtn,
   background: var(--bg-selected);
   color: var(--fg-strong);
 }
+
+/* Align typography/metrics with OpenIDEA tokens (13px ui, 26px rows) */
+.dig-theme { --fs-ui: 13px; --fs-small: 12px; --fs-tiny: 11px; }
+.dig-filerow, .dig-dfile, .dig-dfile-dir, .dig-branchrow { height: 26px; font-size: 13px; line-height: 18px; }
+.dig-dirrow { height: 26px; font-size: 13px; line-height: 18px; }
+.dig-branches__folder { height: 24px; font-size: 13px; }
+.dig-check__box { width: 14px; height: 14px; }
+.dig-group__head { height: 26px; font-size: 12px; }
+.dig-crow { height: 26px; font-size: 13px; }
+.dig-listhead { height: 24px; font-size: 12px; }
