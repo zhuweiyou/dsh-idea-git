@@ -13,7 +13,7 @@ const subs = new Set<() => void>()
 
 const zh: Record<string, string> = {
   // panel chrome
-  Changes: '改动',
+  Changes: '更改',
   Log: '日志',
   Console: '控制台',
   Refresh: '刷新',

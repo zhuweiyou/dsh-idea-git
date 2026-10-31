@@ -88,7 +88,7 @@ function CommitTabView() {
   })
   const pick = (v: 'changes' | 'stash' | 'shelf') => { setSub(v); try { localStorage.setItem('dig.commitSub', v) } catch {} }
   const tabs: Array<{ id: 'changes' | 'stash' | 'shelf'; label: string }> = [
-    { id: 'changes', label: t('Commit') },
+    { id: 'changes', label: t('Changes') },
     { id: 'stash', label: t('Stash') },
     { id: 'shelf', label: t('Shelf') },
   ]
