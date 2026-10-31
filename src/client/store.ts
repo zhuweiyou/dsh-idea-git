@@ -657,7 +657,7 @@ export async function loadStashes() {
 }
 
 export function stashAll() {
-  return withBusy("Staging…", async () => {
+  return withBusy("Stashing…", async () => {
     await api.rpc("stashPush", { ...targetPayload(), includeUntracked: true })
     await refreshStatus()
     await loadStashes()
@@ -665,14 +665,14 @@ export function stashAll() {
 }
 
 export function stashApply(index: number, pop: boolean) {
-  return withBusy(pop ? "Pulling…" : "Staging…", async () => {
+  return withBusy(pop ? "Popping…" : "Applying stash…", async () => {
     await api.rpc("stashApply", { ...targetPayload(), index, pop })
     await refreshAll()
   })
 }
 
 export function stashDrop(index: number) {
-  return withBusy("Discarding…", async () => {
+  return withBusy("Dropping stash…", async () => {
     await api.rpc("stashDrop", { ...targetPayload(), index })
     await loadStashes()
   })
@@ -712,7 +712,7 @@ export async function loadWorktrees() {
 }
 
 export function addWorktree(worktreePath: string, newBranch?: string) {
-  return withBusy("Staging…", async () => {
+  return withBusy("Adding worktree…", async () => {
     await api.rpc("worktreeAdd", {
       ...targetPayload(),
       worktreePath,
@@ -723,7 +723,7 @@ export function addWorktree(worktreePath: string, newBranch?: string) {
 }
 
 export function removeWorktree(worktreePath: string) {
-  return withBusy("Discarding…", async () => {
+  return withBusy("Removing worktree…", async () => {
     await api.rpc("worktreeRemove", { ...targetPayload(), worktreePath, confirm: true })
     await loadWorktrees()
   })
@@ -770,7 +770,7 @@ export function clearHistory() {
 }
 
 export function resolveConflict(file: string, side: "ours" | "theirs" | "mark") {
-  return withBusy("Staging…", async () => {
+  return withBusy("Resolving…", async () => {
     await api.rpc("resolveConflict", {
       ...targetPayload(),
       file,
@@ -811,7 +811,7 @@ export function mergeBranch(name: string) {
 }
 
 export function deleteBranch(name: string, force = false) {
-  return withBusy("Discarding…", async () => {
+  return withBusy("Deleting branch…", async () => {
     await api.rpc("deleteBranch", { ...targetPayload(), name, force })
     await refreshAll()
   })
@@ -1254,7 +1254,7 @@ export function applyPatchFromPath(path: string) {
   })
 }
 export function lfsTrack(pattern: string) {
-  return withBusy("Updating LFS…", async () => {
+  return withBusy("Tracking LFS…", async () => {
     await api.rpc("lfsTrack", { ...targetPayload(), pattern })
     await refreshStatus()
   })
@@ -1265,7 +1265,7 @@ export async function downloadCommitFile(commit: string, file: string) {
 }
 
 export function downloadCommitFiles(commit: string, paths: string[]) {
-  return withBusy("Saving…", async () => {
+  return withBusy("Downloading files…", async () => {
     const dir = await api.pickDirectory()
     if (!dir) return
     const r = await api.rpc<{ path: string }>("saveCommitFiles", {
@@ -1416,7 +1416,7 @@ export function shelfApply(index: number, pop: boolean) {
   })
 }
 export function shelfDrop(index: number) {
-  return withBusy("Dropping…", async () => {
+  return withBusy("Dropping shelf…", async () => {
     await api.rpc("stashDrop", { ...targetPayload(), index })
     await loadShelves()
   })
