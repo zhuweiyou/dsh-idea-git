@@ -67,7 +67,7 @@ export function SettingsSection() {
         <span className="dig-settings__label">{t('Auto fetch')}</span>
         <span className="dig-settings__value">
           <label className="dig-check">
-            <span className="dig-check__box" data-on={autoFetch ? 'true' : undefined} onClick={() => { const v = !autoFetch; setAutoFetch(v); try { localStorage.setItem('dig.autoFetch', v ? '1' : '0') } catch {} }}>{autoFetch ? '✓' : null}</span>
+            <span className="dig-check__box" data-on={autoFetch ? 'true' : undefined} onClick={() => { const v = !autoFetch; setAutoFetch(v); try { localStorage.setItem('dig.autoFetch', v ? '1' : '0') } catch {} }}></span>
             <span className="dig-check__label">{t('Fetch every 2 minutes while panel is open')}</span>
           </label>
         </span>
