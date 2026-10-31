@@ -40,15 +40,46 @@ function ToolSelect({ value, options, onChange }: { value: string; options: Arra
   )
 }
 
-function Fragments({ text, other, enabled }: { text: string; other: string; enabled: boolean }) {
-  if (!enabled || text === other) return <>{text || '\u00a0'}</>
+const HASH_COMMENT = new Set(['py', 'sh', 'bash', 'zsh', 'rb', 'yaml', 'yml', 'toml', 'ini'])
+const KW = new Set('const let var function return if else for while class import export from new await async def None True False self elif try except raise with as in not and or public private protected static void int string bool true false null undefined struct impl fn mut pub use match case break continue switch throw catch finally interface type enum extends implements package go defer chan map range func'.split(' '))
+
+function highlightCode(text: string, lang: string): React.ReactNode {
+  if (!text) return '\u00a0'
+  const parts: React.ReactNode[] = []
+  const hash = HASH_COMMENT.has(lang)
+  const re = new RegExp(
+    (hash ? '#[^\n]*' : '//[^\n]*') + '|/\\*.*?\\*/' +
+    "|'(?:[^'\\\\]|\\\\.)*'" + '|"(?:[^"\\\\]|\\\\.)*"' + '|`(?:[^`\\\\]|\\\\.)*`' +
+    '|\\b\\d+(?:\\.\\d+)?\\b' + '|\\b[A-Za-z_$][A-Za-z0-9_$]*\\b',
+    'g',
+  )
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text))) {
+    if (m.index > last) parts.push(text.slice(last, m.index))
+    const tok = m[0]
+    let cls = ''
+    if ((hash && tok.startsWith('#')) || tok.startsWith('//') || tok.startsWith('/*')) cls = 'dig-tok-com'
+    else if (/^['"`]/.test(tok)) cls = 'dig-tok-str'
+    else if (/^\d/.test(tok)) cls = 'dig-tok-num'
+    else if (KW.has(tok)) cls = 'dig-tok-kw'
+    parts.push(cls ? <span key={parts.length} className={cls}>{tok}</span> : tok)
+    last = m.index + tok.length
+  }
+  if (last < text.length) parts.push(text.slice(last))
+  return <>{parts}</>
+}
+
+function Fragments({ text, other, enabled, lang }: { text: string; other: string; enabled: boolean; lang?: string }) {
+  const code = (t: string) => highlightCode(t, lang || '')
+  if (!enabled || text === other) return <>{code(text)}</>
   const r = wordRanges(text, other)
-  if (r.aStart >= r.aEnd) return <>{text || '\u00a0'}</>
+  if (r.aStart >= r.aEnd) return <>{code(text)}</>
   return (
     <>
-      {text.slice(0, r.aStart)}
-      <mark className="dig-word">{text.slice(r.aStart, r.aEnd)}</mark>
-      {text.slice(r.aEnd)}
+      {code(text.slice(0, r.aStart))}
+      <mark className="dig-word">{code(text.slice(r.aStart, r.aEnd))}</mark>
+      {code(text.slice(r.aEnd))}
     </>
   )
 }
@@ -79,7 +110,7 @@ function FoldButton({ count, onExpand }: { count: number; onExpand: () => void }
   return <button type="button" className="dig-difffold" onClick={onExpand}>⋯ {t('{n} unchanged lines — click to expand', { n: count })}</button>
 }
 
-function SplitView({ rows, highlight, collapse, expanded, onExpand }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void }) {
+function SplitView({ rows, highlight, collapse, expanded, onExpand, lang }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string }) {
   const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   return (
     <div className="dig-diff__split">
@@ -90,11 +121,11 @@ function SplitView({ rows, highlight, collapse, expanded, onExpand }: { rows: Di
           <div key={'r' + it.index} className={'dig-dsrow dig-dsrow--' + it.row.kind}>
             <span className="dig-dsrow__no">{it.row.oldNo ?? ''}</span>
             <span className="dig-dsrow__cell dig-dsrow__cell--old">
-              {it.row.oldNo != null ? <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === 'words'} /> : null}
+              {it.row.oldNo != null ? <Fragments text={it.row.oldText} other={it.row.newText} enabled={highlight === 'words'} lang={lang} /> : null}
             </span>
             <span className="dig-dsrow__no">{it.row.newNo ?? ''}</span>
             <span className="dig-dsrow__cell dig-dsrow__cell--new">
-              {it.row.newNo != null ? <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === 'words'} /> : null}
+              {it.row.newNo != null ? <Fragments text={it.row.newText} other={it.row.oldText} enabled={highlight === 'words'} lang={lang} /> : null}
             </span>
           </div>
         ),
@@ -103,7 +134,7 @@ function SplitView({ rows, highlight, collapse, expanded, onExpand }: { rows: Di
   )
 }
 
-function UnifiedView({ rows, highlight, collapse, expanded, onExpand }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void }) {
+function UnifiedView({ rows, highlight, collapse, expanded, onExpand, lang }: { rows: DiffRow[]; highlight: Highlight; collapse: boolean; expanded: Set<number>; onExpand: (start: number) => void; lang?: string }) {
   const items = React.useMemo(() => buildItems(rows, collapse, expanded), [rows, collapse, expanded])
   const lines: React.ReactNode[] = []
   for (const it of items) {
@@ -127,7 +158,7 @@ function UnifiedView({ rows, highlight, collapse, expanded, onExpand }: { rows: 
           <span className="dig-durow__no">{r.oldNo}</span>
           <span className="dig-durow__no" />
           <span className="dig-durow__sign">−</span>
-          <span className="dig-durow__text"><Fragments text={r.oldText} other={r.newText} enabled={highlight === 'words'} /></span>
+          <span className="dig-durow__text"><Fragments text={r.oldText} other={r.newText} enabled={highlight === 'words'} lang={lang} /></span>
         </div>,
       )
       if (r.newNo != null) lines.push(
@@ -135,7 +166,7 @@ function UnifiedView({ rows, highlight, collapse, expanded, onExpand }: { rows: 
           <span className="dig-durow__no" />
           <span className="dig-durow__no">{r.newNo}</span>
           <span className="dig-durow__sign">＋</span>
-          <span className="dig-durow__text"><Fragments text={r.newText} other={r.oldText} enabled={highlight === 'words'} /></span>
+          <span className="dig-durow__text"><Fragments text={r.newText} other={r.oldText} enabled={highlight === 'words'} lang={lang} /></span>
         </div>,
       )
     }
@@ -196,6 +227,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
   }
 
   if (!d && !b) return null
+  const lang = (d?.file || '').split('.').pop()?.toLowerCase() || ''
   const title = b ? b.title : d!.title
 
   return (
@@ -290,9 +322,9 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
         ) : rows.length === 0 ? (
           <div className="dig-empty">{t('No differences')}</div>
         ) : opts.mode === 'split' ? (
-          <SplitView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} />
+          <SplitView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} />
         ) : (
-          <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} />
+          <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} lang={lang} />
         )}
       </div>
       {editing && d && d.file ? (

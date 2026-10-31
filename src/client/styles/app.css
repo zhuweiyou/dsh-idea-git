@@ -2030,3 +2030,9 @@ body.dig-docked #root { height: 100% !important; }
 .dig-diffwrapbtn { height: 24px; padding: 0 6px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--fg-subtle); cursor: pointer; font-size: 13px; }
 .dig-diffwrapbtn[data-active='true'] { background: var(--bg-selected); color: var(--fg-strong); }
 .dig-diffarea[data-wrap='true'] .dig-dsrow, .dig-diffarea[data-wrap='true'] .dig-durow { white-space: pre-wrap; word-break: break-word; }
+
+/* Diff syntax tokens (light/dark aware via tokens with fallbacks). */
+.dig-tok-com { color: var(--syntax-comment, #6a9955); font-style: italic; }
+.dig-tok-str { color: var(--syntax-string, #ce9178); }
+.dig-tok-num { color: var(--syntax-number, #b5cea8); }
+.dig-tok-kw { color: var(--syntax-keyword, #569cd6); }
