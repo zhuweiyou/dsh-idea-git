@@ -1897,3 +1897,7 @@ button.dig-filterbtn,
 
 /* Diff spans the column; the fixed panel covers its bottom edge (flush). */
 .dig-diffarea { top: 0 !important; bottom: 0 !important; }
+
+/* Reserve space via body shrink; panel is portaled to body so fixed is viewport-relative. */
+body.dig-docked { height: calc(100vh - var(--dig-panel-h, 0px)) !important; overflow: hidden !important; }
+body.dig-docked #root { height: 100% !important; }

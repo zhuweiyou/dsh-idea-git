@@ -72,7 +72,7 @@ function GitEntryButton(props: any) {
   React.useEffect(() => {
     const probe = () => {
       try {
-        const el = document.querySelector('textarea') as HTMLElement | null
+        const el = (document.querySelector('.dig-entry') || document.querySelector('[contenteditable="true"]') || document.querySelector('textarea')) as HTMLElement | null
         const chain: any[] = []
         let n: HTMLElement | null = el
         while (n && chain.length < 16) {

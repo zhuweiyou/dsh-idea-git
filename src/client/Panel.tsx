@@ -1,5 +1,6 @@
 /** The bottom Git panel shell: tabs, branch menu, remote actions, resize, minimize/maximize/close. */
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { useGit, Icon, IconButton, Dropdown, MenuItem } from './lib/ui'
 import { useT } from './lib/i18n'
 import { useWindow, setHeight, toggleMaximized, toggleMinimized, closePanel } from './window'
@@ -88,6 +89,15 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
+  React.useEffect(() => {
+    const h = w.open && !w.maximized ? (w.minimized ? 40 : w.height) : 0
+    const body = document.body
+    try {
+      if (h > 0) { document.documentElement.style.setProperty('--dig-panel-h', h + 'px'); body.classList.add('dig-docked') }
+      else body.classList.remove('dig-docked')
+    } catch {}
+    return () => { try { body.classList.remove('dig-docked') } catch {} }
+  }, [w.open, w.height, w.minimized, w.maximized])
   React.useEffect(() => { saveCurrentWorkspace() }, [w.open, w.height, w.maximized, w.minimized])
   React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
@@ -125,7 +135,7 @@ export function Panel() {
   const bottom = w.minimized ? 40 : w.height
   const branch = s.info?.branch?.head
   const locals = s.branches.filter((b) => !b.remote)
-  return (
+  const content = (
     <>
       {!w.maximized && (s.diff || s.blame) ? <DiffView bottom={bottom} theme={w.theme} /> : null}
       {!w.maximized && s.conflict ? <ConflictView bottom={bottom} theme={w.theme} /> : null}
@@ -203,4 +213,6 @@ export function Panel() {
       <RebasePlanDialog theme={w.theme} />
     </>
   )
+  return createPortal(content, document.body)
 }
+
