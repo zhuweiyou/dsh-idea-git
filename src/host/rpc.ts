@@ -103,6 +103,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'lfsUnlock':
         return withRepo(ctx, payload, signal, (info) => svc.lfsUnlock(info, payload, signal))
 
+      case 'lfsMigrate':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsMigrate(info, payload, signal))
+
       case 'lfsTrack':
         return withRepo(ctx, payload, signal, (info) => svc.lfsTrack(info, payload, signal))
 

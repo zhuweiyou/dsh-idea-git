@@ -371,6 +371,23 @@ try {
     ok('resolved content written', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'resolved\n')
     ok('file no longer conflicted', !(await call('status', D(repo))).value.files.some((f) => f.kind === 'conflicted'))
   }
+
+  /* ---------------- LFS migrate ---------------- */
+  console.log('\n[lfs-migrate]')
+  {
+    let lfsAvailable = true
+    try { execFileSync('git', ['lfs', 'version'], { stdio: 'ignore' }) } catch { lfsAvailable = false }
+    if (!lfsAvailable) { console.log('  (git-lfs not installed, skipped)') }
+    else {
+      const { repo, g } = makeRepo()
+      g(['lfs', 'install', '--local'])
+      fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); fs.writeFileSync(path.join(repo, 'x.bin'), 'BIN\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+      const r = await call('lfsMigrate', { ...D(repo), include: '*.bin' })
+      ok('lfsMigrate ok', r.ok && r.value.ok === true)
+      ok('lfs tracks x.bin', (await call('lfsLsFiles', D(repo))).value.includes('x.bin'))
+      ok('.gitattributes has *.bin', fs.existsSync(path.join(repo, '.gitattributes')) && fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8').includes('*.bin'))
+    }
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

@@ -874,3 +874,12 @@ export function lfsLock(path: string) {
 export function lfsUnlock(path: string) {
   return withBusy('Unlocking…', async () => { await api.rpc('lfsUnlock', { ...targetPayload(), path }); setToast('Unlocked: ' + path) })
 }
+
+
+export function lfsMigrate(include: string) {
+  return withBusy('Migrating to LFS…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('lfsMigrate', { ...targetPayload(), include })
+    if (!r || !r.ok) throw new Error(r?.output || 'lfs migrate failed')
+    await refreshAll()
+  })
+}

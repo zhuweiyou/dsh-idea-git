@@ -1116,6 +1116,13 @@ export async function applyPatch(info: RepoInfo, payload: any, signal?: AbortSig
   return { ok: true }
 }
 
+export async function lfsMigrate(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const include = String(payload?.include ?? '').trim()
+  if (!include) throw new RepoError('git/bad-pattern', 'Missing include pattern')
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['lfs', 'migrate', 'import', `--include=${include}`, '--yes'], timeoutMs: 300000 })
+  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+}
+
 export async function lfsTrack(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const patterns: string[] = Array.isArray(payload?.patterns) ? payload.patterns.map(String) : payload?.pattern ? [String(payload.pattern)] : []
   if (!patterns.length) throw new RepoError('git/bad-pattern', 'Missing patterns')
