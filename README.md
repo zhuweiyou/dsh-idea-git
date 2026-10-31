@@ -33,7 +33,7 @@ IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行�
 - **设置页**：可编辑 Git 可执行文件路径（持久化）、Git/LFS 版本、仓库/主题/语言说明。
 
 ## 主题与语言
-完整沿用 OpenIDEA 设计 token（Islands Dark/Light，作用域限定面板内）；`data-theme` 跟随 DSH
+`data-theme` 跟随 DSH
 `colorScheme` 并订阅 `theme/change`；文案「英文源 + 中文词典」跟随 DSH locale。
 
 ## 构建与安装
@@ -42,9 +42,3 @@ pnpm install
 pnpm build        # Host -> lib/index.js，Client -> dist/client.js（__ModuleLoader__）
 ```
 通过 DSH 插件管理以本地目录安装（`file:` 规格，避免误从 npm 拉取）。
-
-## 与现有插件
-本插件与 `@happyqu/dsh-plugin-git` 并存（两个 Git 按钮都会出现）。确认新版稳定后可在插件管理中禁用旧插件。
-
-## 许可
-样式 token 与提交图算法参考 OpenIDEA（Apache-2.0）；图标为原创绘制。
