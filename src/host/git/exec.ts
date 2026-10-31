@@ -44,12 +44,21 @@ export async function resolveGitPath(configured?: string | null): Promise<string
   const explicit = (configured ?? process.env.IDEA_GIT_PATH ?? '').trim()
   if (explicit) return explicit
   if (cachedGitPath !== undefined) return cachedGitPath
-  try {
-    const r = await spawnProc('git', ['--version'], { cwd: os.homedir(), timeoutMs: 8000 })
-    cachedGitPath = r.code === 0 ? 'git' : null
-  } catch {
-    cachedGitPath = null
+  const candidates = ['git']
+  if (process.platform === 'win32') {
+    candidates.push(
+      'C:\\Program Files\\Git\\cmd\\git.exe',
+      'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
+      'C:\\Program Files\\Git\\bin\\git.exe',
+    )
   }
+  for (const candidate of candidates) {
+    try {
+      const r = await spawnProc(candidate, ['--version'], { cwd: os.homedir(), timeoutMs: 8000 })
+      if (r.code === 0) { cachedGitPath = candidate; return cachedGitPath }
+    } catch {}
+  }
+  cachedGitPath = null
   return cachedGitPath
 }
 
@@ -73,6 +82,7 @@ function spawnProc(exe: string, args: string[], opts: RunOptions): Promise<CmdRe
       cwd: opts.cwd,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0', ...(opts.env ?? {}) },
       stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
     })
     let stdout = ''
     let stderr = ''
@@ -172,6 +182,7 @@ export function runGitBytes(gitPath: string, opts: { cwd: string; args: string[]
       cwd: opts.cwd,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
       stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
     })
     const chunks: Buffer[] = []
     let stderr = ''

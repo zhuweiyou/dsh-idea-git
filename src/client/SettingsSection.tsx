@@ -1,23 +1,38 @@
-/** Plugin settings page: Git diagnostics and behavior notes. */
+/** Plugin settings: Git executable (editable), LFS, behavior notes. */
 import React from 'react'
 import { useT } from './lib/i18n'
 import * as api from './api'
 
-interface VersionInfo {
-  found: boolean
-  path?: string
-  version?: string
-}
+interface VersionInfo { found: boolean; path?: string; version?: string }
 interface LfsInfo { installed: boolean; version?: string }
 
 export function SettingsSection() {
   const t = useT()
   const [info, setInfo] = React.useState<VersionInfo | null>(null)
   const [lfs, setLfs] = React.useState<LfsInfo | null>(null)
-  React.useEffect(() => {
+  const [pathInput, setPathInput] = React.useState('')
+  const [saved, setSaved] = React.useState(false)
+  const [lfsFiles, setLfsFiles] = React.useState<string[] | null>(null)
+
+  const loadVersion = React.useCallback(() => {
     api.rpc<VersionInfo>('gitVersion', {}).then(setInfo).catch(() => setInfo({ found: false }))
-    api.rpc<LfsInfo>('lfsInfo', {}).then(setLfs).catch(() => setLfs({ installed: false }))
   }, [])
+  React.useEffect(() => {
+    loadVersion()
+    api.rpc<LfsInfo>('lfsInfo', {}).then(setLfs).catch(() => setLfs({ installed: false }))
+    api.rpc<{ gitPath?: string }>('getSettings', {}).then((s) => setPathInput(s.gitPath || '')).catch(() => {})
+    api.rpc<string[]>('lfsLsFiles', {}).then(setLfsFiles).catch(() => setLfsFiles([]))
+  }, [loadVersion])
+
+  const save = async () => {
+    try {
+      await api.rpc('setSettings', { gitPath: pathInput.trim() })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1500)
+      loadVersion()
+    } catch {}
+  }
+
   return (
     <div className="dig-settings">
       <h3 className="dig-settings__title">IDEA Git</h3>
@@ -30,9 +45,20 @@ export function SettingsSection() {
           {info === null ? t('Loading') : info.found ? `${info.path}  ·  ${info.version}` : t('Not found')}
         </span>
       </div>
+      <div className="dig-settings__row dig-settings__row--edit">
+        <span className="dig-settings__label">{t('Git executable path')}</span>
+        <span className="dig-settings__value dig-settings__edit">
+          <input className="dig-settings__input" placeholder="git" value={pathInput} onChange={(e) => setPathInput(e.target.value)} />
+          <button type="button" className="dig-btn" onClick={() => void save()}>{saved ? t('Saved') : t('Save')}</button>
+        </span>
+      </div>
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t('Git LFS')}</span>
         <span className="dig-settings__value">{lfs === null ? t('Loading') : lfs.installed ? (lfs.version || t('Installed')) : t('Not found')}</span>
+      </div>
+      <div className="dig-settings__row">
+        <span className="dig-settings__label">{t('LFS tracked files')}</span>
+        <span className="dig-settings__value">{lfsFiles === null ? t('Loading') : lfsFiles.length === 0 ? t('None') : `${lfsFiles.length} — ${lfsFiles.slice(0, 6).join(', ')}${lfsFiles.length > 6 ? ' …' : ''}`}</span>
       </div>
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t('Repository')}</span>

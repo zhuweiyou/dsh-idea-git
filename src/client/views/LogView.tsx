@@ -3,7 +3,7 @@ import React from 'react'
 import { useGit, Icon, IconButton, Dropdown, MenuItem, formatDate } from '../lib/ui'
 import { useT } from '../lib/i18n'
 import { openContextMenu, copyText } from '../lib/contextMenu'
-import { askText } from '../lib/prompt'
+import { askText, askMultiline } from '../lib/prompt'
 import { SplitPane } from '../lib/Split'
 import { computeGraph, emptyGraphState, laneColor, type GraphRow } from '../lib/graph'
 import * as store from '../store'
@@ -60,7 +60,7 @@ function buildBranchTree(branches: BranchItem[], prefix = ''): BNode[] {
   return [...nodes, ...leaves]
 }
 
-function BranchRow({ b, t }: { b: BranchItem; t: (s: string, p?: any) => string }) {
+function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => string; label?: string }) {
   return (
     <div
       key={b.ref}
@@ -74,7 +74,7 @@ function BranchRow({ b, t }: { b: BranchItem; t: (s: string, p?: any) => string 
       onContextMenu={(e) => openContextMenu(e, branchMenuItems(b, t))}
     >
       <Icon name="branch" size={15} style={{ color: b.current ? 'var(--warning)' : 'var(--fg-subtle)' }} />
-      <span className="dig-branchrow__name">{b.name}</span>
+      <span className="dig-branchrow__name">{label ?? b.name}</span>
       {b.ahead || b.behind ? <span className="dig-branchrow__sync">{b.ahead ? `↑${b.ahead}` : ''}{b.behind ? `↓${b.behind}` : ''}</span> : null}
     </div>
   )
@@ -96,7 +96,7 @@ function BranchNodes({ nodes, depth, expanded, toggle, t }: { nodes: BNode[]; de
             </React.Fragment>
           )
         }
-        return <div key={'b:' + n.path} style={{ paddingLeft: depth * 14 + 8 }}>{n.branch ? <BranchRow b={n.branch} t={t} /> : null}</div>
+        return <div key={'b:' + n.path} style={{ paddingLeft: depth * 14 + 8 }}>{n.branch ? <BranchRow b={n.branch} t={t} label={n.name} /> : null}</div>
       })}
     </>
   )
@@ -112,25 +112,30 @@ function BranchesPanel() {
   const locals = s.branches.filter((b) => !b.remote)
   const remotes = s.branches.filter((b) => b.remote && match(b))
   const localTree = React.useMemo(() => buildBranchTree(locals.filter(match)), [s.branches, q])
+  // remote groups: remote name -> its branches (full names, e.g. origin/feature/x)
+  const remoteGroups = React.useMemo(() => {
+    const g = new Map<string, BranchItem[]>()
+    for (const b of remotes) {
+      const remoteName = b.name.split('/')[0]
+      if (!g.has(remoteName)) g.set(remoteName, [])
+      g.get(remoteName)!.push(b)
+    }
+    return g
+  }, [remotes])
+  const remoteTrees = React.useMemo(() => {
+    const m = new Map<string, BNode[]>()
+    for (const [remote, list] of remoteGroups) m.set(remote, buildBranchTree(list, remote))
+    return m
+  }, [remoteGroups])
   const expanded = React.useMemo(() => {
     const all = new Set<string>()
     const walk = (ns: BNode[]) => ns.forEach((n) => { if (n.dir) { all.add(n.path); walk(n.children || []) } })
     walk(localTree)
+    for (const t of remoteTrees.values()) walk(t)
     for (const k of collapsed) all.delete(k)
     return all
-  }, [localTree, collapsed])
+  }, [localTree, remoteTrees, collapsed])
   const toggle = (p: string) => setCollapsed((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
-  // remote groups: remote name -> branches with the remote prefix stripped
-  const remoteGroups = React.useMemo(() => {
-    const g = new Map<string, BranchItem[]>()
-    for (const b of remotes) {
-      const [remoteName, ...rest] = b.name.split('/')
-      const short = rest.join('/') || b.name
-      if (!g.has(remoteName)) g.set(remoteName, [])
-      g.get(remoteName)!.push({ ...b, name: short })
-    }
-    return g
-  }, [remotes])
   const current = locals.find((b) => b.current)
   return (
     <div className="dig-branches">
@@ -140,16 +145,37 @@ function BranchesPanel() {
       </div>
       <div className="dig-branches__list">
         <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={() => void store.refreshAll()} /></div>
-        {current ? <div style={{ paddingLeft: 8 }}><BranchRow b={current} t={t} /></div> : null}
+        {current ? <div style={{ paddingLeft: 8 }}><BranchRow b={current} t={t} label={current.name.split('/').pop()} /></div> : null}
         <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} />
-        {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span></div> : null}
+        {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span><span style={{ flex: 1 }} /><IconButton icon="plus" title={t('Add Remote…')} size={13} onClick={async () => { const n = await askText(t('Remote name')); if (!n) return; const u = await askText(t('Remote URL')); if (u) void store.addRemote(n, u) }} /></div> : null}
         {[...remoteGroups.entries()].map(([remote, list]) => (
           <div key={remote}>
-            <div className="dig-branches__folder" style={{ paddingLeft: 8 }} onClick={() => toggle('remote:' + remote)}>
+            <div className="dig-branches__folder" style={{ paddingLeft: 8 }} onClick={() => toggle('remote:' + remote)}
+              onContextMenu={(e) => { const url = s.remotes.find((r) => r.name === remote)?.url || ''; openContextMenu(e, [
+                { label: t('Edit URL…'), run: async () => { const u = await askText(t('Remote URL'), url); if (u) void store.setRemoteUrl(remote, u) } },
+                { separator: true },
+                { label: t('Remove Remote'), danger: true, run: () => { if (window.confirm(t('Remove remote {name}?', { name: remote }))) void store.removeRemote(remote) } },
+              ]) }}>
               <Icon name={(collapsed.has('remote:' + remote)) ? 'chevronRight' : 'chevronDown'} size={12} />
               <span>{remote}</span>
             </div>
-            {!collapsed.has('remote:' + remote) ? list.map((b) => <div key={b.ref} style={{ paddingLeft: 22 }}><BranchRow b={b} t={t} /></div>) : null}
+            {!collapsed.has('remote:' + remote) ? <BranchNodes nodes={remoteTrees.get(remote) || []} depth={1} expanded={expanded} toggle={toggle} t={t} /> : null}
+          </div>
+        ))}
+        {s.tags.length ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="tag" size={15} /><span>{t('Tags')}</span></div> : null}
+        {s.tags.map((tag) => (
+          <div key={tag} className="dig-branchrow" style={{ paddingLeft: 22 }} title={tag}
+            onClick={() => { if (window.confirm(t('Checkout tag {name}?', { name: tag }))) void store.checkout(tag) }}
+            onContextMenu={(e) => openContextMenu(e, [
+              { label: t('Checkout'), run: () => void store.checkout(tag) },
+              { label: t('New Branch from Here…'), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, tag) } },
+              { label: t('Show History'), run: () => store.openBranchHistory(tag) },
+              { label: t('Copy Branch Name'), run: () => copyText(tag) },
+              { separator: true },
+              { label: t('Delete'), danger: true, run: () => { if (window.confirm(t('Delete tag {name}?', { name: tag }))) void store.deleteTag(tag) } },
+            ])}>
+            <Icon name="tag" size={13} style={{ color: 'var(--fg-subtle)' }} />
+            <span className="dig-branchrow__name">{tag}</span>
           </div>
         ))}
       </div>
@@ -184,7 +210,7 @@ function buildFileTree(files: FileEntry[]): FNode[] {
   return root.children || []
 }
 
-function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t }: { nodes: FNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; commit: string; shortId: string; t: (s: string, p?: any) => string }) {
+function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t, range }: { nodes: FNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; commit: string; shortId: string; t: (s: string, p?: any) => string; range?: { from: string; to: string } | null }) {
   return (
     <>
       {nodes.map((n) => {
@@ -207,9 +233,9 @@ function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t }: { nod
         const color = f.kind === 'added' ? 'var(--vcs-added)' : f.kind === 'deleted' ? 'var(--vcs-deleted)' : 'var(--vcs-modified)'
         return (
           <div key={'f:' + n.path} className="dig-dfile" style={{ paddingLeft: 22 + depth * 14 }} title={f.path}
-            onClick={() => void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path })}
+            onClick={() => range ? void store.openRangeDiff(range.from, range.to, f.path, range.from + '..' + range.to + ': ' + f.path) : void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path })}
             onContextMenu={(e) => openContextMenu(e, [
-              { label: t('Show Diff'), run: () => void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path }) },
+              { label: t('Show Diff'), run: () => range ? void store.openRangeDiff(range.from, range.to, f.path, range.from + '..' + range.to + ': ' + f.path) : void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path }) },
               { label: t('Show History'), run: () => store.openHistory(f.path) },
               { label: t('Annotate with Git Blame'), run: () => void store.openBlame(f.path, f.path) },
               { separator: true },
@@ -240,9 +266,9 @@ function DetailsPane() {
   const toggle = (p: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   return (
     <div className="dig-details">
-      <div className="dig-details__fileshead">{t('{n} files', { n: s.commitFiles.length })}</div>
+      <div className="dig-details__fileshead">{t('{n} files', { n: s.commitFiles.length })}{s.detailRange ? ' · ' + t('selected commits') : ''}</div>
       <div className="dig-details__files">
-        <FileNodes nodes={tree} depth={0} expanded={expanded} toggle={toggle} commit={commit.id} shortId={commit.shortId} t={t} />
+        <FileNodes nodes={tree} depth={0} expanded={expanded} toggle={toggle} commit={commit.id} shortId={commit.shortId} t={t} range={s.detailRange} />
       </div>
       <div className="dig-details__msg">
         <div className="dig-details__subject">{commit.subject}</div>
@@ -260,9 +286,10 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
   if (multi) {
     return [
       { label: t('Copy Revision Numbers'), run: () => copyText(selection.map((x) => x.id).join('\n')) },
+      { label: t('Create Patch…'), run: () => void store.createPatch({ commit: selection[0].id }) },
       { label: t('Cherry-Pick'), run: () => void store.cherryPick(selection.map((x) => x.id)) },
       { separator: true },
-      { label: t('Revert Commits'), disabled: true },
+      { label: t('Revert Commits'), run: () => { if (window.confirm(t('Revert {n} commits?', { n: selection.length }))) void store.revertCommits(selection.map((x) => x.id)) } },
       { label: t('Squash Commits'), disabled: true },
       { label: t('Drop Commits'), disabled: true },
     ]
@@ -270,20 +297,33 @@ function commitMenuItems(c: CommitItem, selection: CommitItem[], t: (x: string, 
   return [
     { label: t('Copy Revision Number'), run: () => copyText(c.id) },
     { label: t('Copy Commit Message'), run: () => copyText(c.message || c.subject) },
+    { label: t('Create Patch…'), run: () => void store.createPatch({ commit: c.id }) },
+    { label: t('Edit Commit Message…'), run: async () => { const m = await askMultiline(t('Commit message'), c.message || c.subject); if (m) void store.amendMessage(c.id, m) } },
     { separator: true },
     { label: t('Checkout Revision'), run: () => void store.checkout(c.id) },
+    { label: t('Compare with Local'), run: () => void store.openCompareWorking(c.id, c.shortId) },
     { separator: true },
     { label: t('Reset Current Branch to Here (Soft)'), run: () => { if (window.confirm(t('Reset to this commit (soft)?'))) void store.resetTo(c.id, 'soft') } },
+    { label: t('Reset Current Branch to Here (Mixed)'), run: () => { if (window.confirm(t('Reset to this commit (mixed)?'))) void store.resetTo(c.id, 'mixed') } },
+    { label: t('Reset Current Branch to Here (Hard)'), danger: true, run: () => { if (window.confirm(t('Hard reset to this commit? Uncommitted changes will be lost.'))) void store.resetTo(c.id, 'hard') } },
     { label: t('Revert Commit'), run: () => { if (window.confirm(t('Revert this commit?'))) void store.revertCommit(c.id) } },
+    { label: t('Undo Commit'), run: () => { if (window.confirm(t('Undo the latest commit (keep changes)?'))) void store.undoLastCommit() } },
+    { label: t('Squash into Parent'), disabled: store.getState().commits[0]?.id !== c.id || c.parents.length === 0, run: () => { if (window.confirm(t('Squash this commit into its parent?'))) void store.squashHead() } },
+    { label: t('Drop Commit'), danger: true, disabled: store.getState().commits[0]?.id !== c.id, run: () => { if (window.confirm(t('Drop this commit? Its changes will be discarded.'))) void store.dropHead() } },
     { separator: true },
     { label: t('New Branch from Here…'), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, c.id) } },
     { label: t('New Tag Here…'), run: async () => { const n = await askText(t('New tag name')); if (n) void store.createTag(n, c.id) } },
     { separator: true },
     { label: t('Cherry-Pick'), run: () => void store.cherryPick([c.id]) },
+    { separator: true },
+    { label: t('Go to Parent Commit'), disabled: !c.parents.length, run: () => void store.selectCommit(c.parents[0]) },
+    { label: t('Go to Child Commit'), disabled: !store.getState().commits.some((x) => x.parents.includes(c.id)), run: () => { const child = store.getState().commits.find((x) => x.parents.includes(c.id)); if (child) void store.selectCommit(child.id) } },
+    { label: t('Open in Browser'), run: () => void store.openCommitInBrowser(c.id) },
   ]
 }
 
 function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
+  const cur = store.getState().info?.branch?.head || 'HEAD'
   if (b.current) {
     return [
       { label: t("New Branch from '{name}'…", { name: b.name }), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, b.name) } },
@@ -300,13 +340,16 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     { label: t("New Branch from '{name}'…", { name: b.name }), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, b.name) } },
     { separator: true },
     { label: t('Show History'), run: () => store.openBranchHistory(b.name) },
+    { label: t('Compare with Current'), disabled: b.current || b.remote, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
     { label: t('Copy Branch Name'), run: () => copyText(b.name) },
     { separator: true },
     { label: t("Merge '{name}' into Current", { name: b.name }), disabled: b.remote, run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },
     ...(b.remote ? [] : [
       { separator: true },
+      { label: t("Rebase '{cur}' onto '{name}'", { cur, name: b.name }), run: () => { if (window.confirm(t("Rebase '{cur}' onto '{name}'?", { cur, name: b.name }))) void store.rebaseBranch(b.name) } },
       { label: t('Rename…'), run: async () => { const n = await askText(t('New branch name'), b.name); if (n && n !== b.name) void store.renameBranch(b.name, n) } },
       { label: t('Delete'), danger: true, run: () => { if (window.confirm(t('Delete branch {name}?', { name: b.name }))) void store.deleteBranch(b.name) } },
+      { label: t('Force Delete'), danger: true, run: () => { if (window.confirm(t('Force delete branch {name}? Unmerged commits will be lost.', { name: b.name }))) void store.deleteBranch(b.name, true) } },
     ]),
   ]
 }
@@ -394,6 +437,20 @@ function FilterBar({ text, setText, regex, setRegex, caseSensitive, setCase, aut
       </Dropdown>
       <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={dateDays != null ? 'true' : undefined}>{dateDays != null ? (dateOpts.find((o) => o.v === dateDays)?.label || t('Date')) : t('Date')} ▾</span>}>
         {(close) => (<>{dateOpts.map((o) => <MenuItem key={String(o.v)} checked={dateDays === o.v} onClick={() => { close(); setDateDays(o.v) }}>{o.label}</MenuItem>)}</>)}
+      </Dropdown>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={s.logPath ? 'true' : undefined}>{s.logPath ? s.logPath : t('Paths')} ▾</span>}>
+        {(close) => (<>
+          <MenuItem onClick={async () => { close(); const p = await askText(t('Filter by path'), s.logPath || ''); if (p) store.setPathFilter(p) }}>{t('Filter by Path…')}</MenuItem>
+          {s.logPath ? <MenuItem onClick={() => { close(); store.clearPathFilter() }}>{t('Clear filter')}</MenuItem> : null}
+        </>)}
+      </Dropdown>
+      <button type="button" className="dig-filterbtn" data-active={s.logHeadOnly ? 'true' : undefined} title={s.logHeadOnly ? t('Current branch') : t('All branches')} onClick={() => store.setLogHeadOnly(!s.logHeadOnly)}>{s.logHeadOnly ? t('Current branch') : t('All branches')}</button>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" title={t('Sort')}>{s.logSort === 'reverse' ? t('Sort: Date (old→new)') : s.logSort === 'topo' ? t('Sort: Topology') : t('Sort: Date (new→old)')} ▾</span>}>
+        {(close) => (<>
+          <MenuItem checked={s.logSort === 'date'} onClick={() => { close(); store.setLogSort('date') }}>{t('Sort: Date (new→old)')}</MenuItem>
+          <MenuItem checked={s.logSort === 'reverse'} onClick={() => { close(); store.setLogSort('reverse') }}>{t('Sort: Date (old→new)')}</MenuItem>
+          <MenuItem checked={s.logSort === 'topo'} onClick={() => { close(); store.setLogSort('topo') }}>{t('Sort: Topology')}</MenuItem>
+        </>)}
       </Dropdown>
       <span style={{ flex: 1 }} />
       <IconButton icon="refresh" title={t('Refresh log')} onClick={() => void store.loadLog(true)} />

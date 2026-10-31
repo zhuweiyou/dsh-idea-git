@@ -9,13 +9,21 @@
  */
 import path from 'node:path'
 import fs from 'node:fs'
+import os from 'node:os'
 import { clearGitPathCache, gitOrThrow, resolveGitPath, runGit, runGitBytes } from './exec.js'
+import { getSettings } from '../settings.js'
 
 export interface RepoInfo {
   root: string
   gitPath: string
   bare: boolean
   worktree: boolean
+}
+
+function samePath(a: string, b: string): boolean {
+  const ra = path.resolve(a)
+  const rb = path.resolve(b)
+  return process.platform === 'win32' ? ra.toLowerCase() === rb.toLowerCase() : ra === rb
 }
 
 export class RepoError extends Error {
@@ -122,9 +130,7 @@ export function targetDirectory(ctx: any, payload: any): string | undefined {
 /* ------------------------------------------------------------------ */
 
 export async function resolveRepo(ctx: any, payload: any): Promise<RepoInfo> {
-  const configured = (() => {
-    try { return usable(ctx.get?.('ideaGitConfig')?.gitPath) } catch { return undefined }
-  })()
+  const configured = usable(getSettings().gitPath)
   const gitPath = await resolveGitPath(configured)
   if (!gitPath) throw new RepoError('git/not-found', 'Git was not found. Install Git or set its path in the plugin settings.')
 
@@ -146,7 +152,7 @@ export async function resolveRepo(ctx: any, payload: any): Promise<RepoInfo> {
     const gitDir = await runGit(gitPath, { cwd: root, args: ['rev-parse', '--absolute-git-dir'] })
     const commonDir = await runGit(gitPath, { cwd: root, args: ['rev-parse', '--path-format=absolute', '--git-common-dir'] })
     if (gitDir.code === 0 && commonDir.code === 0) {
-      worktree = path.resolve(gitDir.stdout.trim()) !== path.resolve(commonDir.stdout.trim())
+      worktree = !samePath(gitDir.stdout.trim(), commonDir.stdout.trim())
     }
   } catch {}
 
@@ -299,8 +305,12 @@ export async function readLog(info: RepoInfo, payload: any, signal?: AbortSignal
   const limit = Math.max(1, Math.min(1000, Number(payload?.limit) || 200))
   const skip = Math.max(0, Number(payload?.skip) || 0)
   const pretty = `%H${FIELD}%h${FIELD}%aN${FIELD}%aE${FIELD}%at${FIELD}%ct${FIELD}%P${FIELD}%D${FIELD}%s${FIELD}%B${RECORD}`
-  const args = ['log', '--date-order', `--max-count=${limit + 1}`, `--skip=${skip}`, `--pretty=format:${pretty}`]
-  if (usable(payload?.branch)) args.push(String(payload.branch))
+  const order = payload?.sort === 'topo' ? '--topo-order' : '--date-order'
+  const args = ['log', order]
+  if (payload?.sort === 'reverse') args.push('--reverse')
+  args.push(`--max-count=${limit + 1}`, `--skip=${skip}`, `--pretty=format:${pretty}`)
+  if (payload?.headOnly === true) args.push('HEAD')
+  else if (usable(payload?.branch)) args.push(String(payload.branch))
   else if (payload?.nobranch !== true) args.push('--all')
   if (usable(payload?.file)) args.push('--', payload.file)
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args, timeoutMs: 60_000 })
@@ -581,6 +591,12 @@ export async function hasLfs(info: RepoInfo): Promise<boolean> {
   return lfsCache
 }
 
+export async function lfsLsFiles(info: RepoInfo, signal?: AbortSignal): Promise<string[]> {
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['lfs', 'ls-files', '-n'] })
+  if (r.code !== 0) return []
+  return r.stdout.split('\n').map((x) => x.trim()).filter(Boolean)
+}
+
 export async function lfsInfo(ctx: any): Promise<{ installed: boolean; version?: string }> {
   const gitPath = await resolveGitPath()
   if (!gitPath) return { installed: false }
@@ -694,10 +710,21 @@ export async function readWorktrees(info: RepoInfo, signal?: AbortSignal): Promi
   }
   if (cur) items.push(cur)
   const root = path.resolve(info.root)
-  for (const it of items) it.current = path.resolve(it.path) === root
+  for (const it of items) it.current = samePath(it.path, root)
   return items
 }
 
+export async function worktreeLock(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const target = String(payload?.worktreePath ?? payload?.target ?? '').trim()
+  if (!target) throw new RepoError('git/bad-path', 'Missing worktree path')
+  if (payload?.lock === true) await runWrite(info, ['worktree', 'lock', target], signal)
+  else await runWrite(info, ['worktree', 'unlock', target], signal)
+  return { ok: true }
+}
+export async function worktreePrune(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  await runWrite(info, ['worktree', 'prune'], signal)
+  return { ok: true }
+}
 export async function addWorktree(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const target = String(payload?.worktreePath ?? payload?.target ?? '').trim()
   if (!target) throw new RepoError('git/bad-path', 'Missing worktree path')
@@ -801,8 +828,16 @@ export async function repoInfo(ctx: any, payload: any, signal?: AbortSignal) {
 
 export async function resetCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const commit = String(payload?.commit || 'HEAD')
-  const mode = payload?.mode === 'mixed' ? 'mixed' : 'soft'
+  const mode = payload?.mode === 'hard' ? 'hard' : payload?.mode === 'mixed' ? 'mixed' : 'soft'
+  if (mode === 'hard' && payload?.confirm !== true) throw new RepoError('git/needs-confirmation', 'Hard reset needs confirmation')
   await runWrite(info, ['reset', `--${mode}`, commit], signal)
+  return { ok: true }
+}
+
+export async function revertMany(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commits: string[] = Array.isArray(payload?.commits) ? payload.commits.map(String) : []
+  if (!commits.length) throw new RepoError('git/bad-commit', 'Missing commits')
+  for (const c of [...commits].reverse()) await runWrite(info, ['revert', '--no-edit', c], signal)
   return { ok: true }
 }
 
@@ -859,6 +894,135 @@ export async function addIgnore(info: RepoInfo, payload: any, signal?: AbortSign
     fs.writeFileSync(target, prefix + added.map((f) => '/' + f).join('\n') + '\n')
   }
   return { added }
+}
+
+export async function conflictVersions(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const file = String(payload?.file ?? '').trim()
+  if (!file) throw new RepoError('git/bad-path', 'Missing file path')
+  const get = async (stage: number): Promise<string> => {
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `:${stage}:${file}`], signal })
+    return r.code === 0 ? r.stdout.toString('utf8') : ''
+  }
+  return { ours: await get(2), theirs: await get(3), base: await get(1) }
+}
+
+export async function undoCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const target = String(payload?.commit ?? 'HEAD~1')
+  await runWrite(info, ['reset', '--soft', target], signal)
+  return { ok: true }
+}
+
+export async function compareRefs(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<Array<{ path: string; kind: string }>> {
+  const fromRaw = String(payload?.from ?? '')
+  const to = String(payload?.to ?? 'HEAD')
+  if (!fromRaw) throw new RepoError('git/bad-ref', 'Missing from ref')
+  const from = fromRaw === 'ROOT' ? '4b825dc642cb6eb9a060e54bf8d69288fbee4904' : fromRaw
+  const args = to === 'WORKTREE' ? ['diff', '--name-status', '-M', from] : ['diff', '--name-status', '-M', from, to]
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || 'compare failed')
+  const files: Array<{ path: string; kind: string }> = []
+  for (const line of r.stdout.split('\n')) {
+    if (!line.trim()) continue
+    const p = line.split('\t')
+    const letter = p[0][0]
+    const kind = letter === 'A' ? 'added' : letter === 'D' ? 'deleted' : letter === 'R' ? 'renamed' : letter === 'C' ? 'copied' : 'modified'
+    files.push({ path: letter === 'R' || letter === 'C' ? (p[2] ?? p[1]) : p[1], kind })
+  }
+  return files
+}
+
+export async function refDiff(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const fromRaw = String(payload?.from ?? '')
+  const to = String(payload?.to ?? 'HEAD')
+  const file = String(payload?.file ?? '')
+  if (!fromRaw || !file) throw new RepoError('git/bad-ref', 'Missing ref/file')
+  const show = async (rev: string): Promise<string> => {
+    if (rev === 'ROOT') return ''
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${rev}:${file}`], signal })
+    return r.code === 0 ? r.stdout.toString('utf8') : ''
+  }
+  let newText: string
+  if (to === 'WORKTREE') {
+    try { newText = fs.readFileSync(path.resolve(info.root, file), 'utf8') } catch { newText = '' }
+  } else newText = await show(to)
+  return { oldText: await show(fromRaw), newText, oldLabel: fromRaw, newLabel: to === 'WORKTREE' ? 'Working Tree' : to }
+}
+
+export async function remoteUrl(info: RepoInfo): Promise<{ url: string | null }> {
+  const r = await runGit(info.gitPath, { cwd: info.root, args: ['remote', 'get-url', 'origin'] })
+  return { url: r.code === 0 ? r.stdout.trim() : null }
+}
+
+export async function createPatch(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ path: string }> {
+  const commit = payload?.commit ? String(payload.commit) : null
+  let out = ''
+  if (commit) {
+    const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['format-patch', '-1', '--stdout', commit], maxBuffer: 32 * 1024 * 1024 })
+    out = r.stdout
+  } else {
+    const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
+    const args = ['diff', '--no-color']
+    if (paths.length) args.push('--', ...paths)
+    const r = await runGit(info.gitPath, { cwd: info.root, signal, args, maxBuffer: 32 * 1024 * 1024 })
+    out = r.stdout
+  }
+  if (!out.trim()) throw new RepoError('git/empty-patch', 'No changes to export')
+  const dir = path.join(os.tmpdir(), 'idea-git-patches')
+  fs.mkdirSync(dir, { recursive: true })
+  const name = `${(commit || 'changes').slice(0, 8)}-${Date.now()}.patch`
+  const target = path.join(dir, name)
+  fs.writeFileSync(target, out)
+  return { path: target }
+}
+
+export async function squashHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const log = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '-2', '--pretty=format:%B%x1e'], maxBuffer: 4 * 1024 * 1024 })
+  const recs = log.stdout.split('\x1e').map((x) => x.replace(/^\n+/, '').trim()).filter(Boolean)
+  if (recs.length < 2) throw new RepoError('git/bad-commit', 'Need at least two commits to squash')
+  const combined = `${recs[1]}\n\n${recs[0]}`.trim()
+  await runWrite(info, ['reset', '--soft', 'HEAD~2'], signal)
+  await runWrite(info, ['commit', '-m', combined], signal)
+  return { ok: true }
+}
+
+export async function dropHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  if (payload?.confirm !== true) throw new RepoError('git/needs-confirmation', 'Dropping a commit needs confirmation')
+  await runWrite(info, ['reset', '--hard', 'HEAD~1'], signal)
+  return { ok: true }
+}
+
+export async function remoteAdd(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim()
+  const url = String(payload?.url ?? '').trim()
+  if (!name || !url) throw new RepoError('git/bad-remote', 'Missing remote name or url')
+  await runWrite(info, ['remote', 'add', name, url], signal)
+  return { ok: true }
+}
+export async function remoteRemove(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim()
+  if (!name) throw new RepoError('git/bad-remote', 'Missing remote name')
+  await runWrite(info, ['remote', 'remove', name], signal)
+  return { ok: true }
+}
+export async function remoteSetUrl(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim()
+  const url = String(payload?.url ?? '').trim()
+  if (!name || !url) throw new RepoError('git/bad-remote', 'Missing remote name or url')
+  await runWrite(info, ['remote', 'set-url', name, url], signal)
+  return { ok: true }
+}
+export async function rebase(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const onto = String(payload?.onto ?? '').trim()
+  if (!onto) throw new RepoError('git/bad-ref', 'Missing target')
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rebase', onto], timeoutMs: 120000 })
+  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+}
+
+export async function tagDelete(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim()
+  if (!name) throw new RepoError('git/bad-tag', 'Missing tag name')
+  await runWrite(info, ['tag', '-d', name], signal)
+  return { ok: true }
 }
 
 /* ------------------------------------------------------------------ */

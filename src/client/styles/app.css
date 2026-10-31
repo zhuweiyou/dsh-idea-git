@@ -1712,3 +1712,112 @@
 .dig-btn:disabled:hover {
   background: var(--bg-elev, #eee);
 }
+
+.dig-conf__labels {
+  flex: none;
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.dig-conf__label {
+  flex: 1;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--fg-secondary);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+.dig-conf__label + .dig-conf__label { border-left: 1px solid var(--border); }
+
+.dig-settings__edit { display: flex; align-items: center; gap: 8px; font-family: var(--font-ui); }
+.dig-settings__input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  outline: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.dig-dialog__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--fg-strong);
+  outline: none;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  line-height: 1.5;
+}
+.dig-dialog__textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* compare view */
+.dig-compare { flex: 1; min-height: 0; display: flex; }
+.dig-compare__files {
+  flex: none;
+  width: 280px;
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+}
+.dig-compare__file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dig-compare__file:hover { background: var(--bg-tree-hover); }
+.dig-compare__file[data-selected='true'] { background: var(--bg-selected); }
+.dig-compare__fname { overflow: hidden; text-overflow: ellipsis; }
+.dig-compare__fdir { color: var(--fg-subtle); font-size: var(--fs-small); overflow: hidden; text-overflow: ellipsis; }
+.dig-compare__diff { flex: 1; min-width: 0; min-height: 0; overflow: auto; }
+
+/* final row metrics: taller rows, comfortable line-height */
+.dig-filerow { height: 30px; font-size: 14px; line-height: 20px; align-items: center; }
+.dig-filerow__name { line-height: 20px; }
+.dig-filerow__dir { line-height: 20px; }
+.dig-dirrow { height: 28px; font-size: 14px; line-height: 20px; }
+.dig-dfile { height: 28px; font-size: 14px; line-height: 20px; }
+.dig-dfile-dir { height: 28px; font-size: 14px; line-height: 20px; }
+.dig-branchrow { height: 26px; font-size: 14px; line-height: 20px; }
+.dig-group__head { height: 30px; }
+
+.dig-banner--toast {
+  color: var(--fg-strong);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* reset native button chrome for filterbar buttons */
+button.dig-filterbtn,
+.dig-filterbtn {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  line-height: 1;
+}
+.dig-filterbtn:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.dig-filterbtn[data-active='true'] {
+  background: var(--bg-selected);
+  color: var(--fg-strong);
+}

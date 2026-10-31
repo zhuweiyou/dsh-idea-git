@@ -49,7 +49,7 @@ export function apply(ctx: any) {
         } catch (error) {
           const text = error instanceof Error ? error.message : String(error)
           logger.warn?.(`[idea-git] ${call.method} failed: ${text}`)
-          return Response.json({ type: 'server-response', rpcId, result: { ok: false, error: { code: 'idea-git/handler-failed', message: text } } })
+          return Response.json({ type: 'server-response', rpcId, result: { ok: false, error: { code: 'idea-git/handler-failed', message: text, details: {} } } })
         }
       },
     })

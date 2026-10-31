@@ -10,6 +10,8 @@ import { ConsoleView } from './views/ConsoleView'
 import { StashView } from './views/StashView'
 import { WorktreeView } from './views/WorktreeView'
 import { DiffView } from './views/DiffView'
+import { ConflictView } from './views/ConflictView'
+import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
 import { PromptHost, askText } from './lib/prompt'
 
@@ -97,6 +99,8 @@ export function Panel() {
   return (
     <>
       {!w.maximized && (s.diff || s.blame) ? <DiffView bottom={bottom} theme={w.theme} /> : null}
+      {!w.maximized && s.conflict ? <ConflictView bottom={bottom} theme={w.theme} /> : null}
+      {!w.maximized && s.compare ? <CompareView bottom={bottom} theme={w.theme} /> : null}
     <div className="dig-theme dig-panel" data-theme={w.theme} style={{ height }}>
       {!w.maximized && !w.minimized ? <ResizeHandle /> : null}
       <div className="dig-panel__header" onDoubleClick={() => toggleMaximized()}>
@@ -158,6 +162,7 @@ export function Panel() {
         </div>
       ) : null}
       {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || 'Loading')}</div> : null}
+      {s.toast ? <div className="dig-banner dig-banner--toast">{s.toast}</div> : null}
       {!w.minimized ? (
         <div className="dig-panel__body">
           <Body />

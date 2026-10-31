@@ -1,6 +1,6 @@
 /** Changes & Commit view: a staged/unstaged file tree plus the commit message panel. */
 import React from 'react'
-import { useGit, Icon, IconButton, Button, Checkbox, baseName, dirName, kindColor, kindLetter } from '../lib/ui'
+import { useGit, Icon, IconButton, Button, Checkbox, Dropdown, MenuItem, baseName, dirName, kindColor, kindLetter, fileIconColor } from '../lib/ui'
 import { useT, getActiveLocale } from '../lib/i18n'
 import { openContextMenu, copyText } from '../lib/contextMenu'
 import * as store from '../store'
@@ -46,6 +46,7 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
   const canUnstage = file.staged
   const showDiff = () => void store.openDiff({ title: path, path, staged: file.staged && !file.unstaged })
   return [
+    ...(file.kind === 'conflicted' ? [{ label: t('Resolve Conflicts…'), run: () => void store.openConflict(file.path) }] : []),
     { label: t('Show Diff'), run: showDiff },
     { label: t('Jump to Source'), run: showDiff },
     { separator: true },
@@ -54,6 +55,7 @@ function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) =>
     { label: t('Unstage'), disabled: !canUnstage, run: () => void store.unstage([path]) },
     ...(file.kind === 'untracked' ? [{ label: t('Add to .gitignore'), run: () => void store.addIgnore([path], 'gitignore') }] : []),
     { separator: true },
+    { label: t('Create Patch…'), run: () => void store.createPatch({ paths: [path] }) },
     { label: t('Show History'), run: () => store.openHistory(path) },
     { label: t('Annotate with Git Blame'), run: () => void store.openBlame(path, path) },
     { separator: true },
@@ -90,7 +92,7 @@ function FileRow({ file }: { file: FileEntry }) {
       onClick={() => store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged })}
       onContextMenu={(e) => openContextMenu(e, fileMenuItems(file, root, t))}>
       <span className="dig-check__box" data-on={included ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); store.toggleInclude(file.path) }}>{included ? <Icon name="check" size={10} /> : null}</span>
-      <span className="dig-filerow__icon" style={{ color: kindColor(file.kind) }}>
+      <span className="dig-filerow__icon" style={{ color: fileIconColor(file.path) }}>
         <Icon name="file" size={18} />
       </span>
       <span className="dig-filerow__name" style={{ color: file.kind === 'deleted' ? 'var(--vcs-deleted)' : undefined }}>
@@ -153,7 +155,7 @@ function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth
   )
 }
 
-function Group({ title, files }: { title: string; files: FileEntry[] }) {
+function Group({ title, files, groupByDir }: { title: string; files: FileEntry[]; groupByDir: boolean }) {
   const gs = useGit()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
   const allOn = files.length > 0 && files.every((f) => gs.include[f.path] !== false)
@@ -176,8 +178,19 @@ function Group({ title, files }: { title: string; files: FileEntry[] }) {
         <span className="dig-group__title">{title}</span>
         <span className="dig-group__count">{files.length}</span>
       </div>
-      <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} />
+      {groupByDir ? <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} /> : files.slice().sort((a, b) => a.path.localeCompare(b.path)).map((f) => <div key={f.path} style={{ paddingLeft: 8 }}><FileRow file={f} /></div>)}
     </div>
+  )
+}
+
+function CommitHistory({ onPick, t }: { onPick: (m: string) => void; t: (x: string, p?: any) => string }) {
+  const [items] = React.useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('dig.msgHistory') || '[]') } catch { return [] } })
+  return (
+    <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('Commit Message History')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="history" size={14} /></span>}>
+      {(close) => items.length ? (
+        <>{items.map((m, i) => <MenuItem key={i} onClick={() => { close(); onPick(m) }}>{m.split('\n')[0].slice(0, 90)}</MenuItem>)}</>
+      ) : (<MenuItem disabled>{t('No history')}</MenuItem>)}
+    </Dropdown>
   )
 }
 
@@ -192,6 +205,7 @@ function CommitPanel() {
       <div className="dig-commit__bar">
         <Checkbox checked={s.amend} onChange={store.setAmend} label={t('Amend')} />
         <IconButton icon="sparkle" title={t('Generate commit message')} size={14} disabled={s.aiBusy} onClick={() => store.generateCommitMessage(getActiveLocale())} />
+        <CommitHistory onPick={(m) => store.setMessage(m)} t={t} />
         <span style={{ flex: 1 }} />
         <span className="dig-commit__len">{firstLine.length}</span>
       </div>
@@ -221,6 +235,7 @@ function CommitPanel() {
 export function ChangesView() {
   const s = useGit()
   const t = useT()
+  const [groupByDir, setGroupByDir] = React.useState<boolean>(() => localStorage.getItem('dig.groupByDir') !== '0')
   const [commitHeight, setCommitHeight] = React.useState(() => Number(localStorage.getItem('dig.commitHeight')) || 230)
   const heightRef = React.useRef(commitHeight)
   heightRef.current = commitHeight
@@ -246,6 +261,12 @@ export function ChangesView() {
         <IconButton icon="plus" title={t('Stage All')} onClick={() => void store.stageAll()} />
         <IconButton icon="minus" title={t('Unstage All')} onClick={() => void store.unstage(s.files.filter((f) => f.staged).map((f) => f.path))} />
         <span className="dig-toolbar__sep" />
+        <IconButton icon="undo" title={t('Rollback All')} disabled={s.files.length === 0} onClick={() => { if (window.confirm(t('Rollback all changes? This cannot be undone.'))) void store.discard(s.files.map((f) => f.path)) }} />
+        <IconButton icon="download" title={t('Update')} onClick={() => void store.remoteOp('pull')} />
+        <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('View Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="eye" size={14} /></span>}>
+          {(close) => (<MenuItem checked={groupByDir} onClick={() => { close(); const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }}>{t('Group by Directory')}</MenuItem>)}
+        </Dropdown>
+        <span className="dig-toolbar__sep" />
         <span className="dig-toolbar__hint">{t('{n} changes', { n: s.files.length })}</span>
       </div>
       <div className="dig-treewrap">
@@ -253,8 +274,8 @@ export function ChangesView() {
           <div className="dig-empty">{t('No local changes')}</div>
         ) : (
           <>
-            {staged.length ? <Group title={t('Staged')} files={staged} /> : null}
-            {unstaged.length ? <Group title={t('Changes')} files={unstaged} /> : null}
+            {staged.length ? <Group title={t('Staged')} files={staged} groupByDir={groupByDir} /> : null}
+            {unstaged.length ? <Group title={t('Changes')} files={unstaged} groupByDir={groupByDir} /> : null}
           </>
         )}
       </div>

@@ -20,8 +20,12 @@ function fail(error: any): Reply {
 }
 
 async function withRepo(ctx: any, payload: any, signal: AbortSignal | undefined, handler: (info: svc.RepoInfo) => Promise<unknown>): Promise<Reply> {
-  const info = await svc.resolveRepo(ctx, payload)
-  return ok(await handler(info))
+  try {
+    const info = await svc.resolveRepo(ctx, payload)
+    return ok(await handler(info))
+  } catch (error) {
+    return fail(error)
+  }
 }
 
 export async function dispatch(ctx: any, method: string, payload: any, signal?: AbortSignal): Promise<Reply> {
@@ -42,8 +46,66 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'reset':
         return withRepo(ctx, payload, signal, (info) => svc.resetCommit(info, payload, signal))
 
+      case 'remoteAdd':
+        return withRepo(ctx, payload, signal, (info) => svc.remoteAdd(info, payload, signal))
+
+      case 'remoteRemove':
+        return withRepo(ctx, payload, signal, (info) => svc.remoteRemove(info, payload, signal))
+
+      case 'remoteSetUrl':
+        return withRepo(ctx, payload, signal, (info) => svc.remoteSetUrl(info, payload, signal))
+
+      case 'rebase':
+        return withRepo(ctx, payload, signal, (info) => svc.rebase(info, payload, signal))
+
+      case 'tagDelete':
+        return withRepo(ctx, payload, signal, (info) => svc.tagDelete(info, payload, signal))
+
+      case 'squashHead':
+        return withRepo(ctx, payload, signal, (info) => svc.squashHead(info, payload, signal))
+
+      case 'dropHead':
+        return withRepo(ctx, payload, signal, (info) => svc.dropHead(info, payload, signal))
+
+      case 'createPatch':
+        return withRepo(ctx, payload, signal, (info) => svc.createPatch(info, payload, signal))
+
+      case 'undoCommit':
+        return withRepo(ctx, payload, signal, (info) => svc.undoCommit(info, payload, signal))
+
+      case 'compareRefs':
+        return withRepo(ctx, payload, signal, (info) => svc.compareRefs(info, payload, signal))
+
+      case 'refDiff':
+        return withRepo(ctx, payload, signal, (info) => svc.refDiff(info, payload, signal))
+
+      case 'remoteUrl':
+        return withRepo(ctx, payload, signal, (info) => svc.remoteUrl(info))
+
+      case 'revertMany':
+        return withRepo(ctx, payload, signal, (info) => svc.revertMany(info, payload, signal))
+
       case 'revert':
         return withRepo(ctx, payload, signal, (info) => svc.revertCommit(info, payload, signal))
+
+      case 'conflictVersions':
+        return withRepo(ctx, payload, signal, (info) => svc.conflictVersions(info, payload, signal))
+
+      case 'getSettings': {
+        const { getSettings } = await import('./settings.js')
+        return ok(getSettings())
+      }
+
+      case 'setSettings': {
+        const { saveSettings } = await import('./settings.js')
+        const { clearGitPathCache } = await import('./git/exec.js')
+        const saved = saveSettings({ gitPath: typeof payload?.gitPath === 'string' ? payload.gitPath : undefined })
+        clearGitPathCache()
+        return ok(saved)
+      }
+
+      case 'lfsLsFiles':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsLsFiles(info, signal))
 
       case 'lfsInfo':
         return ok(await svc.lfsInfo(ctx))
@@ -102,6 +164,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'worktreeList':
         return withRepo(ctx, payload, signal, (info) => svc.readWorktrees(info, signal))
 
+      case 'worktreeLock':
+        return withRepo(ctx, payload, signal, (info) => svc.worktreeLock(info, payload, signal))
+
+      case 'worktreePrune':
+        return withRepo(ctx, payload, signal, (info) => svc.worktreePrune(info, payload, signal))
+
       case 'worktreeAdd':
         return withRepo(ctx, payload, signal, (info) => svc.addWorktree(info, payload, signal))
 
@@ -112,9 +180,13 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
         return withRepo(ctx, payload, signal, (info) => svc.readBlame(info, payload, signal))
 
       case 'aiCommit': {
-        const info = await svc.resolveRepo(ctx, payload)
-        const { generateCommitMessage } = await import('./git/ai.js')
-        return ok(await generateCommitMessage(ctx, info, payload, signal))
+        try {
+          const info = await svc.resolveRepo(ctx, payload)
+          const { generateCommitMessage } = await import('./git/ai.js')
+          return ok(await generateCommitMessage(ctx, info, payload, signal))
+        } catch (error) {
+          return fail(error)
+        }
       }
 
       case 'stage':

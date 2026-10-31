@@ -4,6 +4,7 @@ import { useGit, Icon, IconButton } from '../lib/ui'
 import { useT } from '../lib/i18n'
 import * as store from '../store'
 import { askText } from '../lib/prompt'
+import { openContextMenu } from '../lib/contextMenu'
 
 export function WorktreeView() {
   const s = useGit()
@@ -22,13 +23,19 @@ export function WorktreeView() {
       <div className="dig-toolbar">
         <IconButton icon="refresh" title={t('Refresh')} onClick={() => void store.loadWorktrees()} />
         <button type="button" className="dig-btn" onClick={add}>＋ {t('Add worktree…')}</button>
+        <button type="button" className="dig-btn" onClick={() => { if (window.confirm(t('Prune stale worktree records?'))) void store.pruneWorktrees() }}>{t('Prune')}</button>
         <span style={{ flex: 1 }} />
         <span className="dig-toolbar__hint">{t('{n} worktrees', { n: s.worktrees.length })}</span>
       </div>
       <div className="dig-wt__list">
         {s.worktrees.length === 0 ? <div className="dig-empty">{t('No worktrees')}</div> : null}
         {s.worktrees.map((w) => (
-          <div className="dig-wtrow" key={w.path}>
+          <div className="dig-wtrow" key={w.path}
+            onContextMenu={(e) => openContextMenu(e, [
+              { label: w.locked ? t('Unlock') : t('Lock'), disabled: w.current, run: () => void store.lockWorktree(w.path, !w.locked) },
+              { separator: true },
+              { label: t('Remove worktree'), danger: true, disabled: w.current, run: () => { if (window.confirm(t('Remove this worktree?'))) void store.removeWorktree(w.path) } },
+            ])}>
             <Icon name="folder" size={14} style={{ color: w.current ? 'var(--accent)' : 'var(--fg-subtle)' }} />
             <div className="dig-wtrow__main">
               <div className="dig-wtrow__path" title={w.path}>{w.path}</div>

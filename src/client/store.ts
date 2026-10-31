@@ -36,6 +36,7 @@ export interface GitState {
   busyLabel: string | null
   consoleEntries: ConsoleEntry[]
   selection: string[]
+  detailRange: { from: string; to: string } | null
   include: Record<string, boolean>
   stashes: StashItem[]
   worktrees: WorktreeItem[]
@@ -43,6 +44,12 @@ export interface GitState {
   aiBusy: boolean
   logFilterFile: string | null
   logBranch: string | null
+  logPath: string | null
+  logHeadOnly: boolean
+  logSort: 'date' | 'reverse' | 'topo'
+  conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string } | null
+  toast: string | null
+  compare: { title: string; from: string; to: string; loading: boolean; files: Array<{ path: string; kind: string }>; sel?: string; diff?: { loading: boolean; oldText: string; newText: string } } | null
   diff: { title: string; loading: boolean; file?: string; commit?: string; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
   rev: number
 }
@@ -79,13 +86,20 @@ const initial: GitState = {
   busyLabel: null,
   consoleEntries: [],
   selection: [],
+  detailRange: null,
   include: {},
+  conflict: null,
+  toast: null,
+  compare: null,
   stashes: [],
   worktrees: [],
   blame: null,
   aiBusy: false,
   logFilterFile: null,
   logBranch: null,
+  logPath: null,
+  logHeadOnly: false,
+  logSort: 'date',
   diff: null,
   rev: 0,
 }
@@ -201,7 +215,7 @@ export async function loadLog(reset: boolean) {
   const skip = reset ? 0 : state.commits.length
   set({ logLoading: true })
   try {
-    const r = await api.rpc<{ commits: CommitItem[]; hasMore: boolean }>('log', { ...targetPayload(), limit: 200, skip, ...(state.logFilterFile ? { file: state.logFilterFile } : {}), ...(state.logBranch ? { branch: state.logBranch } : {}) })
+    const r = await api.rpc<{ commits: CommitItem[]; hasMore: boolean }>('log', { ...targetPayload(), limit: 200, skip, ...(state.logFilterFile || state.logPath ? { file: state.logFilterFile || state.logPath } : {}), ...(state.logBranch ? { branch: state.logBranch } : {}), ...(state.logHeadOnly ? { headOnly: true } : {}), sort: state.logSort })
     set({ commits: reset ? r.commits : [...state.commits, ...r.commits], logHasMore: r.hasMore, logLoading: false })
   } catch (e: any) {
     set({ logLoading: false, error: e?.message || String(e), errorCode: e?.code || null })
@@ -223,9 +237,20 @@ export async function selectCommit(id: string, mode: 'single' | 'toggle' | 'rang
   } else {
     selection = [id]
   }
-  set({ selection, selectedCommit: id, commitFiles: [] })
+  const multiRange = (() => {
+    if (selection.length <= 1) return null
+    const idxs = selection.map((sid) => order.indexOf(sid)).filter((i) => i >= 0).sort((a, b) => a - b)
+    if (idxs.length < 2) return null
+    const newest = state.commits[idxs[0]]
+    const oldest = state.commits[idxs[idxs.length - 1]]
+    if (!newest || !oldest) return null
+    return { from: oldest.parents.length ? oldest.id + '^' : 'ROOT', to: newest.id }
+  })()
+  set({ selection, selectedCommit: id, commitFiles: [], detailRange: multiRange })
   try {
-    const files = await api.rpc<FileEntry[]>('commitFiles', { ...targetPayload(), commit: id })
+    const files = multiRange
+      ? await api.rpc<Array<{ path: string; kind: string }>>('compareRefs', { ...targetPayload(), from: multiRange.from, to: multiRange.to }).then((fs) => fs.map((f) => ({ path: f.path, kind: f.kind as any, indexStatus: 'M', worktreeStatus: '.', staged: true, unstaged: false })))
+      : await api.rpc<FileEntry[]>('commitFiles', { ...targetPayload(), commit: id })
     if (state.selectedCommit === id) set({ commitFiles: files })
   } catch {}
 }
@@ -280,6 +305,11 @@ export function commitNow(push: boolean) {
       await api.rpc('stage', { ...targetPayload(), paths: checked })
     }
     await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, paths: state.amend ? undefined : checked })
+    try {
+      const h: string[] = JSON.parse(localStorage.getItem('dig.msgHistory') || '[]')
+      const msg = state.message.trim()
+      if (msg && h[0] !== msg) { h.unshift(msg); localStorage.setItem('dig.msgHistory', JSON.stringify(h.slice(0, 20))) }
+    } catch {}
     set({ message: '', amend: false, selectedCommit: null, commitFiles: [] })
     if (push) {
       try { await api.rpc('remote', { ...targetPayload(), op: 'push', setUpstream: true }) } catch {}
@@ -466,9 +496,9 @@ export function mergeBranch(name: string) {
   })
 }
 
-export function deleteBranch(name: string) {
+export function deleteBranch(name: string, force = false) {
   return withBusy('Discarding…', async () => {
-    await api.rpc('deleteBranch', { ...targetPayload(), name })
+    await api.rpc('deleteBranch', { ...targetPayload(), name, force })
     await refreshAll()
   })
 }
@@ -480,9 +510,9 @@ export function createBranchAt(name: string, start: string) {
   })
 }
 
-export function resetTo(commit: string, mode: 'soft' | 'mixed' = 'soft') {
+export function resetTo(commit: string, mode: 'soft' | 'mixed' | 'hard' = 'soft') {
   return withBusy('Resetting…', async () => {
-    await api.rpc('reset', { ...targetPayload(), commit, mode })
+    await api.rpc('reset', { ...targetPayload(), commit, mode, confirm: mode === 'hard' })
     await refreshAll()
   })
 }
@@ -547,4 +577,196 @@ export function addIgnore(files: string[], destination: 'gitignore' | 'exclude' 
     await api.rpc('addIgnore', { ...targetPayload(), files, destination })
     await refreshStatus()
   })
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Conflict resolution                                                 */
+/* ------------------------------------------------------------------ */
+
+export function closeConflict() {
+  set({ conflict: null })
+}
+
+export async function openConflict(file: string) {
+  set({ conflict: { file, loading: true, ours: '', theirs: '', base: '' }, diff: null, blame: null })
+  try {
+    const r = await api.rpc<{ ours: string; theirs: string; base: string }>('conflictVersions', { ...targetPayload(), file })
+    set({ conflict: { file, loading: false, ours: r.ours, theirs: r.theirs, base: r.base } })
+  } catch (e: any) {
+    set({ conflict: { file, loading: false, ours: '', theirs: '', base: '' }, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+export function resolveSide(file: string, side: 'ours' | 'theirs' | 'mark') {
+  return withBusy('Resolving…', async () => {
+    await api.rpc('resolveConflict', { ...targetPayload(), file, side: side === 'mark' ? undefined : side })
+    await refreshStatus()
+    set({ conflict: null })
+  })
+}
+
+
+export function setPathFilter(path: string) {
+  set({ tab: 'log', logPath: path, logFilterFile: null, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+export function clearPathFilter() {
+  set({ logPath: null, commits: [], selectedCommit: null, commitFiles: [] })
+  void loadLog(true)
+}
+
+export function amendMessage(commitId: string, message: string) {
+  return withBusy('Amending…', async () => {
+    if (state.commits[0]?.id !== commitId) throw new Error('只能修改最近一次提交的信息')
+    await api.rpc('commit', { ...targetPayload(), message, amend: true })
+    await refreshAll()
+  })
+}
+
+
+export function revertCommits(commits: string[]) {
+  return withBusy('Reverting…', async () => {
+    await api.rpc('revertMany', { ...targetPayload(), commits })
+    await refreshAll()
+  })
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Compare / undo / browser                                            */
+/* ------------------------------------------------------------------ */
+
+export function closeCompare() {
+  set({ compare: null })
+}
+
+export async function openCompare(from: string, to: string, title: string) {
+  set({ compare: { title, from, to, loading: true, files: [] }, diff: null, blame: null, conflict: null })
+  try {
+    const files = await api.rpc<Array<{ path: string; kind: string }>>('compareRefs', { ...targetPayload(), from, to })
+    set({ compare: { title, from, to, loading: false, files } })
+    if (files.length) void selectCompareFile(files[0].path)
+  } catch (e: any) {
+    set({ compare: { title, from, to, loading: false, files: [] }, error: e?.message || String(e), errorCode: e?.code || null })
+  }
+}
+
+export async function selectCompareFile(file: string) {
+  const c = state.compare
+  if (!c) return
+  set({ compare: { ...c, sel: file, diff: { loading: true, oldText: '', newText: '' } } })
+  try {
+    const r = await api.rpc<{ oldText: string; newText: string }>('refDiff', { ...targetPayload(), from: c.from, to: c.to, file })
+    if (state.compare) set({ compare: { ...state.compare, diff: { loading: false, oldText: r.oldText, newText: r.newText } } })
+  } catch {
+    if (state.compare) set({ compare: { ...state.compare, diff: { loading: false, oldText: '', newText: '' } } })
+  }
+}
+
+export function undoLastCommit() {
+  return withBusy('Undoing…', async () => {
+    await api.rpc('undoCommit', { ...targetPayload(), commit: 'HEAD~1' })
+    await refreshAll()
+  })
+}
+
+export async function openCommitInBrowser(commit: string) {
+  try {
+    const { url } = await api.rpc<{ url: string | null }>('remoteUrl', targetPayload())
+    if (!url) throw new Error('没有可用的远端地址')
+    let base = url.replace(/\.git$/, '')
+    let href = ''
+    const m = /github\.com[:/](.+?)\/(.+)$/.exec(url)
+    if (m) href = `https://github.com/${m[1]}/${m[2].replace(/\.git$/, '')}/commit/${commit}`
+    else if (/gitlab/.test(url)) href = `${base}/-/commit/${commit}`
+    else if (/bitbucket/.test(url)) href = `${base}/commits/${commit}`
+    else href = `${base}/commit/${commit}`
+    window.open(href, '_blank')
+  } catch (e: any) {
+    set({ error: e?.message || String(e), errorCode: null })
+  }
+}
+
+
+export function setToast(message: string) {
+  set({ toast: message })
+  setTimeout(() => { if (state.toast === message) set({ toast: null }) }, 3500)
+}
+
+export function createPatch(target: { commit?: string; paths?: string[] }) {
+  return withBusy('Creating patch…', async () => {
+    const r = await api.rpc<{ path: string }>('createPatch', { ...targetPayload(), ...target })
+    try { void navigator.clipboard?.writeText(r.path) } catch {}
+    setToast('Patch saved: ' + r.path)
+  })
+}
+
+export function openCompareWorking(from: string, title: string) {
+  return openCompare(from, 'WORKTREE', title)
+}
+
+
+export function setLogHeadOnly(v: boolean) { set({ logHeadOnly: v, commits: [], selectedCommit: null, commitFiles: [] }); void loadLog(true) }
+export function setLogSort(v: 'date' | 'reverse' | 'topo') { set({ logSort: v, commits: [], selectedCommit: null, commitFiles: [] }); void loadLog(true) }
+
+
+export function squashHead() {
+  return withBusy('Squashing…', async () => {
+    await api.rpc('squashHead', { ...targetPayload() })
+    await refreshAll()
+  })
+}
+
+export function dropHead() {
+  return withBusy('Dropping…', async () => {
+    await api.rpc('dropHead', { ...targetPayload(), confirm: true })
+    await refreshAll()
+  })
+}
+
+
+export function rebaseBranch(onto: string) {
+  return withBusy('Rebasing…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('rebase', { ...targetPayload(), onto })
+    if (!r || !r.ok) throw new Error(r?.output || 'Rebase failed')
+    await refreshAll()
+  })
+}
+
+export function deleteTag(name: string) {
+  return withBusy('Deleting tag…', async () => {
+    await api.rpc('tagDelete', { ...targetPayload(), name })
+    await refreshAll()
+  })
+}
+
+
+export function addRemote(name: string, url: string) {
+  return withBusy('Adding remote…', async () => { await api.rpc('remoteAdd', { ...targetPayload(), name, url }); await refreshAll() })
+}
+export function removeRemote(name: string) {
+  return withBusy('Removing remote…', async () => { await api.rpc('remoteRemove', { ...targetPayload(), name }); await refreshAll() })
+}
+export function setRemoteUrl(name: string, url: string) {
+  return withBusy('Updating remote…', async () => { await api.rpc('remoteSetUrl', { ...targetPayload(), name, url }); await refreshAll() })
+}
+
+
+export function lockWorktree(worktreePath: string, lock: boolean) {
+  return withBusy(lock ? 'Locking…' : 'Unlocking…', async () => { await api.rpc('worktreeLock', { ...targetPayload(), worktreePath, lock }); await loadWorktrees() })
+}
+export function pruneWorktrees() {
+  return withBusy('Pruning…', async () => { await api.rpc('worktreePrune', { ...targetPayload() }); await loadWorktrees() })
+}
+
+
+export async function openRangeDiff(from: string, to: string, file: string, title: string) {
+  set({ diff: { title, loading: true, kind: 'text' }, blame: null, conflict: null })
+  try {
+    const r = await api.rpc<{ oldText: string; newText: string; oldLabel: string; newLabel: string }>('refDiff', { ...targetPayload(), from, to, file })
+    set({ diff: { title, loading: false, kind: 'text', oldText: r.oldText, newText: r.newText, oldLabel: r.oldLabel, newLabel: r.newLabel } })
+  } catch (e: any) {
+    set({ diff: { title, loading: false, kind: 'text' }, error: e?.message || String(e) })
+  }
 }

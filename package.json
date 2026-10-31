@@ -40,7 +40,9 @@
     "build": "node scripts/build.mjs",
     "build:host": "node scripts/build-host.mjs",
     "build:client": "node scripts/build-client.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:host": "node scripts/test-host.mjs",
+    "test": "node scripts/test-host.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
