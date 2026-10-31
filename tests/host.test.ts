@@ -848,37 +848,67 @@ test("host integration", async () => {
       const r = await call("conflictDiff3", { ...D(repo), file: "a.txt" })
       ok("conflictDiff3 has base section", r.ok && r.value.text.includes("|||||||") && r.value.text.includes("base"))
     }
-  
-  /* ---------------- ignore file editing ---------------- */
-  console.log("\n[ignore-edit]")
-  {
-    const { repo } = makeRepo()
-    const r0 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
-    ok("read ignore default", r0.ok && r0.value.content === "")
-    ok("write ignore", (await call("writeIgnoreFile", { ...D(repo), destination: "gitignore", content: "node_modules/\n" })).ok)
-    const r1 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
-    ok("ignore persisted", r1.value.content.includes("node_modules/"))
-    const r2 = await call("readIgnoreFile", { ...D(repo), destination: "exclude" })
-    ok("exclude path", r2.value.path.includes(".git/info/exclude"))
-  }
 
-  /* ---------------- init / clone ---------------- */
-  console.log("\n[init-clone]")
-  {
-    const base = fs.mkdtempSync(path.join(os.tmpdir(), "dig-init-"))
-    try {
-      const target = path.join(base, "init-repo")
-      const r = await call("gitInit", { directory: target })
-      ok("gitInit", r.ok && fs.existsSync(path.join(target, ".git")))
-      const srcRepo = makeRepo()
-      fs.writeFileSync(path.join(srcRepo.repo, "hello.txt"), "hi\n")
-      srcRepo.g(["add", "."]); srcRepo.g(["commit", "-qm", "c1"])
-      const parent = path.join(base, "clones")
-      const c = await call("cloneRepo", { url: srcRepo.repo, directory: parent })
-      ok("cloneRepo", c.ok && fs.existsSync(path.join(c.value.path, "hello.txt")))
-    } finally { try { fs.rmSync(base, { recursive: true, force: true }) } catch {} }
-  }
-} finally {
+    /* ---------------- ignore file editing ---------------- */
+    console.log("\n[ignore-edit]")
+    {
+      const { repo } = makeRepo()
+      const r0 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
+      ok("read ignore default", r0.ok && r0.value.content === "")
+      ok(
+        "write ignore",
+        (await call("writeIgnoreFile", { ...D(repo), destination: "gitignore", content: "node_modules/\n" })).ok,
+      )
+      const r1 = await call("readIgnoreFile", { ...D(repo), destination: "gitignore" })
+      ok("ignore persisted", r1.value.content.includes("node_modules/"))
+      const r2 = await call("readIgnoreFile", { ...D(repo), destination: "exclude" })
+      ok("exclude path", r2.value.path.includes(".git/info/exclude"))
+    }
+
+    /* ---------------- init / clone ---------------- */
+    console.log("\n[init-clone]")
+    {
+      const base = fs.mkdtempSync(path.join(os.tmpdir(), "dig-init-"))
+      try {
+        const target = path.join(base, "init-repo")
+        const r = await call("gitInit", { directory: target })
+        ok("gitInit", r.ok && fs.existsSync(path.join(target, ".git")))
+        const srcRepo = makeRepo()
+        fs.writeFileSync(path.join(srcRepo.repo, "hello.txt"), "hi\n")
+        srcRepo.g(["add", "."])
+        srcRepo.g(["commit", "-qm", "c1"])
+        const parent = path.join(base, "clones")
+        const c = await call("cloneRepo", { url: srcRepo.repo, directory: parent })
+        ok("cloneRepo", c.ok && fs.existsSync(path.join(c.value.path, "hello.txt")))
+
+        /* ---------------- commit during merge ---------------- */
+        console.log("\n[merge-commit]")
+        {
+          const { repo, g } = makeRepo()
+          fs.writeFileSync(path.join(repo, "a.txt"), "base\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          g(["checkout", "-q", "-b", "x"])
+          fs.writeFileSync(path.join(repo, "a.txt"), "x\n")
+          g(["commit", "-qam", "x"])
+          g(["checkout", "-q", "main"])
+          fs.writeFileSync(path.join(repo, "a.txt"), "m\n")
+          g(["commit", "-qam", "m"])
+          try {
+            g(["merge", "x"])
+          } catch {}
+          fs.writeFileSync(path.join(repo, "a.txt"), "resolved\n")
+          g(["add", "a.txt"])
+          const r = await call("commit", { ...D(repo), message: "merge", paths: ["a.txt"] })
+          ok("commit during merge (no pathspec)", r.ok && !!r.value.id)
+        }
+      } finally {
+        try {
+          fs.rmSync(base, { recursive: true, force: true })
+        } catch {}
+      }
+    }
+  } finally {
     for (const b of bases) {
       try {
         fs.rmSync(b, { recursive: true, force: true })

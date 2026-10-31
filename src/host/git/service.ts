@@ -558,7 +558,14 @@ export async function commit(info: RepoInfo, payload: any, signal?: AbortSignal)
   if (payload?.signoff === true) args.push("--signoff")
   if (typeof payload?.author === "string" && payload.author.trim()) args.push(`--author=${payload.author.trim()}`)
   if (payload?.all === true) args.push("-a")
-  if (payload?.amend !== true && Array.isArray(payload?.paths) && payload.paths.length)
+  // Git forbids a pathspec ("partial") commit while a merge/rebase/cherry-pick is in progress.
+  const op = await runGit(info.gitPath, {
+    cwd: info.root,
+    signal,
+    args: ["rev-parse", "-q", "--verify", "MERGE_HEAD"],
+  })
+  const inMerge = op.code === 0
+  if (payload?.amend !== true && !inMerge && Array.isArray(payload?.paths) && payload.paths.length)
     args.push("--", ...payload.paths.map(String))
   await runWrite(info, args, signal)
   const id = await runWrite(info, ["rev-parse", "HEAD"], signal)
