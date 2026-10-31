@@ -66,7 +66,7 @@ function GitEntryButton(props: any) {
   const directory = resolveDirectory(props)
   React.useEffect(() => {
     syncAll()
-    const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d))
+    const ts = [0, 300, 1000, 3000].map((d) => setTimeout(syncAll, d))
     return () => ts.forEach(clearTimeout)
   }, [])
 
@@ -126,7 +126,7 @@ export function apply(ctx: any) {
   installServices(ctx)
   syncAll()
   // Services may not be ready at activation on a cold start; retry briefly.
-  for (const delay of [0, 150, 500, 1500, 3000]) setTimeout(syncAll, delay)
+  for (const delay of [0, 150, 500, 1500, 3000, 5000, 10000]) setTimeout(syncAll, delay)
 
   const theme = (() => {
     try {
