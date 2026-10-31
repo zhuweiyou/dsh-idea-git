@@ -2958,3 +2958,48 @@ body.dig-docked #root {
   color: var(--fg-subtle);
   flex: none;
 }
+.dig-commit__warnings {
+  flex: none;
+  max-height: 72px;
+  overflow: auto;
+  padding: 4px 10px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+.dig-commit__warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning);
+  font-size: var(--fs-tiny);
+}
+
+/* Reference chooser */
+.dig-refchooser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 420px;
+}
+.dig-refchooser__list {
+  max-height: 46vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.dig-refchooser__row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}
+.dig-refchooser__row:hover {
+  background: var(--bg-hover);
+}

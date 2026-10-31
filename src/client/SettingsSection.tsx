@@ -4,6 +4,7 @@ import { useT } from "./lib/i18n"
 import * as api from "./api"
 import { useWindow } from "./window"
 import { syncAll, setThemeOverride, setLocaleOverride } from "./services"
+import * as store from "./store"
 
 interface VersionInfo {
   found: boolean
@@ -26,6 +27,20 @@ export function SettingsSection() {
   const [autoFetch, setAutoFetch] = React.useState<boolean>(() => {
     try {
       return localStorage.getItem("dig.autoFetch") === "1"
+    } catch {
+      return false
+    }
+  })
+  const [logFirstParent, setLogFP] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem("dig.logFirstParent") === "1"
+    } catch {
+      return false
+    }
+  })
+  const [logNoMerges, setLogNM] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem("dig.logNoMerges") === "1"
     } catch {
       return false
     }
@@ -150,6 +165,35 @@ export function SettingsSection() {
         <span className="dig-settings__label">{t("Repository")}</span>
         <span className="dig-settings__value">
           {t("Follows the active conversation workspace (including subdirectories).")}
+        </span>
+      </div>
+      <div className="dig-settings__row">
+        <span className="dig-settings__label">{t("Git Log")}</span>
+        <span className="dig-settings__value" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label className="dig-settings-check">
+            <input
+              type="checkbox"
+              checked={logFirstParent}
+              onChange={(e) => {
+                const v = e.target.checked
+                setLogFP(v)
+                store.setLogFirstParent(v)
+              }}
+            />
+            <span>{t("First parent only")}</span>
+          </label>
+          <label className="dig-settings-check">
+            <input
+              type="checkbox"
+              checked={logNoMerges}
+              onChange={(e) => {
+                const v = e.target.checked
+                setLogNM(v)
+                store.setLogNoMerges(v)
+              }}
+            />
+            <span>{t("No merges")}</span>
+          </label>
         </span>
       </div>
       <div className="dig-settings__row">

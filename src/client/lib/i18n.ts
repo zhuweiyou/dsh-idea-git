@@ -499,6 +499,8 @@ const zh: Record<string, string> = {
   'Nothing to push': '没有需要推送的提交',
   'Show Incoming / Outgoing…': '显示传入/传出…',
   'Compare Commits with Current…': '与当前分支比较提交…',
+  'Search branches, tags or revisions': '搜索分支、标签或修订',
+  'Use revision': '使用修订',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

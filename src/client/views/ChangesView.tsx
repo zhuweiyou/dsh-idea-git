@@ -601,6 +601,16 @@ function CommitPanel() {
   const t = useT()
   const includedCount = s.files.filter((f) => s.include[f.path] !== false).length
   const canCommit = includedCount > 0 || s.amend
+  const [warns, setWarns] = React.useState<Array<{ code: string; message: string }>>([])
+  React.useEffect(() => {
+    let live = true
+    void store.fetchCommitWarnings().then((w) => {
+      if (live) setWarns(w)
+    })
+    return () => {
+      live = false
+    }
+  }, [s.files, s.info?.operation])
   const firstLine = s.message.split("\n")[0] || ""
   const problems: string[] = []
   if (firstLine.length > 72) problems.push(t("Subject line is longer than 72 characters"))
@@ -671,6 +681,15 @@ function CommitPanel() {
           {firstLine.length}
         </span>
       </div>
+      {warns.length ? (
+        <div className="dig-commit__warnings">
+          {warns.map((w) => (
+            <div key={w.code + w.message} className="dig-commit__warning" title={w.message}>
+              <Icon name="warning" size={12} /> {w.message}
+            </div>
+          ))}
+        </div>
+      ) : null}
       <textarea
         className="dig-commit__message"
         placeholder={t("Commit Message")}

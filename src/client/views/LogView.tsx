@@ -8,6 +8,7 @@ import { SplitPane } from "../lib/Split"
 import { computeGraph, emptyGraphState, laneColor, type GraphRow } from "../lib/graph"
 import * as store from "../store"
 import { confirmThen } from "../lib/confirm"
+import { chooseRef } from "../lib/refChooser"
 import type { BranchItem, CommitItem, FileEntry } from "../types"
 
 const ROW = 26
@@ -980,7 +981,7 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
     {
       label: t("Compare with Revision…"),
       run: async () => {
-        const ref = await askText(t("Branch or revision"), "HEAD")
+        const ref = await chooseRef(t("Branch or revision"))
         if (ref) void store.openCompare(b.name, ref, `${b.name} ↔ ${ref}`)
       },
     },

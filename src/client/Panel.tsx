@@ -26,6 +26,7 @@ import { MergeConflictsDialog } from "./views/MergeConflictsDialog"
 import { TagDialog } from "./views/TagDialog"
 import { PatchPreviewDialog } from "./views/PatchPreviewDialog"
 import { IncomingOutgoingDialog, CompareBranchesDialog } from "./views/CommitListsDialog"
+import { RefChooserHost } from "./lib/refChooser"
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: "changes", label: "Commit" },
@@ -469,6 +470,7 @@ export function Panel() {
       <PatchPreviewDialog />
       <IncomingOutgoingDialog />
       <CompareBranchesDialog />
+      <RefChooserHost />
       <RebasePlanDialog />
     </>
   )

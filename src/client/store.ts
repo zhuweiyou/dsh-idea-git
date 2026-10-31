@@ -196,8 +196,20 @@ const initial: GitState = {
   logPath: null,
   logHeadOnly: false,
   logSort: "date",
-  logFirstParent: false,
-  logNoMerges: false,
+  logFirstParent: (() => {
+    try {
+      return localStorage.getItem("dig.logFirstParent") === "1"
+    } catch {
+      return false
+    }
+  })(),
+  logNoMerges: (() => {
+    try {
+      return localStorage.getItem("dig.logNoMerges") === "1"
+    } catch {
+      return false
+    }
+  })(),
   diff: null,
   rev: 0,
 }
@@ -1077,10 +1089,16 @@ export function setLogSort(v: "date" | "reverse" | "topo") {
   void loadLog(true)
 }
 export function setLogFirstParent(v: boolean) {
+  try {
+    localStorage.setItem("dig.logFirstParent", v ? "1" : "0")
+  } catch {}
   set({ logFirstParent: v, commits: [], selectedCommit: null, commitFiles: [] })
   void loadLog(true)
 }
 export function setLogNoMerges(v: boolean) {
+  try {
+    localStorage.setItem("dig.logNoMerges", v ? "1" : "0")
+  } catch {}
   set({ logNoMerges: v, commits: [], selectedCommit: null, commitFiles: [] })
   void loadLog(true)
 }
@@ -1707,4 +1725,12 @@ export async function openCompareCommits(from: string, to: string) {
 }
 export function closeCompareCommits() {
   set({ compareDialog: null })
+}
+
+export async function fetchCommitWarnings(): Promise<Array<{ code: string; message: string }>> {
+  try {
+    return await api.rpc<Array<{ code: string; message: string }>>("commitWarnings", targetPayload())
+  } catch {
+    return []
+  }
 }

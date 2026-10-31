@@ -1252,6 +1252,52 @@ export async function repoInfo(ctx: any, payload: any, signal?: AbortSignal) {
   }
 }
 
+export async function commitWarnings(
+  info: RepoInfo,
+  signal?: AbortSignal,
+): Promise<Array<{ code: string; message: string }>> {
+  const out: Array<{ code: string; message: string }> = []
+  let st: StatusResult | null = null
+  try {
+    st = await readStatus(info, signal)
+  } catch {}
+  if (st?.detached) out.push({ code: "detached", message: "HEAD is detached" })
+  const op = await currentOperation(info)
+  if (op) out.push({ code: "operation", message: `A ${op} is in progress` })
+  const TEXT = new Set([
+    ".txt",
+    ".md",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".css",
+    ".html",
+    ".py",
+    ".go",
+    ".rs",
+    ".java",
+    ".yml",
+    ".yaml",
+    ".xml",
+    ".sh",
+  ])
+  for (const f of st?.files ?? []) {
+    const abs = path.resolve(info.root, f.path)
+    try {
+      const stat = fs.statSync(abs)
+      if (stat.size > 5 * 1024 * 1024)
+        out.push({ code: "large", message: `Large file: ${f.path} (${(stat.size / 1024 / 1024).toFixed(1)} MB)` })
+      if (TEXT.has(path.extname(f.path).toLowerCase()) && stat.size < 2 * 1024 * 1024) {
+        const buf = fs.readFileSync(abs)
+        if (buf.includes(Buffer.from("\r\n"))) out.push({ code: "crlf", message: `CRLF line separators: ${f.path}` })
+      }
+    } catch {}
+  }
+  return out
+}
+
 export async function abortOperation(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const op = (await currentOperation(info)) || String(payload?.operation ?? "")
   const args =
