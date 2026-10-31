@@ -980,6 +980,19 @@ export function ChangesView() {
             </>
           )}
         </Dropdown>
+        {s.info?.operation ? (
+          <>
+            <span className="dig-toolbar__sep" />
+            <button type="button" className="dig-btn" onClick={() => void store.abortOperation()}>
+              {t("Abort")}{" "}
+              {s.info.operation === "merge"
+                ? t("Merge")
+                : s.info.operation === "rebase"
+                  ? t("Rebase")
+                  : t("Cherry-pick")}
+            </button>
+          </>
+        ) : null}
         <span className="dig-toolbar__sep" />
         <span className="dig-toolbar__hint">{t("{n} changes", { n: s.files.length })}</span>
       </div>

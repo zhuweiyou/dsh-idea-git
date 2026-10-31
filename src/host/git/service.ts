@@ -1180,6 +1180,21 @@ export async function repoInfo(ctx: any, payload: any, signal?: AbortSignal) {
   }
 }
 
+export async function abortOperation(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const op = (await currentOperation(info)) || String(payload?.operation ?? "")
+  const args =
+    op === "merge"
+      ? ["merge", "--abort"]
+      : op === "rebase"
+        ? ["rebase", "--abort"]
+        : op === "cherry-pick"
+          ? ["cherry-pick", "--abort"]
+          : null
+  if (!args) throw new RepoError("git/no-operation", "No merge/rebase/cherry-pick in progress")
+  await runWrite(info, args, signal)
+  return { ok: true }
+}
+
 export async function resetCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const commit = String(payload?.commit || "HEAD")
   const mode = payload?.mode === "hard" ? "hard" : payload?.mode === "mixed" ? "mixed" : "soft"

@@ -468,6 +468,12 @@ const zh: Record<string, string> = {
   'Clone': '克隆',
   'Initializing repository…': '初始化仓库中…',
   'Cloning repository…': '克隆仓库中…',
+  'Abort': '中止',
+  'Merge': '合并',
+  'Rebase': '变基',
+  'Cherry-pick': '拣选',
+  'Aborting…': '中止中…',
+  'Operation aborted': '操作已中止',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

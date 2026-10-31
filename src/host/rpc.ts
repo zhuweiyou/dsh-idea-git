@@ -61,6 +61,9 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case "renameBranch":
         return withRepo(ctx, payload, signal, (info) => svc.renameBranch(info, payload, signal))
 
+      case "abortOperation":
+        return withRepo(ctx, payload, signal, (info) => svc.abortOperation(info, payload, signal))
+
       case "reset":
         return withRepo(ctx, payload, signal, (info) => svc.resetCommit(info, payload, signal))
 

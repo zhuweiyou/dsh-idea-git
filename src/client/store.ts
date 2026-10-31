@@ -1616,3 +1616,11 @@ export function cloneRepo(url: string, parent: string) {
     setToast("Cloned to " + r.path)
   })
 }
+
+export function abortOperation() {
+  return withBusy("Aborting…", async () => {
+    await api.rpc("abortOperation", { ...targetPayload() })
+    await refreshAll()
+    setToast("Operation aborted")
+  })
+}

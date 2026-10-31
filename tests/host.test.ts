@@ -902,6 +902,26 @@ test("host integration", async () => {
           const r = await call("commit", { ...D(repo), message: "merge", paths: ["a.txt"] })
           ok("commit during merge (no pathspec)", r.ok && !!r.value.id)
         }
+
+        /* ---------------- abort operation ---------------- */
+        console.log("\n[abort-operation]")
+        {
+          const { repo, g } = makeRepo()
+          fs.writeFileSync(path.join(repo, "a.txt"), "base\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          g(["checkout", "-q", "-b", "x"])
+          fs.writeFileSync(path.join(repo, "a.txt"), "x\n")
+          g(["commit", "-qam", "x"])
+          g(["checkout", "-q", "main"])
+          fs.writeFileSync(path.join(repo, "a.txt"), "m\n")
+          g(["commit", "-qam", "m"])
+          try {
+            g(["merge", "x"])
+          } catch {}
+          ok("abortOperation", (await call("abortOperation", D(repo))).ok)
+          ok("merge aborted", !fs.existsSync(path.join(repo, ".git", "MERGE_HEAD")))
+        }
       } finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })
