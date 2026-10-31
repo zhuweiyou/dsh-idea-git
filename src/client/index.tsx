@@ -69,6 +69,25 @@ function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
   React.useEffect(() => { syncAll(); const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d)); return () => ts.forEach(clearTimeout) }, [])
+  React.useEffect(() => {
+    const probe = () => {
+      try {
+        const el = document.querySelector('textarea') as HTMLElement | null
+        const chain: any[] = []
+        let n: HTMLElement | null = el
+        while (n && chain.length < 16) {
+          const cs = getComputedStyle(n)
+          const r = n.getBoundingClientRect()
+          chain.push({ tag: n.tagName, cls: String(n.className || '').slice(0, 120), h: Math.round(r.height), w: Math.round(r.width), top: Math.round(r.top), left: Math.round(r.left), pos: cs.position, transform: cs.transform !== 'none', overflow: cs.overflow })
+          n = n.parentElement
+        }
+        const bodyH = document.body.getBoundingClientRect().height
+        void import('./api').then((api) => (api as any).rpc('debugLayout', { bodyH, chain })).catch(() => {})
+      } catch {}
+    }
+    const t1 = setTimeout(probe, 1200); const t2 = setTimeout(probe, 3000)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
 
   React.useEffect(() => {
     switchWorkspace(directory)

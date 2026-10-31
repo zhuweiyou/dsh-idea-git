@@ -1438,6 +1438,12 @@ export async function changelistsSave(info: RepoInfo, payload: any): Promise<Cha
   return state
 }
 
+export async function debugLayout(payload: any): Promise<{ ok: boolean; path: string }> {
+  const file = path.join(os.tmpdir(), 'dig-layout.json')
+  try { fs.writeFileSync(file, JSON.stringify(payload ?? {}, null, 2)) } catch {}
+  return { ok: true, path: file }
+}
+
 /* ------------------------------------------------------------------ */
 /* Diagnostics                                                         */
 /* ------------------------------------------------------------------ */

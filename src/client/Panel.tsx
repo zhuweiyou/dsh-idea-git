@@ -88,15 +88,6 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
-  React.useEffect(() => {
-    const h = w.open && !w.maximized ? (w.minimized ? 40 : w.height) : 0
-    const body = document.body
-    try {
-      if (h > 0) { document.documentElement.style.setProperty('--dig-panel-h', h + 'px'); body.classList.add('dig-docked') }
-      else body.classList.remove('dig-docked')
-    } catch {}
-    return () => { try { body.classList.remove('dig-docked') } catch {} }
-  }, [w.open, w.height, w.minimized, w.maximized])
   React.useEffect(() => { saveCurrentWorkspace() }, [w.open, w.height, w.maximized, w.minimized])
   React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
