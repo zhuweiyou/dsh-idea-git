@@ -2,6 +2,7 @@
 import React from 'react'
 import { getState, subscribe, type GitState } from '../store'
 import type { FileKind } from '../types'
+import { useT } from './i18n'
 
 export function useGit(): GitState {
   return React.useSyncExternalStore(subscribe, getState)
@@ -14,14 +15,25 @@ export { Icon }
 
 /* ---------------------------- controls ---------------------------- */
 
-export function IconButton(props: { icon: string; title: string; size?: number; disabled?: boolean; active?: boolean; onClick?: (e: React.MouseEvent) => void }) {
+const ICON_LABELS: Record<string, string> = {
+  refresh: 'Refresh', plus: 'Add', minus: 'Remove', undo: 'Rollback', commit: 'Commit', eye: 'View Options', list: 'List',
+  more: 'More', download: 'Pull', upload: 'Push', cloud: 'Fetch', trash: 'Delete', close: 'Close', maximize: 'Maximize',
+  restore: 'Restore', minimize: 'Minimize', chevronDown: 'Expand', chevronRight: 'Expand', chevronLeft: 'Collapse',
+  branch: 'Branch', tag: 'Tag', search: 'Search', history: 'History', sparkle: 'Generate', lock: 'Lock', stash: 'Stash',
+  warning: 'Warning', 'arrow-up': 'Move Up', 'arrow-down': 'Move Down', edit: 'Edit', split: 'Split', 'collapse-all': 'Collapse All',
+  folder: 'Folder', file: 'File', star: 'Favorite', starOutline: 'Add to Favorites', target: 'Navigate',
+}
+
+export function IconButton(props: { icon: string; title?: string; size?: number; disabled?: boolean; active?: boolean; onClick?: (e: React.MouseEvent) => void }) {
+  const t = useT()
+  const title = props.title || t(ICON_LABELS[props.icon] || props.icon)
   return (
     <button
       type="button"
       className="dig-iconbtn"
       data-active={props.active ? 'true' : undefined}
-      title={props.title}
-      aria-label={props.title}
+      title={title}
+      aria-label={title}
       disabled={props.disabled}
       onClick={props.onClick}
     >
