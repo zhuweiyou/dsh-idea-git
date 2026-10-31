@@ -826,3 +826,21 @@ export function checkoutAndRebase(branch: string, onto: string) {
     await refreshAll()
   })
 }
+
+
+export function squashRange(ids: string[]) {
+  return withBusy('Squashing…', async () => {
+    await api.rpc('squashRange', { ...targetPayload(), ids })
+    await refreshAll()
+  })
+}
+export function dropCommit(commit: string) {
+  return withBusy('Dropping…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('dropCommit', { ...targetPayload(), commit })
+    if (!r || !r.ok) throw new Error(r?.output || 'drop failed')
+    await refreshAll()
+  })
+}
+export async function silentFetch() {
+  try { await api.rpc('remote', { ...targetPayload(), op: 'fetch' }) } catch {}
+}

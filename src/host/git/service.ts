@@ -1009,6 +1009,35 @@ export async function createPatch(info: RepoInfo, payload: any, signal?: AbortSi
   return { path: target }
 }
 
+export async function squashRange(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const ids: string[] = Array.isArray(payload?.ids) ? payload.ids.map(String) : []
+  if (ids.length < 2) throw new RepoError('git/bad-commit', 'Need at least two commits')
+  const newest = ids[0]
+  const oldest = ids[ids.length - 1]
+  const parents = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', oldest] })
+  const fields = parents.stdout.trim().split(/\s+/)
+  if (fields.length < 2) throw new RepoError('git/bad-commit', 'Range includes the root commit; cannot squash')
+  const base = fields[1]
+  const cnt = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--count', `${base}..${newest}`] })
+  if (Number(cnt.stdout.trim()) !== ids.length) throw new RepoError('git/bad-range', 'Selected commits are not a contiguous range')
+  const logs = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '--reverse', '--format=%B', `${base}..${newest}`], maxBuffer: 4 * 1024 * 1024 })
+  const combined = logs.stdout.split('\n').map((x) => x.trim()).filter(Boolean).join('\n\n')
+  await runWrite(info, ['reset', '--soft', base], signal)
+  await runWrite(info, ['commit', '-m', combined || 'squash'], signal)
+  return { ok: true }
+}
+
+export async function dropCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commit = String(payload?.commit ?? '').trim()
+  if (!commit) throw new RepoError('git/bad-commit', 'Missing commit')
+  const parents = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', commit] })
+  const fields = parents.stdout.trim().split(/\s+/)
+  if (fields.length < 2) throw new RepoError('git/bad-commit', 'Cannot drop the root commit')
+  const parent = fields[1]
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rebase', '--onto', parent, commit, 'HEAD'], timeoutMs: 180000 })
+  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+}
+
 export async function squashHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const log = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '-2', '--pretty=format:%B%x1e'], maxBuffer: 4 * 1024 * 1024 })
   const recs = log.stdout.split('\x1e').map((x) => x.replace(/^\n+/, '').trim()).filter(Boolean)

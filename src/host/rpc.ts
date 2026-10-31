@@ -61,6 +61,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'tagDelete':
         return withRepo(ctx, payload, signal, (info) => svc.tagDelete(info, payload, signal))
 
+      case 'squashRange':
+        return withRepo(ctx, payload, signal, (info) => svc.squashRange(info, payload, signal))
+
+      case 'dropCommit':
+        return withRepo(ctx, payload, signal, (info) => svc.dropCommit(info, payload, signal))
+
       case 'squashHead':
         return withRepo(ctx, payload, signal, (info) => svc.squashHead(info, payload, signal))
 

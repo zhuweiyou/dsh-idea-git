@@ -321,6 +321,26 @@ try {
     const pi = await call('pullInto', { ...D(repo), remote: 'origin', branch: 'main', rebase: false })
     ok('pullInto', pi.ok && pi.value.ok === true)
   }
+
+  /* ---------------- squash range / drop arbitrary ---------------- */
+  console.log('\n[squash-drop]')
+  {
+    const { repo, g } = makeRepo()
+    for (const [f, c] of [['a', 'c1'], ['b', 'c2'], ['c', 'c3'], ['d', 'c4']]) { fs.writeFileSync(path.join(repo, f), 'x\n'); g(['add', '.']); g(['commit', '-qm', c]) }
+    const count = () => Number(g(['rev-list', '--count', 'HEAD']).trim())
+    const ids = (await call('log', D(repo))).value.commits.map((c) => c.id) // newest first: c4,c3,c2,c1
+    const before = count()
+    ok('squashRange', (await call('squashRange', { ...D(repo), ids: [ids[0], ids[1]] })).ok)
+    ok('squash range count', count() === before - 1)
+    // drop a non-head middle commit: rebuild c1..c3
+    const repo2 = makeRepo()
+    for (const [f, c] of [['a', 'c1'], ['b', 'c2'], ['c', 'c3']]) { fs.writeFileSync(path.join(repo2.repo, f), 'x\n'); repo2.g(['add', '.']); repo2.g(['commit', '-qm', c]) }
+    const ids2 = (await call('log', D(repo2.repo))).value.commits.map((c) => c.id) // c3,c2,c1
+    const r = await call('dropCommit', { ...D(repo2.repo), commit: ids2[1] }) // drop c2
+    ok('dropCommit middle', r.ok && r.value.ok === true)
+    ok('drop removed file b', !fs.existsSync(path.join(repo2.repo, 'b')))
+    ok('drop kept file c', fs.existsSync(path.join(repo2.repo, 'c')))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

@@ -83,6 +83,12 @@ export function Panel() {
   React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
     if (!w.open) return
+    const auto = localStorage.getItem('dig.autoFetch') === '1'
+    const fetchTimer = auto ? setInterval(() => { void store.silentFetch() }, 120000) : null
+    return () => { if (fetchTimer) clearInterval(fetchTimer) }
+  }, [w.open])
+  React.useEffect(() => {
+    if (!w.open) return
     const timer = setInterval(() => { try { void store.refreshSummary() } catch {} }, 5000)
     return () => clearInterval(timer)
   }, [w.open])

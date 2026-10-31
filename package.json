@@ -41,7 +41,9 @@
     "build:client": "node scripts/build-client.mjs",
     "typecheck": "tsc --noEmit",
     "test:host": "node scripts/test-host.mjs",
-    "test": "node scripts/test-host.mjs"
+    "test": "node scripts/test-host.mjs",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build && npm run test:host"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

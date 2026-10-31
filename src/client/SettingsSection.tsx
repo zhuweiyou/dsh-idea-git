@@ -13,6 +13,7 @@ export function SettingsSection() {
   const [pathInput, setPathInput] = React.useState('')
   const [saved, setSaved] = React.useState(false)
   const [lfsFiles, setLfsFiles] = React.useState<string[] | null>(null)
+  const [autoFetch, setAutoFetch] = React.useState<boolean>(() => { try { return localStorage.getItem('dig.autoFetch') === '1' } catch { return false } })
 
   const loadVersion = React.useCallback(() => {
     api.rpc<VersionInfo>('gitVersion', {}).then(setInfo).catch(() => setInfo({ found: false }))
@@ -59,6 +60,15 @@ export function SettingsSection() {
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t('LFS tracked files')}</span>
         <span className="dig-settings__value">{lfsFiles === null ? t('Loading') : lfsFiles.length === 0 ? t('None') : `${lfsFiles.length} — ${lfsFiles.slice(0, 6).join(', ')}${lfsFiles.length > 6 ? ' …' : ''}`}</span>
+      </div>
+      <div className="dig-settings__row">
+        <span className="dig-settings__label">{t('Auto fetch')}</span>
+        <span className="dig-settings__value">
+          <label className="dig-check">
+            <span className="dig-check__box" data-on={autoFetch ? 'true' : undefined} onClick={() => { const v = !autoFetch; setAutoFetch(v); try { localStorage.setItem('dig.autoFetch', v ? '1' : '0') } catch {} }}>{autoFetch ? '✓' : null}</span>
+            <span className="dig-check__label">{t('Fetch every 2 minutes while panel is open')}</span>
+          </label>
+        </span>
       </div>
       <div className="dig-settings__row">
         <span className="dig-settings__label">{t('Repository')}</span>
