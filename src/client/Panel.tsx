@@ -479,5 +479,5 @@ export function Panel() {
       <RebasePlanDialog />
     </>
   )
-  return createPortal(content, document.documentElement)
+  return createPortal(content, document.body)
 }
