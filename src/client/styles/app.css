@@ -1909,3 +1909,6 @@ body.dig-docked #root { height: 100% !important; }
 /* No visible resize bar / hover tint on the panel edge. */
 .dig-panel__handle { height: 0 !important; background: transparent !important; }
 .dig-panel__handle:hover { background: transparent !important; opacity: 0 !important; }
+
+/* Fully remove the panel's top shadow for a flush, integrated look. */
+.dig-panel { box-shadow: none !important; }
