@@ -196,7 +196,7 @@ function NoRepoView() {
         <button type="button" className="dig-btn" onClick={() => setShowClone((v) => !v)}>
           {t("Clone Repository…")}
         </button>
-        <button type="button" className="dig-btn" onClick={() => void store.refreshAll()}>
+        <button type="button" className="dig-btn" onClick={() => void store.refreshWithFeedback()}>
           {t("Retry")}
         </button>
       </div>
@@ -428,7 +428,7 @@ export function Panel() {
               <IconButton icon="upload" size={17} title={t("Push")} onClick={() => void store.remoteOp("push")} />
             </>
           ) : null}
-          <IconButton icon="refresh" size={17} title={t("Refresh")} onClick={() => void store.refreshAll()} />
+          <IconButton icon="refresh" size={17} title={t("Refresh")} onClick={() => void store.refreshWithFeedback()} />
           <IconButton
             icon={w.minimized ? "maximize" : "minimize"}
             size={17}

@@ -450,10 +450,15 @@ export async function selectCommit(id: string, mode: "single" | "toggle" | "rang
 
 async function withBusy(label: string, fn: () => Promise<void>) {
   if (state.busy) return
+  const toastBefore = toastSeq
+  let ok = true
+  let errMsg = ""
   set({ busy: true, busyLabel: t(label) })
   try {
     await fn()
   } catch (e: any) {
+    ok = false
+    errMsg = e?.message || String(e)
     const unknown =
       e?.code === "idea-git/unknown-method" || /unknown-method|Unknown method|未知方法/.test(String(e?.message || ""))
     set({
@@ -464,6 +469,14 @@ async function withBusy(label: string, fn: () => Promise<void>) {
     })
   } finally {
     set({ busy: false, busyLabel: null })
+    if (ok) {
+      if (toastSeq === toastBefore) {
+        const action = t(label).replace(/(中…|…)$/, "")
+        setToast(t("Completed: {action}", { action }))
+      }
+    } else {
+      setToast(t("Failed: {message}", { message: errMsg }))
+    }
   }
 }
 
@@ -1777,4 +1790,11 @@ export async function fetchCommitWarnings(): Promise<Array<{ code: string; messa
   } catch {
     return []
   }
+}
+
+export function refreshWithFeedback() {
+  return withBusy("Refreshing…", async () => {
+    await refreshAll()
+    setToast(t("Refreshed"))
+  })
 }

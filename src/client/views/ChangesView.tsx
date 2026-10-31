@@ -750,7 +750,7 @@ export function ChangesView() {
   const tree = (
     <div className="dig-changes">
       <div className="dig-toolbar">
-        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.refreshStatus()} />
+        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.refreshWithFeedback()} />
         <IconButton icon="plus" title={t("Stage All")} onClick={() => void store.stageAll()} />
         <IconButton
           icon="minus"

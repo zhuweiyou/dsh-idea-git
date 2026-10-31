@@ -353,7 +353,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           }}
         />
         <IconButton icon="cloud" size={13} title={t("Fetch")} onClick={() => void store.remoteOp("fetch")} />
-        <IconButton icon="refresh" size={13} title={t("Refresh")} onClick={() => void store.refreshAll()} />
+        <IconButton icon="refresh" size={13} title={t("Refresh")} onClick={() => void store.refreshWithFeedback()} />
       </div>
       <div className="dig-branches__main">
         <div className="dig-branches__search">
