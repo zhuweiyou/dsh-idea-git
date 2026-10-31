@@ -185,6 +185,18 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'worktreeList':
         return withRepo(ctx, payload, signal, (info) => svc.readWorktrees(info, signal))
 
+      case 'worktreeMove':
+        return withRepo(ctx, payload, signal, (info) => svc.worktreeMove(info, payload, signal))
+
+      case 'worktreeRepair':
+        return withRepo(ctx, payload, signal, (info) => svc.worktreeRepair(info, payload, signal))
+
+      case 'tagPush':
+        return withRepo(ctx, payload, signal, (info) => svc.tagPush(info, payload, signal))
+
+      case 'pullInto':
+        return withRepo(ctx, payload, signal, (info) => svc.pullInto(info, payload, signal))
+
       case 'worktreeLock':
         return withRepo(ctx, payload, signal, (info) => svc.worktreeLock(info, payload, signal))
 

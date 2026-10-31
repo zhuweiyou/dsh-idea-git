@@ -172,6 +172,7 @@ function BranchesPanel() {
               { label: t('Show History'), run: () => store.openBranchHistory(tag) },
               { label: t('Copy Branch Name'), run: () => copyText(tag) },
               { separator: true },
+              { label: t('Push Tag'), run: () => void store.pushTag(tag) },
               { label: t('Delete'), danger: true, run: () => { if (window.confirm(t('Delete tag {name}?', { name: tag }))) void store.deleteTag(tag) } },
             ])}>
             <Icon name="tag" size={13} style={{ color: 'var(--fg-subtle)' }} />
@@ -386,12 +387,18 @@ function branchMenuItems(b: BranchItem, t: (x: string, p?: any) => string) {
   return [
     { label: t('Checkout'), run: () => void store.checkout(b.name) },
     { label: t("New Branch from '{name}'…", { name: b.name }), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, b.name) } },
+    { label: t("Checkout and Rebase onto '{cur}'", { cur }), disabled: b.remote, run: () => { if (window.confirm(t("Checkout '{name}' and rebase onto '{cur}'?", { name: b.name, cur }))) void store.checkoutAndRebase(b.name, cur) } },
+    { label: t('Show Diff with Working Tree'), run: () => void store.openCompare(b.name, 'WORKTREE', b.name) },
     { separator: true },
     { label: t('Show History'), run: () => store.openBranchHistory(b.name) },
     { label: t('Compare with Current'), disabled: b.current || b.remote, run: () => void store.openCompare(b.name, 'HEAD', b.name) },
     { label: t('Copy Branch Name'), run: () => copyText(b.name) },
     { separator: true },
     { label: t("Merge '{name}' into Current", { name: b.name }), disabled: b.remote, run: () => { if (window.confirm(t('Merge {name} into current branch?', { name: b.name }))) void store.mergeBranch(b.name) } },
+    ...(b.remote ? [
+      { label: t("Pull into '{cur}' Using Rebase", { cur }), run: () => { const i = b.name.indexOf('/'); if (i > 0) void store.pullInto(b.name.slice(0, i), b.name.slice(i + 1), true) } },
+      { label: t("Pull into '{cur}' Using Merge", { cur }), run: () => { const i = b.name.indexOf('/'); if (i > 0) void store.pullInto(b.name.slice(0, i), b.name.slice(i + 1), false) } },
+    ] : []),
     ...(b.remote ? [] : [
       { separator: true },
       { label: t("Rebase '{cur}' onto '{name}'", { cur, name: b.name }), run: () => { if (window.confirm(t("Rebase '{cur}' onto '{name}'?", { cur, name: b.name }))) void store.rebaseBranch(b.name) } },

@@ -721,6 +721,18 @@ export async function readWorktrees(info: RepoInfo, signal?: AbortSignal): Promi
   return items
 }
 
+export async function worktreeMove(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const from = String(payload?.worktreePath ?? payload?.from ?? '').trim()
+  const to = String(payload?.to ?? '').trim()
+  if (!from || !to) throw new RepoError('git/bad-path', 'Missing worktree move paths')
+  await runWrite(info, ['worktree', 'move', from, to], signal)
+  return { ok: true }
+}
+export async function worktreeRepair(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
+  await runWrite(info, ['worktree', 'repair', ...paths], signal)
+  return { ok: true }
+}
 export async function worktreeLock(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const target = String(payload?.worktreePath ?? payload?.target ?? '').trim()
   if (!target) throw new RepoError('git/bad-path', 'Missing worktree path')
@@ -862,6 +874,21 @@ export async function cherryPick(info: RepoInfo, payload: any, signal?: AbortSig
   return { ok: true }
 }
 
+export async function tagPush(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim()
+  const remote = String(payload?.remote ?? 'origin').trim()
+  if (!name) throw new RepoError('git/bad-tag', 'Missing tag name')
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['push', remote, name], timeoutMs: 120000 })
+  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+}
+export async function pullInto(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const remote = String(payload?.remote ?? '').trim()
+  const branch = String(payload?.branch ?? '').trim()
+  if (!remote || !branch) throw new RepoError('git/bad-ref', 'Missing remote/branch')
+  const args = ['pull', payload?.rebase === true ? '--rebase' : '--no-rebase', remote, branch]
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args, timeoutMs: 180000 })
+  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+}
 export async function tagCreate(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const name = String(payload?.name ?? '').trim()
   if (!name) throw new RepoError('git/bad-tag', 'Missing tag name')

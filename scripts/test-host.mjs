@@ -300,6 +300,27 @@ try {
       ok('save LFS zip', rz.ok && fs.existsSync(rz.value.path) && fs.statSync(rz.value.path).size > 0)
     }
   }
+
+  /* ---------------- worktree move/repair, tag push, pullInto ---------------- */
+  console.log('\n[extras]')
+  {
+    const { base, repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    const bare = path.join(base, 'remote.git'); execFileSync('git', ['init', '--bare', '-q', bare])
+    g(['remote', 'add', 'origin', bare]); g(['push', '-q', '-u', 'origin', 'main'])
+    const wt = path.join(base, 'wt1')
+    ok('worktreeAdd', (await call('worktreeAdd', { ...D(repo), worktreePath: wt })).ok)
+    const wt2 = path.join(base, 'wt2')
+    ok('worktreeMove', (await call('worktreeMove', { ...D(repo), worktreePath: wt, to: wt2 })).ok)
+    ok('worktree at new path', (await call('worktreeList', D(repo))).value.some((w) => path.basename(w.path) === path.basename(wt2)))
+    ok('worktreeRepair', (await call('worktreeRepair', { ...D(repo), paths: [] })).ok)
+    ok('worktreeRemove moved', (await call('worktreeRemove', { ...D(repo), worktreePath: wt2, confirm: true })).ok)
+    ok('tagCreate', (await call('tagCreate', { ...D(repo), name: 'v9', commit: 'HEAD' })).ok)
+    ok('tagPush', (await call('tagPush', { ...D(repo), name: 'v9', remote: 'origin' })).ok)
+    ok('tag on remote', execFileSync('git', ['ls-remote', '--tags', bare], { cwd: repo }).toString().includes('refs/tags/v9'))
+    const pi = await call('pullInto', { ...D(repo), remote: 'origin', branch: 'main', rebase: false })
+    ok('pullInto', pi.ok && pi.value.ok === true)
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

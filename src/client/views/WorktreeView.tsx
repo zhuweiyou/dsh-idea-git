@@ -24,6 +24,7 @@ export function WorktreeView() {
         <IconButton icon="refresh" title={t('Refresh')} onClick={() => void store.loadWorktrees()} />
         <button type="button" className="dig-btn" onClick={add}>＋ {t('Add worktree…')}</button>
         <button type="button" className="dig-btn" onClick={() => { if (window.confirm(t('Prune stale worktree records?'))) void store.pruneWorktrees() }}>{t('Prune')}</button>
+        <IconButton icon="refresh" title={t('Repair worktrees')} onClick={() => void store.repairWorktree([])} />
         <span style={{ flex: 1 }} />
         <span className="dig-toolbar__hint">{t('{n} worktrees', { n: s.worktrees.length })}</span>
       </div>
@@ -33,6 +34,8 @@ export function WorktreeView() {
           <div className="dig-wtrow" key={w.path}
             onContextMenu={(e) => openContextMenu(e, [
               { label: w.locked ? t('Unlock') : t('Lock'), disabled: w.current, run: () => void store.lockWorktree(w.path, !w.locked) },
+              { label: t('Move…'), disabled: w.current, run: async () => { const to = await askText(t('Move worktree to'), w.path); if (to) void store.moveWorktree(w.path, to) } },
+              { label: t('Repair link'), run: () => void store.repairWorktree([w.path]) },
               { separator: true },
               { label: t('Remove worktree'), danger: true, disabled: w.current, run: () => { if (window.confirm(t('Remove this worktree?'))) void store.removeWorktree(w.path) } },
             ])}>

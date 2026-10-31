@@ -797,3 +797,32 @@ export function downloadCommitFiles(commit: string, paths: string[]) {
 export function cherryPickSelected(commit: string, paths: string[]) {
   return withBusy('Cherry-pick…', async () => { await api.rpc('cherryPickPaths', { ...targetPayload(), commit, paths }); await refreshAll() })
 }
+
+
+export function moveWorktree(from: string, to: string) {
+  return withBusy('Moving worktree…', async () => { await api.rpc('worktreeMove', { ...targetPayload(), worktreePath: from, to }); await loadWorktrees() })
+}
+export function repairWorktree(paths: string[] = []) {
+  return withBusy('Repairing worktrees…', async () => { await api.rpc('worktreeRepair', { ...targetPayload(), paths }); await loadWorktrees() })
+}
+export function pushTag(name: string) {
+  return withBusy('Pushing tag…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('tagPush', { ...targetPayload(), name })
+    if (!r || !r.ok) throw new Error(r?.output || 'push tag failed')
+  })
+}
+export function pullInto(remote: string, branch: string, rebase: boolean) {
+  return withBusy('Pulling…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('pullInto', { ...targetPayload(), remote, branch, rebase })
+    if (!r || !r.ok) throw new Error(r?.output || 'pull failed')
+    await refreshAll()
+  })
+}
+export function checkoutAndRebase(branch: string, onto: string) {
+  return withBusy('Checkout & Rebase…', async () => {
+    await api.rpc('checkout', { ...targetPayload(), branch, create: false })
+    const r = await api.rpc<{ ok: boolean; output: string }>('rebase', { ...targetPayload(), onto })
+    if (!r || !r.ok) throw new Error(r?.output || 'rebase failed')
+    await refreshAll()
+  })
+}
