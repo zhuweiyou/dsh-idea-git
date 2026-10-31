@@ -535,6 +535,12 @@ async function smudgeLfs(info: RepoInfo, buf: Buffer): Promise<Buffer> {
   return buf
 }
 
+async function readBlob(info: RepoInfo, commit: string, file: string, signal?: AbortSignal): Promise<Buffer | null> {
+  const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${file}`], signal })
+  if (r.code !== 0) return null
+  return isLfsPointer(r.stdout) ? smudgeLfs(info, r.stdout) : r.stdout
+}
+
 /** Both versions of one file: text lines, or image bytes (base64) for image diffs, with LFS smudge. */
 export async function fileDiffText(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const file = String(payload?.file ?? '').trim()
@@ -1059,16 +1065,16 @@ export async function saveCommitFiles(info: RepoInfo, payload: any, signal?: Abo
   fs.mkdirSync(dir, { recursive: true })
   if (paths.length === 1) {
     const file = paths[0]
-    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${file}`], signal })
-    if (r.code !== 0) throw new Error(`Cannot read ${file}`)
+    const buf = await readBlob(info, commit, file, signal)
+    if (!buf) throw new Error(`Cannot read ${file}`)
     const target = path.join(dir, path.basename(file))
-    fs.writeFileSync(target, r.stdout)
+    fs.writeFileSync(target, buf)
     return { path: target }
   }
   const entries: Array<{ name: string; data: Buffer }> = []
   for (const p of paths) {
-    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${p}`], signal })
-    if (r.code === 0) entries.push({ name: p, data: r.stdout })
+    const buf = await readBlob(info, commit, p, signal)
+    if (buf) entries.push({ name: p, data: buf })
   }
   if (!entries.length) throw new RepoError('git/empty-patch', 'No files to save')
   const target = path.join(dir, `${commit.slice(0, 7)}.zip`)
@@ -1080,9 +1086,9 @@ export async function commitFileBase64(info: RepoInfo, payload: any, signal?: Ab
   const commit = String(payload?.commit ?? '')
   const file = String(payload?.file ?? '')
   if (!commit || !file) throw new RepoError('git/bad-ref', 'Missing commit/file')
-  const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${file}`], signal })
-  if (r.code !== 0) throw new Error(`Cannot read ${file} at ${commit}`)
-  return { name: file.split('/').pop() || 'file', base64: r.stdout.toString('base64') }
+  const buf = await readBlob(info, commit, file, signal)
+  if (!buf) throw new Error(`Cannot read ${file} at ${commit}`)
+  return { name: file.split('/').pop() || 'file', base64: buf.toString('base64') }
 }
 
 export async function commitFilesZip(info: RepoInfo, payload: any, signal?: AbortSignal) {
@@ -1091,8 +1097,8 @@ export async function commitFilesZip(info: RepoInfo, payload: any, signal?: Abor
   if (!commit || !paths.length) throw new RepoError('git/bad-ref', 'Missing commit/paths')
   const entries: Array<{ name: string; data: Buffer }> = []
   for (const p of paths) {
-    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${p}`], signal })
-    if (r.code === 0) entries.push({ name: p, data: r.stdout })
+    const buf = await readBlob(info, commit, p, signal)
+    if (buf) entries.push({ name: p, data: buf })
   }
   if (!entries.length) throw new RepoError('git/empty-patch', 'No files to zip')
   return { name: `${commit.slice(0, 7)}.zip`, base64: zipStore(entries).toString('base64') }

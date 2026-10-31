@@ -273,6 +273,33 @@ try {
     ok('save zip', r2.ok && fs.existsSync(r2.value.path) && fs.statSync(r2.value.path).size > 0)
     ok('partial cherry-pick', (await call('cherryPickPaths', { ...D(repo), commit, paths: ['a.txt'] })).ok)
   }
+
+  /* ---------------- LFS download (smudge) ---------------- */
+  console.log('\n[lfs-download]')
+  {
+    let lfsAvailable = true
+    try { execFileSync('git', ['lfs', 'version'], { stdio: 'ignore' }) } catch { lfsAvailable = false }
+    if (!lfsAvailable) { console.log('  (git-lfs not installed, skipped)') }
+    else {
+      const { base, repo, g } = makeRepo()
+      g(['lfs', 'install', '--local'])
+      g(['lfs', 'track', '*.bin'])
+      const content = 'LFS-CONTENT-123\n'
+      fs.writeFileSync(path.join(repo, 'x.bin'), content)
+      fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n')
+      g(['add', '.']); g(['commit', '-qm', 'lfs'])
+      const sha = g(['rev-parse', 'HEAD']).trim()
+      // sanity: the blob in git is a pointer
+      const stored = execFileSync('git', ['show', `${sha}:x.bin`], { cwd: repo }).toString()
+      ok('committed LFS file is a pointer', stored.startsWith('version https://git-lfs'))
+      const out = path.join(base, 'lfsout')
+      const r = await call('saveCommitFiles', { ...D(repo), dir: out, commit: sha, paths: ['x.bin'] })
+      ok('save LFS file smudged', r.ok && fs.readFileSync(r.value.path, 'utf8') === content)
+      const outz = path.join(base, 'lfszip')
+      const rz = await call('saveCommitFiles', { ...D(repo), dir: outz, commit: sha, paths: ['x.bin', 'a.txt'] })
+      ok('save LFS zip', rz.ok && fs.existsSync(rz.value.path) && fs.statSync(rz.value.path).size > 0)
+    }
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}
