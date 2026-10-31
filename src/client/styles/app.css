@@ -3005,7 +3005,7 @@ body.dig-docked #root {
 }
 
 /* Maximized panel must fill the viewport even if the body was shrunk for docking. */
-.dig-panel[data-maximized='true'] { top: auto !important; bottom: 0 !important; height: 100vh !important; }
+.dig-panel[data-maximized='true'] { top: 0 !important; bottom: 0 !important; height: auto !important; }
 
 /* Maximized panel always above app layers. */
 .dig-panel[data-maximized='true'] { z-index: 2147483000 !important; }
