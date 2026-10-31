@@ -85,10 +85,10 @@ function classify(f: FileStat, lfs: Set<string>): 'text' | 'excluded' {
 
 export async function generateCommitMessage(ctx: any, info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ message: string }> {
   const llm = ctx.get?.('llm') ?? ctx.llm
-  if (!llm || typeof llm.stream !== 'function') throw new Error('当前 profile 没有可用的模型服务。')
+  if (!llm || typeof llm.stream !== 'function') throw new Error('No model service is available in the current profile.')
   const provided = payload?.provider && payload?.model ? { provider: payload.provider, model: payload.model } : null
   const sel = provided || selection(ctx, payload?.sessionId)
-  if (!sel.provider || !sel.model) throw new Error('无法读取当前会话的模型，请在该会话中选择模型后再试。')
+  if (!sel.provider || !sel.model) throw new Error('Cannot read the current session model; select a model in that session and retry.')
 
   let staged = true
   let files = await numstat(info, true, signal)
@@ -138,10 +138,10 @@ export async function generateCommitMessage(ctx: any, info: RepoInfo, payload: a
     }
     for await (const chunk of llm.stream(options)) {
       if (chunk?.type === 'text-delta') text += chunk.text
-      else if (chunk?.type === 'finish' && chunk.reason?.kind === 'error') throw new Error(chunk.reason.failure?.message || 'AI 生成失败')
+      else if (chunk?.type === 'finish' && chunk.reason?.kind === 'error') throw new Error(chunk.reason.failure?.message || 'AI generation failed')
     }
   } catch (error) {
-    throw new Error('AI 生成失败：' + (error instanceof Error ? error.message : String(error)))
+    throw new Error('AI generation failed: ' + (error instanceof Error ? error.message : String(error)))
   }
   return { message: text.trim() }
 }

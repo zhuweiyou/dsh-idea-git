@@ -2,7 +2,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import { useGit, Icon, IconButton, Dropdown, MenuItem } from './lib/ui'
-import { useT } from './lib/i18n'
+import { useT, t } from './lib/i18n'
 import { useWindow, setHeight, toggleMaximized, toggleMinimized, closePanel } from './window'
 import * as store from './store'
 import { ChangesView } from './views/ChangesView'
@@ -67,11 +67,11 @@ export class ViewBoundary extends React.Component<{ children: React.ReactNode },
       const msg = String(this.state.err?.stack || this.state.err?.message || this.state.err)
       return (
         <div className="dig-errorpane">
-          <div className="dig-errorpane__title">视图渲染出错</div>
+          <div className="dig-errorpane__title">{t('View render error')}</div>
           <pre className="dig-errorpane__msg">{msg}</pre>
           <div className="dig-errorpane__actions">
-            <button type="button" className="dig-btn" onClick={() => this.setState({ err: null })}>重试</button>
-            <button type="button" className="dig-btn" onClick={() => { try { window.location.reload() } catch {} }}>刷新页面</button>
+            <button type="button" className="dig-btn" onClick={() => this.setState({ err: null })}>{t('Retry')}</button>
+            <button type="button" className="dig-btn" onClick={() => { try { window.location.reload() } catch {} }}>{t('Reload page')}</button>
           </div>
         </div>
       )

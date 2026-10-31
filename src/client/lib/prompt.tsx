@@ -1,6 +1,7 @@
 /** In-app text prompt styled like an IDEA dialog (Electron has no window.prompt). */
 import React from 'react'
 import { Icon } from './ui'
+import { t } from './i18n'
 
 interface Pending { title: string; initial: string; multiline: boolean; resolve: (v: string | null) => void }
 let pending: Pending | null = null
@@ -71,8 +72,8 @@ export function PromptHost({ theme }: { theme: 'light' | 'dark' }) {
           )}
         </div>
         <div className="dig-dialog__footer">
-          <button type="button" className="dig-btn" onClick={() => finish(null)}>取消</button>
-          <button type="button" className="dig-btn dig-btn--primary" disabled={!value.trim()} onClick={ok}>确定</button>
+          <button type="button" className="dig-btn" onClick={() => finish(null)}>{t('Cancel')}</button>
+          <button type="button" className="dig-btn dig-btn--primary" disabled={!value.trim()} onClick={ok}>{t('OK')}</button>
         </div>
       </div>
     </div>

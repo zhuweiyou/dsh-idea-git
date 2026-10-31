@@ -3,6 +3,7 @@
  * button, the panel shell and the views.
  */
 import * as api from './api'
+import { t } from './lib/i18n'
 import type { BlameLine, BranchItem, CommitItem, ConsoleEntry, FileEntry, RemoteItem, RepoInfoResult, StashItem, StatusResult, WorktreeItem } from './types'
 
 export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'shelf' | 'worktree' | 'submodule'
@@ -194,7 +195,7 @@ export async function refreshAll() {
   try {
     const info = await api.rpc<RepoInfoResult>('info', targetPayload())
     if (!info.isRepo) {
-      set({ loading: false, ready: true, info, error: info.reason || '当前工作区不是 Git 仓库', errorCode: info.code || 'git/not-a-repository', files: [], commits: [], branches: [], status: null })
+      set({ loading: false, ready: true, info, error: info.reason || t('Not a Git repository'), errorCode: info.code || 'git/not-a-repository', files: [], commits: [], branches: [], status: null })
       return
     }
     set({ info, ready: true })
@@ -292,8 +293,8 @@ async function withBusy(label: string, fn: () => Promise<void>) {
   try {
     await fn()
   } catch (e: any) {
-    const unknown = e?.code === 'idea-git/unknown-method' || /unknown-method|未知方法/.test(String(e?.message || ''))
-    set({ error: (e?.message || String(e)) + (unknown ? '（Host 未加载最新代码，请完全退出并重新打开 DSH）' : ''), errorCode: e?.code || null })
+    const unknown = e?.code === 'idea-git/unknown-method' || /unknown-method|Unknown method|未知方法/.test(String(e?.message || ''))
+    set({ error: (e?.message || String(e)) + (unknown ? t('Host has not loaded the latest code; fully quit and reopen DSH') : ''), errorCode: e?.code || null })
   } finally {
     set({ busy: false, busyLabel: null })
   }
@@ -330,7 +331,7 @@ export function commitNow(push: boolean) {
     const checked = state.files.filter((f) => state.include[f.path] !== false).map((f) => f.path)
     const stagedPaths: string[] = []
     if (!state.amend) {
-      if (checked.length === 0) throw new Error('没有勾选要提交的文件')
+      if (checked.length === 0) throw new Error(t('No files selected to commit'))
       for (const p of checked) {
         const ex = state.excludedHunks[p] || []
         if (ex.length) {
@@ -344,7 +345,7 @@ export function commitNow(push: boolean) {
           stagedPaths.push(p)
         }
       }
-      if (!stagedPaths.length) throw new Error('没有勾选要提交的改动')
+      if (!stagedPaths.length) throw new Error(t('No included changes to commit'))
     }
     await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, signoff: state.commitSignoff, author: state.commitAuthor || undefined, paths: state.amend ? undefined : stagedPaths })
     try {
@@ -539,14 +540,14 @@ export function mergeBranch(name: string) {
       const conflicts = state.files.filter((f) => f.kind === 'conflicted')
       if (conflicts.length) {
         setTab('changes')
-        setToast('合并有冲突：请在合并编辑器中解决后提交')
+        setToast(t('Merge conflicts: resolve them in the merge editor and commit'))
         void openConflict(conflicts[0].path)
         return
       }
       throw new Error(out || 'Merge failed (see Console)')
     }
     const out = (r.output || '').trim()
-    if (/already up[ -]to[ -]date/i.test(out)) setToast(`已是最新：当前分支已包含 '${name}'`)
+    if (/already up[ -]to[ -]date/i.test(out)) setToast(t('Already up to date: current branch already contains {name}', { name }))
     else setToast(out || `Merged ${name}`)
     await refreshAll()
   })
@@ -700,7 +701,7 @@ export function clearPathFilter() {
 
 export function amendMessage(commitId: string, message: string) {
   return withBusy('Amending…', async () => {
-    if (state.commits[0]?.id !== commitId) throw new Error('只能修改最近一次提交的信息')
+    if (state.commits[0]?.id !== commitId) throw new Error(t('Only the latest commit message can be edited'))
     await api.rpc('commit', { ...targetPayload(), message, amend: true })
     await refreshAll()
   })
@@ -756,7 +757,7 @@ export function undoLastCommit() {
 export async function openCommitInBrowser(commit: string) {
   try {
     const { url } = await api.rpc<{ url: string | null }>('remoteUrl', targetPayload())
-    if (!url) throw new Error('没有可用的远端地址')
+    if (!url) throw new Error(t('No remote URL available'))
     let base = url.replace(/\.git$/, '')
     let href = ''
     const m = /github\.com[:/](.+?)\/(.+)$/.exec(url)

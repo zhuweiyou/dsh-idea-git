@@ -326,7 +326,7 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
         return ok({ ok: true })
 
       default:
-        return { ok: false, error: { code: 'idea-git/unknown-method', message: `未知方法：${method}` } }
+        return { ok: false, error: { code: 'idea-git/unknown-method', message: `Unknown method: ${method}` } }
     }
   } catch (error) {
     return fail(error)

@@ -2,7 +2,7 @@
 import React from 'react'
 import { getState, subscribe, type GitState } from '../store'
 import type { FileKind } from '../types'
-import { useT } from './i18n'
+import { useT, t } from './i18n'
 
 export function useGit(): GitState {
   return React.useSyncExternalStore(subscribe, getState)
@@ -137,12 +137,12 @@ export function formatDate(ts: number): string {
 export function relTime(ts: number): string {
   const diff = Date.now() - ts
   const min = Math.floor(diff / 60000)
-  if (min < 1) return '刚刚'
-  if (min < 60) return `${min} 分钟前`
+  if (min < 1) return t('Just now')
+  if (min < 60) return t('{n} minutes ago', { n: min })
   const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr} 小时前`
+  if (hr < 24) return t('{n} hours ago', { n: hr })
   const day = Math.floor(hr / 24)
-  if (day < 30) return `${day} 天前`
+  if (day < 30) return t('{n} days ago', { n: day })
   return formatDate(ts).slice(0, 10)
 }
 
