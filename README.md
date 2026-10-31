@@ -39,4 +39,5 @@ dsh plugin --profile web add dsh-idea-git
 - **设置页**：可编辑 Git 可执行文件路径（持久化）、Git/LFS 版本、仓库/主题/语言说明。
 
 ## 主题与语言
-`data-theme` 跟随 DSH `colorScheme` 并订阅 `theme/change`；文案「英文源 + 中文词典」跟随 DSH locale。
+- [x] `data-theme` 跟随 DSH `colorScheme`，并订阅 `theme/change`
+- [x] 文案「英文源 + 中文词典」跟随 DSH `locale`
