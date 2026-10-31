@@ -2037,3 +2037,9 @@ body.dig-docked #root { height: 100% !important; }
 .dig-tok-num { color: var(--syntax-number, #b5cea8); }
 .dig-tok-kw { color: var(--syntax-keyword, #569cd6); }
 .dig-group__comment { margin-left: 8px; color: var(--fg-subtle); font-size: var(--fs-tiny); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Panel view error boundary */
+.dig-errorpane { flex: 1; min-height: 0; overflow: auto; padding: 16px; color: var(--fg); }
+.dig-errorpane__title { font-weight: 600; color: var(--danger); margin-bottom: 8px; }
+.dig-errorpane__msg { white-space: pre-wrap; font-family: var(--font-mono); font-size: var(--fs-small); color: var(--fg-secondary); background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+.dig-errorpane__actions { display: flex; gap: 8px; margin-top: 10px; }

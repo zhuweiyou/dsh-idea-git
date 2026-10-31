@@ -61,6 +61,28 @@ function ResizeHandle() {
   return <div className="dig-panel__grip" role="separator" aria-orientation="horizontal" onPointerDown={startDrag} />
 }
 
+class ViewBoundary extends React.Component<{ children: React.ReactNode }, { err: any }> {
+  state: { err: any } = { err: null }
+  static getDerivedStateFromError(err: any) { return { err } }
+  componentDidCatch(err: any, info: any) { try { console.error('[idea-git] view crashed', err, info) } catch {} }
+  render() {
+    if (this.state.err) {
+      const msg = String(this.state.err?.stack || this.state.err?.message || this.state.err)
+      return (
+        <div className="dig-errorpane">
+          <div className="dig-errorpane__title">视图渲染出错</div>
+          <pre className="dig-errorpane__msg">{msg}</pre>
+          <div className="dig-errorpane__actions">
+            <button type="button" className="dig-btn" onClick={() => this.setState({ err: null })}>重试</button>
+            <button type="button" className="dig-btn" onClick={() => { try { window.location.reload() } catch {} }}>刷新页面</button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 function Body() {
   const s = useGit()
   const t = useT()
@@ -218,7 +240,7 @@ export function Panel() {
       {s.toast ? <div className="dig-banner dig-banner--toast">{s.toast}</div> : null}
       {!w.minimized ? (
         <div className="dig-panel__body">
-          <Body />
+          <ViewBoundary><Body /></ViewBoundary>
         </div>
       ) : null}
     </div>
