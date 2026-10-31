@@ -3,6 +3,7 @@
  * button, the panel shell and the views.
  */
 import * as api from "./api"
+import { setTarget } from "./window"
 import { t } from "./lib/i18n"
 import type {
   BlameLine,
@@ -1593,5 +1594,25 @@ export function applyPatchText(text: string) {
   return withBusy("Applying patch…", async () => {
     await api.rpc("applyPatch", { ...targetPayload(), text })
     await refreshAll()
+  })
+}
+
+export function initRepo() {
+  return withBusy("Initializing repository…", async () => {
+    const dir = state.target?.directory
+    if (!dir) throw new Error("No workspace directory")
+    await api.rpc("gitInit", { directory: dir })
+    await refreshAll()
+    setToast("Initialized Git repository")
+  })
+}
+
+export function cloneRepo(url: string, parent: string) {
+  return withBusy("Cloning repository…", async () => {
+    const r = await api.rpc<{ path: string }>("cloneRepo", { url, directory: parent })
+    if (state.target?.sessionId) setTarget({ sessionId: state.target.sessionId, directory: r.path })
+    set({ target: { sessionId: state.target?.sessionId || "", directory: r.path } })
+    await refreshAll()
+    setToast("Cloned to " + r.path)
   })
 }

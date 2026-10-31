@@ -437,6 +437,7 @@ const zh: Record<string, string> = {
   'View render error': '视图渲染出错',
   'Reload page': '刷新页面',
   'OK': '确定',
+  Cancel: '取消',
   'Just now': '刚刚',
   '{n} minutes ago': '{n} 分钟前',
   '{n} hours ago': '{n} 小时前',
@@ -459,6 +460,14 @@ const zh: Record<string, string> = {
   'Apply Patch (Paste)…': '应用补丁（粘贴）…',
   'Edit .gitignore…': '编辑 .gitignore…',
   'Edit .git/info/exclude…': '编辑 .git/info/exclude…',
+  'Initialize Repository': '初始化仓库',
+  'Clone Repository…': '克隆仓库…',
+  'Repository URL': '仓库地址',
+  'Destination folder': '目标文件夹',
+  'Browse…': '浏览…',
+  'Clone': '克隆',
+  'Initializing repository…': '初始化仓库中…',
+  'Cloning repository…': '克隆仓库中…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

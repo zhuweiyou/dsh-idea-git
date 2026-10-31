@@ -2766,3 +2766,33 @@ body.dig-docked #root {
 .dig-dsrow--add .dig-dsrow__no:last-of-type {
   box-shadow: inset -3px 0 0 var(--diff-inserted);
 }
+
+/* No-repository empty state */
+.dig-norepo {
+  gap: 10px;
+  padding: 24px;
+}
+.dig-norepo__path {
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+}
+.dig-norepo__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dig-norepo__clone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(520px, 80vw);
+  margin-top: 8px;
+}
+.dig-norepo__dest {
+  display: flex;
+  gap: 8px;
+}
+.dig-norepo__dest .dig-modal__input {
+  flex: 1;
+}

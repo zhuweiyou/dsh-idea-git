@@ -861,6 +861,23 @@ test("host integration", async () => {
     const r2 = await call("readIgnoreFile", { ...D(repo), destination: "exclude" })
     ok("exclude path", r2.value.path.includes(".git/info/exclude"))
   }
+
+  /* ---------------- init / clone ---------------- */
+  console.log("\n[init-clone]")
+  {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), "dig-init-"))
+    try {
+      const target = path.join(base, "init-repo")
+      const r = await call("gitInit", { directory: target })
+      ok("gitInit", r.ok && fs.existsSync(path.join(target, ".git")))
+      const srcRepo = makeRepo()
+      fs.writeFileSync(path.join(srcRepo.repo, "hello.txt"), "hi\n")
+      srcRepo.g(["add", "."]); srcRepo.g(["commit", "-qm", "c1"])
+      const parent = path.join(base, "clones")
+      const c = await call("cloneRepo", { url: srcRepo.repo, directory: parent })
+      ok("cloneRepo", c.ok && fs.existsSync(path.join(c.value.path, "hello.txt")))
+    } finally { try { fs.rmSync(base, { recursive: true, force: true }) } catch {} }
+  }
 } finally {
     for (const b of bases) {
       try {

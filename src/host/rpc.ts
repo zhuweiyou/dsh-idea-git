@@ -37,6 +37,12 @@ async function withRepo(
 export async function dispatch(ctx: any, method: string, payload: any, signal?: AbortSignal): Promise<Reply> {
   try {
     switch (method) {
+      case "gitInit":
+        return { ok: true, value: await svc.gitInit(payload) }
+
+      case "cloneRepo":
+        return { ok: true, value: await svc.cloneRepo(payload, signal) }
+
       case "addIgnore":
         return withRepo(ctx, payload, signal, (info) => svc.addIgnore(info, payload, signal))
 

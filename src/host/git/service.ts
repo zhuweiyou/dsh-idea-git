@@ -1247,6 +1247,38 @@ export async function renameBranch(info: RepoInfo, payload: any, signal?: AbortS
   return { ok: true }
 }
 
+export async function gitInit(payload: any): Promise<{ path: string }> {
+  const directory = String(payload?.directory ?? "").trim()
+  if (!directory) throw new RepoError("git/bad-path", "Missing directory")
+  const gitPath = await resolveGitPath()
+  if (!gitPath) throw new RepoError("git/not-found", "Git executable not found")
+  fs.mkdirSync(directory, { recursive: true })
+  const r = await runGit(gitPath, { cwd: directory, args: ["init"] })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || "git init failed")
+  return { path: directory }
+}
+
+export async function cloneRepo(payload: any, signal?: AbortSignal): Promise<{ path: string }> {
+  const url = String(payload?.url ?? "").trim()
+  const parent = String(payload?.directory ?? "").trim()
+  if (!url || !parent) throw new RepoError("git/bad-request", "Missing url/directory")
+  const gitPath = await resolveGitPath()
+  if (!gitPath) throw new RepoError("git/not-found", "Git executable not found")
+  const base =
+    url
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .pop()
+      ?.replace(/\.git$/, "") || "repo"
+  const target = path.join(parent, base)
+  if (fs.existsSync(target) && fs.readdirSync(target).length)
+    throw new RepoError("git/exists", `Directory not empty: ${target}`)
+  fs.mkdirSync(parent, { recursive: true })
+  const r = await runGit(gitPath, { cwd: parent, args: ["clone", "--", url, target], signal, timeoutMs: 600000 })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || "git clone failed")
+  return { path: target }
+}
+
 export async function readIgnoreFile(info: RepoInfo, payload: any): Promise<{ path: string; content: string }> {
   const dest = payload?.destination === "exclude" ? "exclude" : "gitignore"
   const file = dest === "exclude" ? path.join(info.root, ".git", "info", "exclude") : path.join(info.root, ".gitignore")

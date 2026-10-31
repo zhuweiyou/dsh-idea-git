@@ -5,6 +5,7 @@ import { useGit, Icon, IconButton, Dropdown, MenuItem } from "./lib/ui"
 import { useT, t } from "./lib/i18n"
 import { useWindow, setHeight, toggleMaximized, toggleMinimized, closePanel } from "./window"
 import * as store from "./store"
+import { pickDirectory } from "./api"
 import { ChangesView } from "./views/ChangesView"
 import { LogView } from "./views/LogView"
 import { ConsoleView } from "./views/ConsoleView"
@@ -145,23 +146,74 @@ function CommitTabView() {
   )
 }
 
+function NoRepoView() {
+  const s = useGit()
+  const t = useT()
+  const [showClone, setShowClone] = React.useState(false)
+  const [url, setUrl] = React.useState("")
+  const [parent, setParent] = React.useState("")
+  return (
+    <div className="dig-empty dig-norepo">
+      <Icon name="warning" size={22} style={{ color: "var(--warning)" }} />
+      <div>{errorText(t, s.info?.code || null, s.info?.reason || null)}</div>
+      {s.info?.directory ? <div className="dig-norepo__path">{s.info.directory}</div> : null}
+      <div className="dig-norepo__actions">
+        <button type="button" className="dig-btn dig-btn--primary" onClick={() => void store.initRepo()}>
+          {t("Initialize Repository")}
+        </button>
+        <button type="button" className="dig-btn" onClick={() => setShowClone((v) => !v)}>
+          {t("Clone Repository…")}
+        </button>
+        <button type="button" className="dig-btn" onClick={() => void store.refreshAll()}>
+          {t("Retry")}
+        </button>
+      </div>
+      {showClone ? (
+        <div className="dig-norepo__clone">
+          <input
+            className="dig-modal__input"
+            placeholder={t("Repository URL")}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <div className="dig-norepo__dest">
+            <input
+              className="dig-modal__input"
+              placeholder={t("Destination folder")}
+              value={parent}
+              onChange={(e) => setParent(e.target.value)}
+            />
+            <button
+              type="button"
+              className="dig-btn"
+              onClick={async () => {
+                const d = await pickDirectory()
+                if (d) setParent(d)
+              }}
+            >
+              {t("Browse…")}
+            </button>
+          </div>
+          <button
+            type="button"
+            className="dig-btn dig-btn--primary"
+            disabled={!url.trim() || !parent.trim() || !!s.busy}
+            onClick={() => void store.cloneRepo(url.trim(), parent.trim())}
+          >
+            {t("Clone")}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function Body() {
   const s = useGit()
   const t = useT()
   if (s.loading && !s.ready) return <div className="dig-empty">{t("Loading")}</div>
   if (s.info && s.info.isRepo === false) {
-    return (
-      <div className="dig-empty" style={{ flexDirection: "column", gap: 8 }}>
-        <Icon name="warning" size={22} style={{ color: "var(--warning)" }} />
-        <div>{errorText(t, s.info.code || null, s.info.reason || null)}</div>
-        {s.info.directory ? (
-          <div style={{ color: "var(--fg-subtle)", fontFamily: "var(--font-mono)" }}>{s.info.directory}</div>
-        ) : null}
-        <button type="button" className="dig-btn" onClick={() => void store.refreshAll()}>
-          {t("Retry")}
-        </button>
-      </div>
-    )
+    return <NoRepoView />
   }
   switch (s.tab) {
     case "changes":
@@ -237,7 +289,7 @@ export function Panel() {
       const t = ev.target as HTMLElement | null
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable))
         return
-      if (document.querySelector(".dig-modal-mask")) return
+      if (document.querySelector('.dig-modal-mask, [aria-modal="true"]')) return
       // Esc dismisses the top-most overlay first, otherwise closes the panel (same as the close button).
       if (s.diff || s.blame) {
         ev.preventDefault()
@@ -379,9 +431,9 @@ export function Panel() {
         ) : null}
       </div>
       <ContextMenuHost />
-      <PromptHost theme={w.theme} />
+      <PromptHost />
       <ConfirmHost />
-      <RebasePlanDialog theme={w.theme} />
+      <RebasePlanDialog />
     </>
   )
   return createPortal(content, document.body)
