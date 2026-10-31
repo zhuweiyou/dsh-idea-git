@@ -17,6 +17,7 @@ import { ConflictView } from './views/ConflictView'
 import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
 import { syncAll } from './services'
+import { saveCurrentWorkspace } from './workspaceState'
 import { PromptHost, askText } from './lib/prompt'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
@@ -87,6 +88,7 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
+  React.useEffect(() => { saveCurrentWorkspace() }, [w.open, w.height, w.maximized, w.minimized])
   React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
     if (!w.open) return

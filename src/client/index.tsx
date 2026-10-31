@@ -13,6 +13,7 @@ import { setActiveLocale } from './lib/i18n'
 import { installServices, syncAll, syncTheme, syncLocale } from './services'
 import * as store from './store'
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from './window'
+import { switchWorkspace } from './workspaceState'
 import { Panel } from './Panel'
 import { SettingsSection } from './SettingsSection'
 import { Icon } from './lib/ui'
@@ -68,6 +69,10 @@ function GitEntryButton(props: any) {
   const w = useWindow()
   const directory = resolveDirectory(props)
   React.useEffect(() => { syncAll(); const ts = [0, 200, 800].map((d) => setTimeout(syncAll, d)); return () => ts.forEach(clearTimeout) }, [])
+
+  React.useEffect(() => {
+    switchWorkspace(directory)
+  }, [directory])
 
   React.useEffect(() => {
     if (!w.open) return

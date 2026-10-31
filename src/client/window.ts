@@ -37,6 +37,14 @@ export function subscribeWindow(fn: () => void): () => void {
 export function getWindow(): WindowState {
   return state
 }
+
+export function snapshotWindow(): WindowState {
+  return state
+}
+
+export function restoreWindow(snap: WindowState | null | undefined) {
+  if (snap) set(snap)
+}
 function set(patch: Partial<WindowState>) {
   state = { ...state, ...patch }
   subs.forEach((f) => {

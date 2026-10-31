@@ -124,6 +124,14 @@ export function getState(): GitState {
   return state
 }
 
+export function snapshotState(): GitState {
+  return state
+}
+
+export function restoreState(snap: GitState | null | undefined) {
+  if (snap) set(snap)
+}
+
 function set(patch: Partial<GitState>) {
   state = { ...state, ...patch, rev: state.rev + 1 }
   subs.forEach((f) => {
