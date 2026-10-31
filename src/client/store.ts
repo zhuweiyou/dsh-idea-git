@@ -528,7 +528,9 @@ export function mergeBranch(name: string) {
       }
       throw new Error(out || 'Merge failed (see Console)')
     }
-    setToast((r.output || '').trim() || `Merged ${name}`)
+    const out = (r.output || '').trim()
+    if (/already up[ -]to[ -]date/i.test(out)) setToast(`已是最新：当前分支已包含 '${name}'`)
+    else setToast(out || `Merged ${name}`)
     await refreshAll()
   })
 }
