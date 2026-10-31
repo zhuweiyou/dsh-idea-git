@@ -102,6 +102,7 @@ function FileRow({ file }: { file: FileEntry }) {
       <span className="dig-filerow__name" style={{ color: file.kind === 'deleted' ? 'var(--vcs-deleted)' : undefined }}>
         {baseName(file.path)}
       </span>
+      {file.staged && file.unstaged && file.kind !== 'conflicted' ? <span className="dig-partial" title={t('Partially staged')}>{t('partial')}</span> : null}
       {dirName(file.path) ? <span className="dig-filerow__dir">{dirName(file.path)}</span> : null}
       <span className="dig-filerow__letter" style={{ color: kindColor(file.kind) }}>{kindLetter(file.kind)}</span>
       <span className="dig-filerow__actions" onClick={(e) => e.stopPropagation()}>

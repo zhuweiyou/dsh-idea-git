@@ -4,6 +4,7 @@ import { useGit, Icon, IconButton } from '../lib/ui'
 import { useT } from '../lib/i18n'
 import { computeRows, wordRanges, type DiffRow, type IgnorePolicy } from '../lib/textdiff'
 import * as store from '../store'
+import { openContextMenu } from '../lib/contextMenu'
 import styles from '../vendor/vcs/DiffEditor.module.css'
 
 type Mode = 'split' | 'unified'
@@ -205,6 +206,11 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
         ) : d && d.file && !d.commit ? (
           <>
             <button type="button" className="dig-btn" onClick={() => { setDraft(d.newText || ''); setEditing(true) }}>{t('Edit')}</button>
+            <button type="button" className="dig-btn" onClick={async (ev) => {
+              const items = await store.listHunks(d.file!, !!d.staged)
+              if (!items.length) return
+              openContextMenu(ev as any, items.map((h) => ({ label: h.header + '  ' + t(d.staged ? 'Unstage Hunk' : 'Stage Hunk'), run: () => void store.applyHunks(d.file!, [h.index], d.staged ? 'unstage' : 'stage') })))
+            }}>{t(d.staged ? 'Unstage Hunk…' : 'Stage Hunk…')}</button>
             <button type="button" className="dig-btn" onClick={() => { store.closeDiff(); store.openHistory(d.file!) }}>{t('History')}</button>
             <button type="button" className="dig-btn" onClick={() => void store.openBlame(d.file!, d.file!)}>{t('Blame')}</button>
           </>

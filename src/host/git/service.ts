@@ -509,6 +509,58 @@ export async function remoteOp(info: RepoInfo, payload: any, signal?: AbortSigna
   return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n'), code: r.code }
 }
 
+export interface HunkItem { index: number; header: string; patch: string }
+
+function splitDiffHunks(diff: string): { preamble: string; hunks: Array<{ header: string; text: string }> } {
+  const lines = diff.split('\n')
+  const pre: string[] = []
+  const hunks: Array<{ header: string; text: string }> = []
+  let cur: string[] | null = null
+  for (const ln of lines) {
+    if (ln.startsWith('@@')) {
+      if (cur) hunks.push({ header: cur[0] || '', text: cur.join('\n') + '\n' })
+      cur = [ln]
+    } else if (cur) cur.push(ln)
+    else pre.push(ln)
+  }
+  if (cur) hunks.push({ header: cur[0] || '', text: cur.join('\n') + '\n' })
+  return { preamble: pre.join('\n'), hunks }
+}
+
+export async function listHunks(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<HunkItem[]> {
+  const file = String(payload?.file ?? '')
+  if (!file) throw new RepoError('git/bad-path', 'Missing file')
+  const args = ['diff', '-U3', '--no-color']
+  if (payload?.staged === true) args.push('--cached')
+  args.push('--', file)
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args, maxBuffer: 8 * 1024 * 1024 })
+  if (r.code !== 0) return []
+  const { preamble, hunks } = splitDiffHunks(r.stdout)
+  return hunks.map((h, i) => ({ index: i, header: h.header, patch: preamble + '\n' + h.text })).filter((h) => h.header)
+}
+
+export async function applyHunks(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const file = String(payload?.file ?? '')
+  const indexes: number[] = Array.isArray(payload?.indexes) ? payload.indexes.map(Number) : []
+  if (!file || !indexes.length) throw new RepoError('git/bad-request', 'Missing file/indexes')
+  const stagedSource = payload?.staged === true // diff source = index (for unstage)
+  const args = ['diff', '-U3', '--no-color']
+  if (stagedSource) args.push('--cached')
+  args.push('--', file)
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args, maxBuffer: 8 * 1024 * 1024 })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || 'diff failed')
+  const { preamble, hunks } = splitDiffHunks(r.stdout)
+  const chosen = indexes.map((i) => hunks[i]).filter(Boolean)
+  if (!chosen.length) throw new RepoError('git/bad-range', 'No such hunk')
+  const patch = preamble + '\n' + chosen.map((h) => h.text).join('')
+  const applyArgs = ['apply', '--cached', '--recount', '--whitespace=nowarn']
+  if (payload?.reverse === true) applyArgs.push('--reverse')
+  applyArgs.push('-')
+  const ap = await runGit(info.gitPath, { cwd: info.root, signal, args: applyArgs, input: patch })
+  if (ap.code !== 0) throw new Error(ap.stderr.trim() || 'git apply failed')
+  return { ok: true }
+}
+
 export async function diffText(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<string> {
   const args = ['diff', '--no-color']
   if (payload?.staged === true) args.push('--cached')

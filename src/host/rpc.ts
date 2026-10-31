@@ -209,6 +209,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'remotes':
         return withRepo(ctx, payload, signal, (info) => svc.readRemotes(info, signal))
 
+      case 'listHunks':
+        return withRepo(ctx, payload, signal, (info) => svc.listHunks(info, payload, signal))
+
+      case 'applyHunks':
+        return withRepo(ctx, payload, signal, (info) => svc.applyHunks(info, payload, signal))
+
       case 'diffText':
         return withRepo(ctx, payload, signal, (info) => svc.diffText(info, payload, signal))
 

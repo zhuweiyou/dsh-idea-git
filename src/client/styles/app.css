@@ -2019,3 +2019,4 @@ body.dig-docked #root { height: 100% !important; }
 
 /* Active changelist header: bold and strong text color. */
 .dig-group[data-active='true'] .dig-group__title { font-weight: 700 !important; color: var(--fg-strong) !important; }
+.dig-partial { flex: none; padding: 0 4px; border-radius: 4px; background: color-mix(in srgb, var(--vcs-modified) 16%, transparent); color: var(--vcs-modified); font-size: 10px; line-height: 14px; }

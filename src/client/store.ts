@@ -56,7 +56,7 @@ export interface GitState {
   conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string; working: string } | null
   toast: string | null
   compare: { title: string; from: string; to: string; loading: boolean; files: Array<{ path: string; kind: string }>; sel?: string; diff?: { loading: boolean; oldText: string; newText: string } } | null
-  diff: { title: string; loading: boolean; file?: string; commit?: string; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
+  diff: { title: string; loading: boolean; file?: string; commit?: string; staged?: boolean; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
   rev: number
 }
 
@@ -383,10 +383,10 @@ export function closeDiff() {
 }
 
 export async function openDiff(req: { title: string; path?: string; staged?: boolean; commit?: string }) {
-  set({ diff: { title: req.title, loading: true, file: req.path, commit: req.commit }, blame: null })
+  set({ diff: { title: req.title, loading: true, file: req.path, commit: req.commit, staged: req.staged === true }, blame: null })
   try {
     const r = await api.rpc<any>('fileDiff', { ...targetPayload(), file: req.path, staged: req.staged === true, commit: req.commit })
-    set({ diff: { title: req.title, loading: false, file: req.path, commit: req.commit, kind: r.kind, oldText: r.oldText, newText: r.newText, oldB64: r.oldB64, newB64: r.newB64, mime: r.mime, oldLabel: r.oldLabel, newLabel: r.newLabel, lfs: r.lfs } })
+    set({ diff: { title: req.title, loading: false, file: req.path, commit: req.commit, staged: req.staged === true, kind: r.kind, oldText: r.oldText, newText: r.newText, oldB64: r.oldB64, newB64: r.newB64, mime: r.mime, oldLabel: r.oldLabel, newLabel: r.newLabel, lfs: r.lfs } })
   } catch (e: any) {
     set({ diff: { title: req.title, loading: false, file: req.path, commit: req.commit }, error: e?.message || String(e), errorCode: e?.code || null })
   }
@@ -1030,4 +1030,18 @@ export function commitChangelist(paths: string[], push: boolean) {
   for (const f of state.files) inc[f.path] = paths.includes(f.path)
   set({ include: inc })
   return commitNow(push)
+}
+
+
+/* Hunk-level staging */
+export async function listHunks(file: string, staged: boolean) {
+  return api.rpc<Array<{ index: number; header: string }>>('listHunks', { ...targetPayload(), file, staged })
+}
+export function applyHunks(file: string, indexes: number[], mode: 'stage' | 'unstage') {
+  return withBusy(mode === 'stage' ? 'Staging hunk…' : 'Unstaging hunk…', async () => {
+    await api.rpc('applyHunks', { ...targetPayload(), file, indexes, staged: mode === 'unstage', reverse: mode === 'unstage' })
+    await refreshStatus()
+    const d = state.diff
+    if (d && d.file === file) await openDiff({ title: d.title, path: d.file, staged: d.staged })
+  })
 }

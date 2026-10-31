@@ -404,6 +404,14 @@ const zh: Record<string, string> = {
   'Added to Favorites': '已添加到收藏',
   'Removed from Favorites': '已取消收藏',
   'Refreshed': '已刷新',
+  'Stage Hunk…': '暂存块…',
+  'Unstage Hunk…': '取消暂存块…',
+  'Stage Hunk': '暂存此块',
+  'Unstage Hunk': '取消暂存此块',
+  'partial': '部分',
+  'Partially staged': '部分已暂存',
+  'Staging hunk…': '暂存块中…',
+  'Unstaging hunk…': '取消暂存块中…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

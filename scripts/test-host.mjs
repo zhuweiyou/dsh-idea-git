@@ -484,6 +484,25 @@ try {
     ok('merge ok', r.ok && r.value.ok === true)
     ok('merged file exists', fs.existsSync(path.join(repo, 'b.txt')))
   }
+
+  /* ---------------- hunk staging ---------------- */
+  console.log('\n[hunks]')
+  {
+    const { repo, g } = makeRepo()
+    const lines = Array.from({ length: 20 }, (_, i) => 'line' + (i + 1))
+    fs.writeFileSync(path.join(repo, 'a.txt'), lines.join('\n') + '\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    lines[1] = 'CHANGED-2'; lines[17] = 'CHANGED-18'
+    fs.writeFileSync(path.join(repo, 'a.txt'), lines.join('\n') + '\n')
+    const hs = (await call('listHunks', { ...D(repo), file: 'a.txt' })).value
+    ok('listHunks >= 2', hs.length >= 2)
+    ok('applyHunks stage first', (await call('applyHunks', { ...D(repo), file: 'a.txt', indexes: [0], staged: false })).ok)
+    const st = (await call('status', D(repo))).value.files.find((f) => f.path === 'a.txt')
+    ok('partial staged', st.staged === true && st.unstaged === true)
+    const cached = g(['diff', '--cached', '--unified=0'])
+    ok('only first hunk staged', cached.includes('CHANGED-2') && !cached.includes('CHANGED-18'))
+    const work = g(['diff', '--unified=0'])
+    ok('second hunk remains unstaged', work.includes('CHANGED-18'))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}
