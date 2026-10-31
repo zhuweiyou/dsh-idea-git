@@ -289,10 +289,10 @@ function DetailsPane() {
     const walk = (ns: FNode[]) => ns.forEach((n) => { if (n.dir) { all.add(n.path); walk(n.children || []) } })
     walk(tree); setExpanded(all); setSelected(new Set())
   }, [tree])
-  if (!commit) return <div className="dig-details"><div className="dig-empty">{t('Select a commit to see details')}</div></div>
-  const toggle = (p: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const flatPaths = React.useMemo(() => { const out: string[] = []; const walk = (ns: FNode[]) => ns.forEach((n) => { if (n.dir) walk(n.children || []); else out.push(n.path) }); walk(tree); return out }, [tree])
   const anchor = React.useRef<string | null>(null)
+  if (!commit) return <div className="dig-details"><div className="dig-empty">{t('Select a commit to see details')}</div></div>
+  const toggle = (p: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const onSelectFile = (p: string, e: React.MouseEvent) => {
     setSelected((prev) => {
       let next: Set<string>
