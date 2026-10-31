@@ -2,19 +2,26 @@
 import { setTheme } from "./window"
 import { setActiveLocale } from "./lib/i18n"
 
+let context: any = null
 let themeSvc: any = null
 let localeSvc: any = null
 
 export function installServices(ctx: any) {
+  context = ctx
+  refreshServices()
+}
+
+function refreshServices() {
   try {
-    themeSvc = ctx.get?.("theme") ?? null
+    themeSvc = context?.get?.("theme") ?? themeSvc
   } catch {}
   try {
-    localeSvc = ctx.get?.("locale") ?? null
+    localeSvc = context?.get?.("locale") ?? localeSvc
   } catch {}
 }
 
 export function syncTheme() {
+  refreshServices()
   try {
     const ov = localStorage.getItem("dig.themeOverride")
     if (ov === "light" || ov === "dark") {
@@ -29,6 +36,7 @@ export function syncTheme() {
 }
 
 export function syncLocale() {
+  refreshServices()
   try {
     const ov = localStorage.getItem("dig.localeOverride")
     if (ov) {
