@@ -72,6 +72,11 @@ export function openPanel() {
 }
 export function closePanel() {
   set({ open: false })
+  try {
+    document.body.classList.remove("dig-docked")
+    document.body.style.height = ""
+    document.body.style.overflow = ""
+  } catch {}
 }
 export function togglePanel() {
   set({ open: !state.open, minimized: false })
@@ -80,5 +85,14 @@ export function toggleMinimized() {
   set({ minimized: !state.minimized })
 }
 export function toggleMaximized() {
-  set({ maximized: !state.maximized, minimized: false })
+  const next = !state.maximized
+  set({ maximized: next, minimized: false })
+  try {
+    if (next) {
+      document.body.classList.remove("dig-docked")
+      document.body.style.height = ""
+      document.body.style.overflow = ""
+      document.documentElement.style.removeProperty("--dig-panel-h")
+    }
+  } catch {}
 }
