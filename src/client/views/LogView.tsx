@@ -85,25 +85,89 @@ function buildBranchTree(branches: BranchItem[], prefix = "", favs: Set<string> 
   return [...top, ...nodes, ...rest]
 }
 
+function TreeRow({
+  depth,
+  toggle,
+  icon,
+  label,
+  trailing,
+  title,
+  className,
+  onClick,
+  onContextMenu,
+  dataRef,
+  dataCurrent,
+  dataRemote,
+}: {
+  depth: number
+  toggle?: React.ReactNode
+  icon: React.ReactNode
+  label: React.ReactNode
+  trailing?: React.ReactNode
+  title?: string
+  className?: string
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
+  onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void
+  dataRef?: string
+  dataCurrent?: boolean
+  dataRemote?: boolean
+}) {
+  return (
+    <div
+      className={"dig-tree-row" + (className ? " " + className : "")}
+      style={{ ["--tree-depth" as any]: depth }}
+      title={title}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      data-ref={dataRef}
+      data-current={dataCurrent ? "true" : undefined}
+      data-remote={dataRemote ? "true" : undefined}
+    >
+      <span className="dig-tree-row__toggle">{toggle}</span>
+      <span className="dig-tree-row__icon">{icon}</span>
+      <span className="dig-tree-row__label">{label}</span>
+      {trailing}
+    </div>
+  )
+}
+
 function BranchRow({
   b,
   t,
   label,
+  depth = 0,
   onSelect,
 }: {
   b: BranchItem
   t: (s: string, p?: any) => string
   label?: string
+  depth?: number
   onSelect?: (name: string) => void
 }) {
   return (
-    <div
-      key={b.ref}
+    <TreeRow
+      depth={depth}
       className="dig-branchrow"
-      data-ref={b.name}
-      data-remote={b.remote ? "true" : undefined}
-      data-current={b.current ? "true" : undefined}
+      dataRef={b.name}
+      dataRemote={b.remote}
+      dataCurrent={b.current}
       title={b.name}
+      icon={
+        <Icon
+          name={isFavorite(b.name) ? "star" : "branch"}
+          size={16}
+          style={{ color: b.current ? "var(--warning)" : "var(--fg-subtle)" }}
+        />
+      }
+      label={label ?? b.name}
+      trailing={
+        b.ahead || b.behind ? (
+          <span className="dig-branchrow__sync">
+            {b.ahead ? `↑${b.ahead}` : ""}
+            {b.behind ? `↓${b.behind}` : ""}
+          </span>
+        ) : undefined
+      }
       onClick={(e) => {
         onSelect?.(b.name)
         for (const el of Array.from(document.querySelectorAll(".dig-branchrow[data-selected]")))
@@ -111,20 +175,7 @@ function BranchRow({
         ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
       }}
       onContextMenu={(e) => openContextMenu(e, branchMenuItems(b, t))}
-    >
-      <Icon
-        name={isFavorite(b.name) ? "star" : "branch"}
-        size={15}
-        style={{ color: b.current ? "var(--warning)" : "var(--fg-subtle)" }}
-      />
-      <span className="dig-branchrow__name">{label ?? b.name}</span>
-      {b.ahead || b.behind ? (
-        <span className="dig-branchrow__sync">
-          {b.ahead ? `↑${b.ahead}` : ""}
-          {b.behind ? `↓${b.behind}` : ""}
-        </span>
-      ) : null}
-    </div>
+    />
   )
 }
 
@@ -150,17 +201,13 @@ function BranchNodes({
           const open = expanded.has(n.path)
           return (
             <React.Fragment key={"d:" + n.path}>
-              <div
-                className="dig-branches__folder"
-                style={{ paddingLeft: 8 + depth * 16 }}
+              <TreeRow
+                depth={depth}
+                toggle={<Icon name={open ? "chevronDown" : "chevronRight"} size={14} />}
+                icon={<Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />}
+                label={n.name}
                 onClick={() => toggle(n.path)}
-              >
-                <span className="dig-tree__toggle">
-                  <Icon name={open ? "chevronDown" : "chevronRight"} size={14} />
-                </span>
-                <Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />
-                <span>{n.name}</span>
-              </div>
+              />
               {open && n.children ? (
                 <BranchNodes
                   nodes={n.children}
@@ -174,11 +221,7 @@ function BranchNodes({
             </React.Fragment>
           )
         }
-        return (
-          <div key={"b:" + n.path} style={{ paddingLeft: depth * 16 + 8 }}>
-            {n.branch ? <BranchRow b={n.branch} t={t} label={n.name} onSelect={onSelect} /> : null}
-          </div>
-        )
+        return <BranchRow key={"b:" + n.path} b={n.branch!} t={t} label={n.name} depth={depth} onSelect={onSelect} />
       })}
     </>
   )
@@ -330,9 +373,14 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 <span>{t("Favorites")}</span>
               </div>
               {favBranches.map((b) => (
-                <div key={"fav:" + b.ref} style={{ paddingLeft: 8 }}>
-                  <BranchRow b={b} t={t} label={b.name.split("/").pop()} onSelect={setSelectedName} />
-                </div>
+                <BranchRow
+                  key={"fav:" + b.ref}
+                  b={b}
+                  t={t}
+                  label={b.name.split("/").pop()}
+                  depth={0}
+                  onSelect={setSelectedName}
+                />
               ))}
             </>
           ) : null}
@@ -352,7 +400,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           </div>
           <BranchNodes
             nodes={localTree}
-            depth={1}
+            depth={0}
             expanded={expanded}
             toggle={toggle}
             t={t}
@@ -378,9 +426,11 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           ) : null}
           {[...remoteGroups.entries()].map(([remote]) => (
             <div key={remote}>
-              <div
-                className="dig-branches__folder"
-                style={{ paddingLeft: 8 }}
+              <TreeRow
+                depth={0}
+                toggle={<Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />}
+                icon={<Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />}
+                label={remote}
                 onClick={() => toggle("remote:" + remote)}
                 onContextMenu={(e) => {
                   const url = s.remotes.find((r) => r.name === remote)?.url || ""
@@ -404,13 +454,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                     },
                   ])
                 }}
-              >
-                <span className="dig-tree__toggle">
-                  <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />
-                </span>
-                <Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />
-                <span>{remote}</span>
-              </div>
+              />
               {!collapsed.has("remote:" + remote) ? (
                 <BranchNodes
                   nodes={remoteTrees.get(remote) || []}
