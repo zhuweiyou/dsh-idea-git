@@ -388,6 +388,20 @@ try {
       ok('.gitattributes has *.bin', fs.existsSync(path.join(repo, '.gitattributes')) && fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8').includes('*.bin'))
     }
   }
+
+  /* ---------------- shelf ---------------- */
+  console.log('\n[shelf]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    fs.appendFileSync(path.join(repo, 'a.txt'), 'B\n')
+    ok('shelfSave', (await call('shelfSave', { ...D(repo), name: 'wip' })).ok)
+    const list = (await call('shelfList', D(repo))).value
+    ok('shelfList name', list.length === 1 && list[0].name === 'wip')
+    ok('shelf apply pop', (await call('stashApply', { ...D(repo), index: list[0].index, pop: true })).ok)
+    ok('shelf empty after pop', (await call('shelfList', D(repo))).value.length === 0)
+    ok('content restored', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'A\nB\n')
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

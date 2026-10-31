@@ -634,6 +634,31 @@ export interface StashItem {
   author: string
 }
 
+const SHELF_PREFIX = 'shelf: '
+export interface ShelfItem { index: number; ref: string; name: string; date: number }
+
+export async function listShelves(info: RepoInfo, signal?: AbortSignal): Promise<ShelfItem[]> {
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['stash', 'list', '--format=%gd%x1f%gs%x1f%ct'] })
+  if (r.code !== 0) return []
+  const out: ShelfItem[] = []
+  for (const line of r.stdout.split('\n')) {
+    if (!line.trim()) continue
+    const f = line.split('\x1f')
+    const msg = f[1] || ''
+    if (!msg.includes(SHELF_PREFIX)) continue
+    const m = /stash@\{(\d+)\}/.exec(f[0] || '')
+    out.push({ index: m ? Number(m[1]) : 0, ref: f[0] || '', name: msg.slice(msg.indexOf(SHELF_PREFIX) + SHELF_PREFIX.length), date: Number(f[2]) * 1000 })
+  }
+  return out
+}
+
+export async function shelfSave(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const name = String(payload?.name ?? '').trim() || 'shelf'
+  const args = ['stash', 'push', '-u', '-m', SHELF_PREFIX + name]
+  await runWrite(info, args, signal)
+  return { ok: true }
+}
+
 export async function readStashes(info: RepoInfo, signal?: AbortSignal): Promise<StashItem[]> {
   const fmt = ['%gd', '%H', '%gs', '%ct', '%aN'].join(FIELD)
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['stash', 'list', '--format=' + fmt] })

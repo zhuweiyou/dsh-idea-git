@@ -5,7 +5,7 @@
 import * as api from './api'
 import type { BlameLine, BranchItem, CommitItem, ConsoleEntry, FileEntry, RemoteItem, RepoInfoResult, StashItem, StatusResult, WorktreeItem } from './types'
 
-export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'worktree' | 'submodule'
+export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'shelf' | 'worktree' | 'submodule'
 
 export interface Target {
   sessionId: string
@@ -39,6 +39,7 @@ export interface GitState {
   detailRange: { from: string; to: string } | null
   include: Record<string, boolean>
   stashes: StashItem[]
+  shelves: Array<{ index: number; ref: string; name: string; date: number }>
   worktrees: WorktreeItem[]
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   blame: { title: string; lines: BlameLine[]; loading: boolean } | null
@@ -93,6 +94,7 @@ const initial: GitState = {
   toast: null,
   compare: null,
   stashes: [],
+  shelves: [],
   worktrees: [],
   submodules: [],
   blame: null,
@@ -131,6 +133,7 @@ export function setTab(tab: TabId) {
   if (tab === 'console') void loadConsole()
   if (tab === 'log' && state.commits.length === 0) void loadLog(true)
   if (tab === 'stash') void loadStashes()
+  if (tab === 'shelf') void loadShelves()
   if (tab === 'worktree') void loadWorktrees()
   if (tab === 'submodule') void loadSubmodules()
 }
@@ -882,4 +885,19 @@ export function lfsMigrate(include: string) {
     if (!r || !r.ok) throw new Error(r?.output || 'lfs migrate failed')
     await refreshAll()
   })
+}
+
+
+export async function loadShelves() {
+  if (!state.target) return
+  try { set({ shelves: await api.rpc<Array<{ index: number; ref: string; name: string; date: number }>>('shelfList', targetPayload()) }) } catch {}
+}
+export function shelfSave(name: string) {
+  return withBusy('Shelving…', async () => { await api.rpc('shelfSave', { ...targetPayload(), name }); await refreshStatus(); await loadShelves() })
+}
+export function shelfApply(index: number, pop: boolean) {
+  return withBusy(pop ? 'Popping…' : 'Applying…', async () => { await api.rpc('stashApply', { ...targetPayload(), index, pop }); await refreshAll() })
+}
+export function shelfDrop(index: number) {
+  return withBusy('Dropping…', async () => { await api.rpc('stashDrop', { ...targetPayload(), index }); await loadShelves() })
 }

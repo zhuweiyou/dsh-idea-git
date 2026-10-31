@@ -197,6 +197,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'commitDiff':
         return withRepo(ctx, payload, signal, (info) => svc.commitDiffText(info, payload, signal))
 
+      case 'shelfList':
+        return withRepo(ctx, payload, signal, (info) => svc.listShelves(info, signal))
+
+      case 'shelfSave':
+        return withRepo(ctx, payload, signal, (info) => svc.shelfSave(info, payload, signal))
+
       case 'stashList':
         return withRepo(ctx, payload, signal, (info) => svc.readStashes(info, signal))
 

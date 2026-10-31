@@ -10,13 +10,13 @@ import { ConsoleView } from './views/ConsoleView'
 import { StashView } from './views/StashView'
 import { WorktreeView } from './views/WorktreeView'
 import { SubmoduleView } from './views/SubmoduleView'
+import { ShelfView } from './views/ShelfView'
 import { DiffView } from './views/DiffView'
 import { ConflictView } from './views/ConflictView'
 import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
 import { syncAll } from './services'
 import { PromptHost, askText } from './lib/prompt'
-import { CommandPaletteHost, openCommandPalette } from './lib/commands'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: 'changes', label: 'Git' },
@@ -25,6 +25,7 @@ const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: 'worktree', label: 'Worktrees' },
   { id: 'submodule', label: 'Submodules' },
   { id: 'stash', label: 'Stash' },
+  { id: 'shelf', label: 'Shelf' },
 ]
 
 function errorText(t: (s: string, p?: any) => string, code: string | null, fallback: string | null): string {
@@ -74,6 +75,7 @@ function Body() {
     case 'log': return <LogView />
     case 'console': return <ConsoleView />
     case 'stash': return <StashView />
+    case 'shelf': return <ShelfView />
     case 'worktree': return <WorktreeView />
     case 'submodule': return <SubmoduleView />
     default: return null
@@ -99,7 +101,6 @@ export function Panel() {
   React.useEffect(() => {
     if (!w.open) return
     const onKey = (ev: KeyboardEvent) => {
-      if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'k' || ev.key === 'K')) { ev.preventDefault(); openCommandPalette(); return }
       if (ev.key !== 'Escape') return
       // Do not hijack Esc while typing, or while a prompt dialog is open.
       const t = ev.target as HTMLElement | null
@@ -196,7 +197,6 @@ export function Panel() {
     </div>
       <ContextMenuHost />
       <PromptHost theme={w.theme} />
-      <CommandPaletteHost />
     </>
   )
 }
