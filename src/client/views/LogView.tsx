@@ -39,7 +39,7 @@ function RefLabel({ name }: { name: string }) {
 /* -------------------- branch tree -------------------- */
 interface BNode { name: string; path: string; dir: boolean; branch?: BranchItem; children?: BNode[] }
 
-function buildBranchTree(branches: BranchItem[], prefix = ''): BNode[] {
+function buildBranchTree(branches: BranchItem[], prefix = '', favs: Set<string> = new Set()): BNode[] {
   const dirs = new Map<string, BranchItem[]>()
   const leaves: BNode[] = []
   for (const b of branches) {
@@ -55,9 +55,13 @@ function buildBranchTree(branches: BranchItem[], prefix = ''): BNode[] {
   const nodes: BNode[] = []
   for (const [head, list] of dirs) {
     const path = prefix ? prefix + '/' + head : head
-    nodes.push({ name: head, path, dir: true, children: buildBranchTree(list, path) })
+    nodes.push({ name: head, path, dir: true, children: buildBranchTree(list, path, favs) })
   }
-  return [...nodes, ...leaves]
+  const rank = (b: BranchItem) => (b.current ? 0 : favs.has(b.name) ? 1 : 2)
+  const sorted = [...leaves].sort((a, b) => rank(a.branch!) - rank(b.branch!) || a.name.localeCompare(b.name))
+  const top = sorted.filter((n) => rank(n.branch!) < 2)
+  const rest = sorted.filter((n) => rank(n.branch!) === 2)
+  return [...top, ...nodes, ...rest]
 }
 
 function BranchRow({ b, t, label }: { b: BranchItem; t: (s: string, p?: any) => string; label?: string }) {
@@ -120,7 +124,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   const match = (b: BranchItem) => !q || b.name.toLowerCase().includes(q)
   const locals = s.branches.filter((b) => !b.remote)
   const remotes = s.branches.filter((b) => b.remote && match(b))
-  const localTree = React.useMemo(() => buildBranchTree(locals.filter(match)), [s.branches, q])
+  const localTree = React.useMemo(() => buildBranchTree(locals.filter(match), '', favSet()), [s.branches, q, favTick])
   // remote groups: remote name -> its branches (full names, e.g. origin/feature/x)
   const remoteGroups = React.useMemo(() => {
     const g = new Map<string, BranchItem[]>()
@@ -133,9 +137,9 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
   }, [remotes])
   const remoteTrees = React.useMemo(() => {
     const m = new Map<string, BNode[]>()
-    for (const [remote, list] of remoteGroups) m.set(remote, buildBranchTree(list, remote))
+    for (const [remote, list] of remoteGroups) m.set(remote, buildBranchTree(list, remote, favSet()))
     return m
-  }, [remoteGroups])
+  }, [remoteGroups, favTick])
   const expanded = React.useMemo(() => {
     const all = new Set<string>()
     const walk = (ns: BNode[]) => ns.forEach((n) => { if (n.dir) { all.add(n.path); walk(n.children || []) } })
