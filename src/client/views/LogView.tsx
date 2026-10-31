@@ -165,7 +165,7 @@ function BranchesPanel() {
         {s.tags.length ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="tag" size={15} /><span>{t('Tags')}</span></div> : null}
         {s.tags.map((tag) => (
           <div key={tag} className="dig-branchrow" style={{ paddingLeft: 22 }} title={tag}
-            onClick={() => { if (window.confirm(t('Checkout tag {name}?', { name: tag }))) void store.checkout(tag) }}
+            onClick={(e) => { for (const el of Array.from(document.querySelectorAll('.dig-branchrow[data-selected]'))) el.removeAttribute('data-selected'); (e.currentTarget as HTMLElement).setAttribute('data-selected', 'true') }}
             onContextMenu={(e) => openContextMenu(e, [
               { label: t('Checkout'), run: () => void store.checkout(tag) },
               { label: t('New Branch from Here…'), run: async () => { const n = await askText(t('New branch name')); if (n) void store.createBranchAt(n, tag) } },
