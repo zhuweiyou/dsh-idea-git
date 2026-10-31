@@ -3,6 +3,29 @@
   "version": "0.1.0",
   "type": "module",
   "description": "IDEA-style Git tool window for DeepSeek Harness: changes & commit, commit graph log, console, diff, branches/remotes, stash/worktrees and AI commit messages.",
+  "author": "zhuweiyou <zhuweiyou@users.noreply.github.com>",
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "git",
+    "idea",
+    "diff",
+    "blame",
+    "lfs",
+    "worktree",
+    "commit-graph"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhuweiyou/dsh-idea-git.git"
+  },
+  "homepage": "https://github.com/zhuweiyou/dsh-idea-git#readme",
+  "bugs": {
+    "url": "https://github.com/zhuweiyou/dsh-idea-git/issues"
+  },
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
