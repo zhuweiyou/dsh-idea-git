@@ -1917,3 +1917,11 @@ body.dig-docked #root { height: 100% !important; }
 .dig-panel__grip { position: absolute; left: 0; right: 0; top: 0; height: 5px; z-index: 5; cursor: row-resize; background: transparent !important; }
 .dig-panel__grip:hover, .dig-panel__grip:active { background: transparent !important; }
 .dig-commit__probs { display: inline-flex; align-items: center; color: var(--warning); }
+
+/* Changes view: left tree / right commit panel (IDEA Commit tool window). */
+.dig-hlayout-c { flex: 1; min-height: 0; display: flex; flex-direction: row; overflow: hidden; }
+.dig-hlayout-c__main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.dig-hlayout-c__handle { flex: none; width: 5px; cursor: col-resize; background: transparent; }
+.dig-hlayout-c__handle:hover { background: var(--accent); opacity: .25; }
+.dig-hlayout-c__side { flex: none; min-width: 0; min-height: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+.dig-hlayout-c__side .dig-commit { border-top: 0; height: 100%; }

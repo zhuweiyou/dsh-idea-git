@@ -274,18 +274,18 @@ export function ChangesView() {
   const t = useT()
   React.useEffect(() => { void store.loadChangelists() }, [])
   const [groupByDir, setGroupByDir] = React.useState<boolean>(() => localStorage.getItem('dig.groupByDir') !== '0')
-  const [commitHeight, setCommitHeight] = React.useState(() => Number(localStorage.getItem('dig.commitHeight')) || 230)
-  const heightRef = React.useRef(commitHeight)
-  heightRef.current = commitHeight
+  const [commitWidth, setCommitWidth] = React.useState(() => Number(localStorage.getItem('dig.commitWidth')) || 380)
+  const widthRef = React.useRef(commitWidth)
+  widthRef.current = commitWidth
   const startDrag = (e: React.PointerEvent) => {
     e.preventDefault()
-    const startY = e.clientY
-    const startH = heightRef.current
-    const move = (ev: PointerEvent) => setCommitHeight(Math.max(120, Math.min(window.innerHeight - 200, startH + (startY - ev.clientY))))
+    const startX = e.clientX
+    const startW = widthRef.current
+    const move = (ev: PointerEvent) => setCommitWidth(Math.max(260, Math.min(Math.min(760, window.innerWidth - 360), startW + (startX - ev.clientX))))
     const up = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
-      localStorage.setItem('dig.commitHeight', String(heightRef.current))
+      localStorage.setItem('dig.commitWidth', String(widthRef.current))
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
@@ -355,10 +355,10 @@ export function ChangesView() {
     </div>
   )
   return (
-    <div className="dig-vlayout">
-      <div className="dig-vlayout__main" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{tree}</div>
-      <div className="dig-vlayout__handle" role="separator" onPointerDown={startDrag} />
-      <div style={{ flex: 'none', height: commitHeight, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="dig-hlayout-c">
+      <div className="dig-hlayout-c__main">{tree}</div>
+      <div className="dig-hlayout-c__handle" role="separator" aria-orientation="vertical" onPointerDown={startDrag} />
+      <div className="dig-hlayout-c__side" style={{ width: commitWidth }}>
         <CommitPanel />
       </div>
     </div>
