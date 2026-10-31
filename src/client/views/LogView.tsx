@@ -352,7 +352,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           </div>
           <BranchNodes
             nodes={localTree}
-            depth={0}
+            depth={1}
             expanded={expanded}
             toggle={toggle}
             t={t}
