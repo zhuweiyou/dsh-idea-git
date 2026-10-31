@@ -2704,3 +2704,4 @@ body.dig-docked #root {
 .dig-durow--del { background: var(--diff-deleted); }
 .dig-durow--add { background: var(--diff-inserted); }
 .dig-word { background: color-mix(in srgb, var(--fg) 20%, transparent); color: inherit; }
+.dig-settings__select { height: 26px; min-width: 160px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--bg-input); color: var(--fg); }

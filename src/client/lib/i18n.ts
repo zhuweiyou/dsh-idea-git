@@ -444,6 +444,12 @@ const zh: Record<string, string> = {
   'No model service is available in the current profile.': '当前 profile 没有可用的模型服务。',
   'Cannot read the current session model; select a model in that session and retry.': '无法读取当前会话的模型，请在会话中选择模型后重试。',
   'AI generation failed': 'AI 生成失败',
+  'Theme': '主题',
+  'Language': '语言',
+  'Follow DSH': '跟随 DSH',
+  'Light': '浅色',
+  'Dark': '深色',
+  'Simplified Chinese': '简体中文',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

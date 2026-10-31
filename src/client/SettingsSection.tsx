@@ -3,6 +3,7 @@ import React from "react"
 import { useT } from "./lib/i18n"
 import * as api from "./api"
 import { useWindow } from "./window"
+import { syncAll, setThemeOverride, setLocaleOverride } from "./services"
 
 interface VersionInfo {
   found: boolean
@@ -27,6 +28,20 @@ export function SettingsSection() {
       return localStorage.getItem("dig.autoFetch") === "1"
     } catch {
       return false
+    }
+  })
+  const [themeOv, setThemeOv] = React.useState<string>(() => {
+    try {
+      return localStorage.getItem("dig.themeOverride") || ""
+    } catch {
+      return ""
+    }
+  })
+  const [localeOv, setLocaleOv] = React.useState<string>(() => {
+    try {
+      return localStorage.getItem("dig.localeOverride") || ""
+    } catch {
+      return ""
     }
   })
 
@@ -139,8 +154,42 @@ export function SettingsSection() {
         </span>
       </div>
       <div className="dig-settings__row">
-        <span className="dig-settings__label">{t("Theme and language")}</span>
-        <span className="dig-settings__value">{t("Follow DSH settings.")}</span>
+        <span className="dig-settings__label">{t("Theme")}</span>
+        <span className="dig-settings__value">
+          <select
+            className="dig-settings__select"
+            value={themeOv}
+            onChange={(e) => {
+              const v = e.target.value
+              setThemeOv(v)
+              setThemeOverride(v as "" | "light" | "dark")
+              syncAll()
+            }}
+          >
+            <option value="">{t("Follow DSH")}</option>
+            <option value="light">{t("Light")}</option>
+            <option value="dark">{t("Dark")}</option>
+          </select>
+        </span>
+      </div>
+      <div className="dig-settings__row">
+        <span className="dig-settings__label">{t("Language")}</span>
+        <span className="dig-settings__value">
+          <select
+            className="dig-settings__select"
+            value={localeOv}
+            onChange={(e) => {
+              const v = e.target.value
+              setLocaleOv(v)
+              setLocaleOverride(v as "" | "zh" | "en")
+              syncAll()
+            }}
+          >
+            <option value="">{t("Follow DSH")}</option>
+            <option value="zh">{t("Simplified Chinese")}</option>
+            <option value="en">English</option>
+          </select>
+        </span>
       </div>
     </div>
   )
