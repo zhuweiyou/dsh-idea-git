@@ -1,6 +1,6 @@
 # dsh-idea-git（IDEA Git）
 
-IDE 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行。
+IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行。
 
 <img width="1275" height="1071" alt="image" src="https://github.com/user-attachments/assets/5e033765-dac9-4a1d-86a4-03af717d31ae" />
 
