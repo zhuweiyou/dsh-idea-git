@@ -111,21 +111,33 @@ export class ViewBoundary extends React.Component<{ children: React.ReactNode },
 
 function CommitTabView() {
   const t = useT()
-  const [sub, setSub] = React.useState<"changes" | "stash" | "shelf">(() => {
+  const [sub, setSub] = React.useState<"changes" | "stash" | "shelf" | "combined">(() => {
     const v = localStorage.getItem("dig.commitSub")
-    return v === "stash" || v === "shelf" ? v : "changes"
+    return v === "stash" || v === "shelf" || v === "combined" ? v : "changes"
   })
-  const pick = (v: "changes" | "stash" | "shelf") => {
+  const combine = (() => {
+    try {
+      return localStorage.getItem("dig.combineStashShelf") === "1"
+    } catch {
+      return false
+    }
+  })()
+  const pick = (v: "changes" | "stash" | "shelf" | "combined") => {
     setSub(v)
     try {
       localStorage.setItem("dig.commitSub", v)
     } catch {}
   }
-  const tabs: Array<{ id: "changes" | "stash" | "shelf"; label: string }> = [
-    { id: "changes", label: t("Changes") },
-    { id: "stash", label: t("Stash") },
-    { id: "shelf", label: t("Shelf") },
-  ]
+  const tabs: Array<{ id: "changes" | "stash" | "shelf" | "combined"; label: string }> = combine
+    ? [
+        { id: "changes", label: t("Changes") },
+        { id: "combined", label: t("Stashes and Shelves") },
+      ]
+    : [
+        { id: "changes", label: t("Changes") },
+        { id: "stash", label: t("Stash") },
+        { id: "shelf", label: t("Shelf") },
+      ]
   return (
     <div className="dig-committab">
       <div className="dig-committab__bar" role="tablist">
@@ -135,7 +147,7 @@ function CommitTabView() {
             type="button"
             role="tab"
             className="dig-committab__tab"
-            data-active={sub === x.id ? "true" : undefined}
+            data-active={(combine && sub !== "changes" ? "combined" : sub) === x.id ? "true" : undefined}
             onClick={() => pick(x.id)}
           >
             {x.label}
@@ -143,7 +155,22 @@ function CommitTabView() {
         ))}
       </div>
       <div className="dig-committab__body">
-        {sub === "changes" ? <ChangesView /> : sub === "stash" ? <StashView /> : <ShelfView />}
+        {sub === "changes" ? (
+          <ChangesView />
+        ) : combine ? (
+          <div className="dig-committab__stack">
+            <div className="dig-committab__half">
+              <StashView />
+            </div>
+            <div className="dig-committab__half">
+              <ShelfView />
+            </div>
+          </div>
+        ) : sub === "stash" ? (
+          <StashView />
+        ) : (
+          <ShelfView />
+        )}
       </div>
     </div>
   )

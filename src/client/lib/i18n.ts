@@ -488,6 +488,9 @@ const zh: Record<string, string> = {
   'New Tag…': '新建标签…',
   'Apply Patch': '应用补丁',
   'Patch does not apply cleanly': '补丁无法干净应用',
+  'Stashes and Shelves': '储藏与货架',
+  'Stash and Shelf': '储藏与货架',
+  'Combine Stash and Shelf tabs': '合并储藏与货架页签',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

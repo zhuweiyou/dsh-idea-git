@@ -2891,3 +2891,22 @@ body.dig-docked #root {
   font-size: var(--fs-small);
   color: var(--fg-secondary);
 }
+
+/* Combined Stash + Shelf tabs */
+.dig-committab__stack {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dig-committab__half {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dig-committab__half + .dig-committab__half {
+  border-top: 1px solid var(--border);
+}

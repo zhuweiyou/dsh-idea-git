@@ -30,6 +30,13 @@ export function SettingsSection() {
       return false
     }
   })
+  const [combineStash, setCombineStash] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem("dig.combineStashShelf") === "1"
+    } catch {
+      return false
+    }
+  })
   const [themeOv, setThemeOv] = React.useState<string>(() => {
     try {
       return localStorage.getItem("dig.themeOverride") || ""
@@ -143,6 +150,25 @@ export function SettingsSection() {
         <span className="dig-settings__label">{t("Repository")}</span>
         <span className="dig-settings__value">
           {t("Follows the active conversation workspace (including subdirectories).")}
+        </span>
+      </div>
+      <div className="dig-settings__row">
+        <span className="dig-settings__label">{t("Stash and Shelf")}</span>
+        <span className="dig-settings__value">
+          <label className="dig-settings-check">
+            <input
+              type="checkbox"
+              checked={combineStash}
+              onChange={(e) => {
+                const v = e.target.checked
+                setCombineStash(v)
+                try {
+                  localStorage.setItem("dig.combineStashShelf", v ? "1" : "0")
+                } catch {}
+              }}
+            />
+            <span>{t("Combine Stash and Shelf tabs")}</span>
+          </label>
         </span>
       </div>
       <div className="dig-settings__row">
