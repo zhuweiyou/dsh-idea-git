@@ -170,7 +170,7 @@ function BranchRow({
       }
       onClick={(e) => {
         onSelect?.(b.name)
-        for (const el of Array.from(document.querySelectorAll(".dig-branchrow[data-selected]")))
+        for (const el of Array.from(document.querySelectorAll(".dig-tree-row[data-selected]")))
           el.removeAttribute("data-selected")
         ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
       }}
@@ -484,7 +484,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 title={tag}
                 onClick={(e) => {
                   setSelectedName(tag)
-                  for (const el of Array.from(document.querySelectorAll(".dig-branchrow[data-selected]")))
+                  for (const el of Array.from(document.querySelectorAll(".dig-tree-row[data-selected]")))
                     el.removeAttribute("data-selected")
                   ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
                 }}
