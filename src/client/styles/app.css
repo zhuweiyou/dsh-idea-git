@@ -1847,3 +1847,12 @@ button.dig-filterbtn,
 .dig-merge__label { color: var(--fg-subtle); font-size: var(--fs-tiny); }
 .dig-merge__actions { display: flex; gap: 6px; padding: 6px 10px; }
 .dig-merge__actions .dig-btn[data-active='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* command palette */
+.dig-cmd-mask { position: fixed; inset: 0; z-index: 320; background: rgba(0,0,0,.35); display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; }
+.dig-cmd { width: 560px; max-width: 92vw; background: var(--dsw-alias-bg-overlay); border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; box-shadow: 0 18px 48px rgba(0,0,0,.5); overflow: hidden; }
+.dig-cmd__input { width: 100%; box-sizing: border-box; height: 40px; padding: 0 14px; border: 0; border-bottom: 1px solid var(--dsw-alias-border-l1); background: transparent; color: var(--dsw-alias-label-primary); outline: none; font-size: 14px; }
+.dig-cmd__list { max-height: 50vh; overflow: auto; padding: 6px; }
+.dig-cmd__item { height: 30px; display: flex; align-items: center; padding: 0 10px; border-radius: 6px; color: var(--dsw-alias-label-primary); cursor: pointer; font-size: 13px; }
+.dig-cmd__item[data-active='true'] { background: var(--dsw-alias-bg-layer-2); }
+.dig-cmd__empty { padding: 12px; color: var(--dsw-alias-label-secondary); font-size: 13px; }

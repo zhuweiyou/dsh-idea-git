@@ -16,6 +16,7 @@ import { CompareView } from './views/CompareView'
 import { ContextMenuHost } from './lib/contextMenu'
 import { syncAll } from './services'
 import { PromptHost, askText } from './lib/prompt'
+import { CommandPaletteHost, openCommandPalette } from './lib/commands'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: 'changes', label: 'Git' },
@@ -98,6 +99,7 @@ export function Panel() {
   React.useEffect(() => {
     if (!w.open) return
     const onKey = (ev: KeyboardEvent) => {
+      if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'k' || ev.key === 'K')) { ev.preventDefault(); openCommandPalette(); return }
       if (ev.key !== 'Escape') return
       // Do not hijack Esc while typing, or while a prompt dialog is open.
       const t = ev.target as HTMLElement | null
@@ -194,6 +196,7 @@ export function Panel() {
     </div>
       <ContextMenuHost />
       <PromptHost theme={w.theme} />
+      <CommandPaletteHost />
     </>
   )
 }

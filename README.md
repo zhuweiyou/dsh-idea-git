@@ -2,14 +2,20 @@
 
 IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行。
 
+## 安装
+
+### Desktop 版
+在 DSH 桌面端的插件安装入口里直接填写插件名称 `dsh-idea-git` 即可。
+
+### Web 版
+```sh
+dsh plugin --profile web add dsh-idea-git
+```
+
 ## 入口
 - **GIT 按钮**：会话输入框左侧（“完全权限”右侧），hover 高亮、打开态常驻高亮，点击 toggle。
 - **底部面板**：拖动上边缘调高、最小化 / 最大化（全屏）/ 关闭；双击标题栏切换最大化。
-- 标签页：**Git（改动）/ Log / Console / Worktrees / Stash**。
-
-## 仓库定位
-以当前会话工作区为位置；若工作区是某仓库的子目录，用 `git rev-parse --show-toplevel`
-向上找到仓库根并展示整仓。
+- 标签页：**Git（改动）/ Log / Console / Worktrees / Submodules / Stash**。
 
 ## 功能
 - **改动与提交**：目录分组/扁平切换、包含勾选框（文件与分组三态）、整文件暂存/取消/丢弃、
@@ -33,12 +39,4 @@ IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行�
 - **设置页**：可编辑 Git 可执行文件路径（持久化）、Git/LFS 版本、仓库/主题/语言说明。
 
 ## 主题与语言
-`data-theme` 跟随 DSH
-`colorScheme` 并订阅 `theme/change`；文案「英文源 + 中文词典」跟随 DSH locale。
-
-## 构建与安装
-```sh
-pnpm install
-pnpm build        # Host -> lib/index.js，Client -> dist/client.js（__ModuleLoader__）
-```
-通过 DSH 插件管理以本地目录安装（`file:` 规格，避免误从 npm 拉取）。
+`data-theme` 跟随 DSH `colorScheme` 并订阅 `theme/change`；文案「英文源 + 中文词典」跟随 DSH locale。
