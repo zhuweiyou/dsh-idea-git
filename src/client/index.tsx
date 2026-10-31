@@ -137,8 +137,10 @@ export function apply(ctx: any) {
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register({ name: 'conversation.input.left', id: 'idea-git-entry', order: 41 }, GitEntryButton),
   )
-  ctx.slots.inject('shell.overlay', () =>
-    ctx.slots.register({ name: 'shell.overlay', id: 'idea-git-window', order: 41 }, Panel),
+  // In-flow dock below the composer: opening it shrinks/pushes the conversation
+  // area up instead of covering it (IDE tool-window behaviour).
+  ctx.slots.inject('conversation.composer.dock', () =>
+    ctx.slots.register({ name: 'conversation.composer.dock', id: 'idea-git-window', order: 41 }, Panel),
   )
   ctx.slots.inject('settings.section', () =>
     ctx.slots.register({ name: 'settings.section', id: 'idea-git-settings', order: 60, label: () => 'IDEA Git' }, SettingsSection),

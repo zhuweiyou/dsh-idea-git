@@ -88,19 +88,6 @@ export function Panel() {
   const w = useWindow()
   const s = useGit()
   const t = useT()
-  React.useEffect(() => {
-    const h = w.open && !w.maximized ? (w.minimized ? 40 : w.height) : 0
-    const body = document.body
-    try {
-      if (h > 0) {
-        document.documentElement.style.setProperty('--dig-panel-h', h + 'px')
-        body.classList.add('dig-docked')
-      } else {
-        body.classList.remove('dig-docked')
-      }
-    } catch {}
-    return () => { try { body.classList.remove('dig-docked') } catch {} }
-  }, [w.open, w.height, w.minimized, w.maximized])
   React.useEffect(() => { saveCurrentWorkspace() }, [w.open, w.height, w.maximized, w.minimized])
   React.useEffect(() => { if (w.open) syncAll() }, [w.open])
   React.useEffect(() => {
@@ -134,7 +121,8 @@ export function Panel() {
   }, [w.open, s.diff, s.blame, s.conflict, s.compare])
   if (!w.open) return null
 
-  const height = w.maximized ? '100vh' : w.minimized ? 40 : w.height
+  const maxH = typeof window !== 'undefined' ? Math.round(window.innerHeight * 0.55) : 420
+  const height = w.maximized ? '55vh' : w.minimized ? 40 : Math.min(w.height, maxH)
   const bottom = w.minimized ? 40 : w.height
   const branch = s.info?.branch?.head
   const locals = s.branches.filter((b) => !b.remote)
