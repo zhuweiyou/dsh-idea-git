@@ -128,6 +128,13 @@ function FileRow({ file }: { file: FileEntry }) {
   )
 }
 
+function collectFiles(node: TreeNode): string[] {
+  const out: string[] = []
+  const walk = (n: TreeNode) => { if (n.dir) (n.children || []).forEach(walk); else if (n.file) out.push(n.file.path) }
+  walk(node)
+  return out
+}
+
 function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void }) {
   const gs = useGit()
   const t = useT()
@@ -139,7 +146,8 @@ function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth
           const open = expanded.has(n.path)
           return (
             <React.Fragment key={'d:' + n.path}>
-              <div className="dig-dirrow" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(n.path)}
+              <div className="dig-dirrow" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(n.path)} draggable
+                onDragStart={(e) => { const paths = collectFiles(n); if (paths.length) { try { e.dataTransfer.setData('application/x-dsh-changes', paths.join('\n')); e.dataTransfer.effectAllowed = 'move' } catch {} } }}
                 onContextMenu={(e) => openContextMenu(e, dirMenuItems(n, gs, t))}>
                 <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} />
                 <Icon name="folder" size={13} style={{ color: 'var(--fg-subtle)' }} />
@@ -177,10 +185,10 @@ function Group({ title, files, groupByDir, listId, active }: { title: string; fi
     return next
   })
   return (
-    <div className="dig-group" data-inactive={listId && active === false ? 'true' : undefined}>
+    <div className="dig-group" data-inactive={listId && active === false ? 'true' : undefined}
+      onDragOver={listId ? (e) => { if (e.dataTransfer.types.includes('application/x-dsh-changes')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } } : undefined}
+      onDrop={listId ? (e) => { const p = e.dataTransfer.getData('application/x-dsh-changes'); if (p) { e.preventDefault(); store.moveToChangelist(p.split('\n'), listId) } } : undefined}>
       <div className="dig-group__head" style={listId ? { cursor: 'context-menu' } : undefined}
-        onDragOver={listId ? (e) => { if (e.dataTransfer.types.includes('application/x-dsh-changes')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } } : undefined}
-        onDrop={listId ? (e) => { const p = e.dataTransfer.getData('application/x-dsh-changes'); if (p) { e.preventDefault(); store.moveToChangelist(p.split('\n'), listId) } } : undefined}
         onContextMenu={listId ? (e) => {
           const paths = files.map((f) => f.path)
           openContextMenu(e, [
