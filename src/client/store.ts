@@ -58,6 +58,7 @@ export interface GitState {
   worktrees: WorktreeItem[]
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   excludedHunks: Record<string, number[]>
+  mergeDialog: boolean
   changelists: {
     lists: Array<{ id: string; name: string; comment: string }>
     active: string
@@ -168,6 +169,7 @@ const initial: GitState = {
   worktrees: [],
   submodules: [],
   excludedHunks: {},
+  mergeDialog: false,
   changelists: null,
   rebasePlan: null,
   blame: null,
@@ -740,7 +742,7 @@ export function mergeBranch(name: string) {
       if (conflicts.length) {
         setTab("changes")
         setToast(t("Merge conflicts: resolve them in the merge editor and commit"))
-        void openConflict(conflicts[0].path)
+        set({ mergeDialog: true })
         return
       }
       throw new Error(out || "Merge failed (see Console)")
@@ -1623,4 +1625,11 @@ export function abortOperation() {
     await refreshAll()
     setToast("Operation aborted")
   })
+}
+
+export function openMergeDialog() {
+  set({ mergeDialog: true })
+}
+export function closeMergeDialog() {
+  set({ mergeDialog: false })
 }

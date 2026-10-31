@@ -2796,3 +2796,32 @@ body.dig-docked #root {
 .dig-norepo__dest .dig-modal__input {
   flex: 1;
 }
+
+/* Merge conflicts dialog */
+.dig-conflictlist {
+  display: flex;
+  flex-direction: column;
+  max-height: 52vh;
+  overflow: auto;
+}
+.dig-conflictrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.dig-conflictrow__path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}
+.dig-conflictrow__actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}

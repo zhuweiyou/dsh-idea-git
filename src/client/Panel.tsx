@@ -22,6 +22,7 @@ import { syncAll } from "./services"
 import { saveCurrentWorkspace } from "./workspaceState"
 import { PromptHost, askText } from "./lib/prompt"
 import { ConfirmHost } from "./lib/confirm"
+import { MergeConflictsDialog } from "./views/MergeConflictsDialog"
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: "changes", label: "Commit" },
@@ -433,6 +434,7 @@ export function Panel() {
       <ContextMenuHost />
       <PromptHost />
       <ConfirmHost />
+      <MergeConflictsDialog />
       <RebasePlanDialog />
     </>
   )

@@ -474,6 +474,10 @@ const zh: Record<string, string> = {
   'Cherry-pick': '拣选',
   'Aborting…': '中止中…',
   'Operation aborted': '操作已中止',
+  'Accept All Ours': '全部采用我方',
+  'Accept All Theirs': '全部采用对方',
+  'No conflicts': '没有冲突',
+  'Merge…': '合并…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

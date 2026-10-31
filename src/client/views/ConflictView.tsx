@@ -23,11 +23,10 @@ function parseConflicts(text: string): Seg[] {
       flush()
       i++
       const ours: string[] = []
-      while (i < lines.length && !lines[i].startsWith("=======")) {
+      while (i < lines.length && !lines[i].startsWith("|||||||") && !lines[i].startsWith("=======")) {
         ours.push(lines[i])
         i++
       }
-      i++
       let base: string[] = []
       if (i < lines.length && lines[i].startsWith("|||||||")) {
         i++

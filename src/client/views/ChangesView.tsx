@@ -980,6 +980,14 @@ export function ChangesView() {
             </>
           )}
         </Dropdown>
+        {s.files.some((f) => f.kind === "conflicted") ? (
+          <>
+            <span className="dig-toolbar__sep" />
+            <button type="button" className="dig-btn" onClick={() => store.openMergeDialog()}>
+              {t("Resolve Conflicts")} ({s.files.filter((f) => f.kind === "conflicted").length})
+            </button>
+          </>
+        ) : null}
         {s.info?.operation ? (
           <>
             <span className="dig-toolbar__sep" />
