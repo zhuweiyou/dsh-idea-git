@@ -156,6 +156,7 @@ function BranchNodes({
                 onClick={() => toggle(n.path)}
               >
                 <Icon name={open ? "chevronDown" : "chevronRight"} size={14} />
+                <Icon name="folder" size={14} style={{ color: "var(--fg-subtle)" }} />
                 <span>{n.name}</span>
               </div>
               {open && n.children ? (
@@ -172,7 +173,7 @@ function BranchNodes({
           )
         }
         return (
-          <div key={"b:" + n.path} style={{ paddingLeft: depth * 14 + 8 }}>
+          <div key={"b:" + n.path} style={{ paddingLeft: depth * 14 + 8 + 20 }}>
             {n.branch ? <BranchRow b={n.branch} t={t} label={n.name} onSelect={onSelect} /> : null}
           </div>
         )
@@ -327,7 +328,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 <span>{t("Favorites")}</span>
               </div>
               {favBranches.map((b) => (
-                <div key={"fav:" + b.ref} style={{ paddingLeft: 8 }}>
+                <div key={"fav:" + b.ref} style={{ paddingLeft: 28 }}>
                   <BranchRow b={b} t={t} label={b.name.split("/").pop()} onSelect={setSelectedName} />
                 </div>
               ))}
@@ -402,13 +403,14 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                   ])
                 }}
               >
-                <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={12} />
+                <Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />
+                <Icon name="folder" size={14} style={{ color: "var(--fg-subtle)" }} />
                 <span>{remote}</span>
               </div>
               {!collapsed.has("remote:" + remote) ? (
                 <BranchNodes
                   nodes={remoteTrees.get(remote) || []}
-                  depth={1}
+                  depth={0}
                   expanded={expanded}
                   toggle={toggle}
                   t={t}
