@@ -255,6 +255,24 @@ try {
     ok('.gitattributes has pattern', fs.existsSync(path.join(repo, '.gitattributes')) && fs.readFileSync(path.join(repo, '.gitattributes'), 'utf8').includes('*.psd'))
     ok('lfsUntrack', (await call('lfsUntrack', { ...D(repo), pattern: '*.psd' })).ok)
   }
+
+  /* ---------------- save commit files ---------------- */
+  console.log('\n[save]')
+  {
+    const { base, repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); fs.writeFileSync(path.join(repo, 'b.txt'), 'B\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A2\n'); fs.writeFileSync(path.join(repo, 'b.txt'), 'B2\n'); g(['add', '.']); g(['commit', '-qm', 'c2'])
+    const commit = g(['rev-parse', 'HEAD']).trim()
+    const before = g(['rev-parse', 'HEAD~1']).trim()
+    g(['reset', '-q', '--hard', before])
+    const out1 = path.join(base, 'out1')
+    const r1 = await call('saveCommitFiles', { ...D(repo), dir: out1, commit, paths: ['a.txt'] })
+    ok('save single file', r1.ok && fs.existsSync(r1.value.path) && fs.readFileSync(r1.value.path, 'utf8') === 'A2\n')
+    const out2 = path.join(base, 'out2')
+    const r2 = await call('saveCommitFiles', { ...D(repo), dir: out2, commit, paths: ['a.txt', 'b.txt'] })
+    ok('save zip', r2.ok && fs.existsSync(r2.value.path) && fs.statSync(r2.value.path).size > 0)
+    ok('partial cherry-pick', (await call('cherryPickPaths', { ...D(repo), commit, paths: ['a.txt'] })).ok)
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

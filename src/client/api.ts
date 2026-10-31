@@ -1,9 +1,18 @@
 /** Connection/API helper for the panel. */
 
 let connection: any = null
+let uiWorkspace: any = null
 
 export function setConnection(next: any) {
   connection = next
+}
+
+export function setUiWorkspace(w: any) {
+  uiWorkspace = w
+}
+
+export async function pickDirectory(): Promise<string | null> {
+  try { return (await uiWorkspace?.pickDirectory?.()) ?? null } catch { return null }
 }
 
 export function hasConnection(): boolean {

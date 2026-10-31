@@ -1831,3 +1831,6 @@ button.dig-filterbtn,
 .dig-group__head { height: 26px; font-size: 12px; }
 .dig-crow { height: 26px; font-size: 13px; }
 .dig-listhead { height: 24px; font-size: 12px; }
+
+.dig-dfile[data-selected='true'] { background: var(--bg-selected); color: var(--fg-strong); }
+.dig-dfile[data-selected='true']:hover { background: var(--bg-selected); }

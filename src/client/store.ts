@@ -778,3 +778,21 @@ export function applyPatchFromPath(path: string) {
 export function lfsTrack(pattern: string) {
   return withBusy('Updating LFS…', async () => { await api.rpc('lfsTrack', { ...targetPayload(), pattern }); await refreshStatus() })
 }
+
+
+export async function downloadCommitFile(commit: string, file: string) {
+  return downloadCommitFiles(commit, [file])
+}
+
+export function downloadCommitFiles(commit: string, paths: string[]) {
+  return withBusy('Saving…', async () => {
+    const dir = await api.pickDirectory()
+    if (!dir) return
+    const r = await api.rpc<{ path: string }>('saveCommitFiles', { ...targetPayload(), commit, paths, dir })
+    setToast('Saved to ' + r.path)
+  })
+}
+
+export function cherryPickSelected(commit: string, paths: string[]) {
+  return withBusy('Cherry-pick…', async () => { await api.rpc('cherryPickPaths', { ...targetPayload(), commit, paths }); await refreshAll() })
+}

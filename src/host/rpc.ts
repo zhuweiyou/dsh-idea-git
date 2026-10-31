@@ -67,6 +67,18 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'dropHead':
         return withRepo(ctx, payload, signal, (info) => svc.dropHead(info, payload, signal))
 
+      case 'saveCommitFiles':
+        return withRepo(ctx, payload, signal, (info) => svc.saveCommitFiles(info, payload, signal))
+
+      case 'commitFileBase64':
+        return withRepo(ctx, payload, signal, (info) => svc.commitFileBase64(info, payload, signal))
+
+      case 'commitFilesZip':
+        return withRepo(ctx, payload, signal, (info) => svc.commitFilesZip(info, payload, signal))
+
+      case 'cherryPickPaths':
+        return withRepo(ctx, payload, signal, (info) => svc.cherryPickPaths(info, payload, signal))
+
       case 'applyPatch':
         return withRepo(ctx, payload, signal, (info) => svc.applyPatch(info, payload, signal))
 

@@ -210,38 +210,64 @@ function buildFileTree(files: FileEntry[]): FNode[] {
   return root.children || []
 }
 
-function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t, range }: { nodes: FNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; commit: string; shortId: string; t: (s: string, p?: any) => string; range?: { from: string; to: string } | null }) {
+function filesUnder(node: FNode): string[] {
+  const out: string[] = []
+  const walk = (n: FNode) => { if (n.dir) n.children?.forEach(walk); else out.push(n.path) }
+  walk(node)
+  return out
+}
+
+function FileNodes({ nodes, depth, expanded, toggle, commit, shortId, t, range, selected, onSelectFile, onToggleDir }: {
+  nodes: FNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; commit: string; shortId: string
+  t: (s: string, p?: any) => string; range?: { from: string; to: string } | null
+  selected: Set<string>; onSelectFile: (p: string, e: React.MouseEvent) => void; onToggleDir: (n: FNode) => void
+}) {
+  const openDiff = (path: string) => range
+    ? void store.openRangeDiff(range.from, range.to, path, range.from + '..' + range.to + ': ' + path)
+    : void store.openDiff({ title: shortId + ': ' + path, commit, path })
   return (
     <>
       {nodes.map((n) => {
         if (n.dir) {
           const open = expanded.has(n.path)
+          const files = filesUnder(n)
+          const allOn = files.length > 0 && files.every((f) => selected.has(f))
           return (
             <React.Fragment key={'d:' + n.path}>
-              <div className="dig-dfile-dir" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(n.path)}>
-                <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} />
-                <Icon name="folder" size={15} style={{ color: 'var(--fg-subtle)' }} />
+              <div className="dig-dfile-dir" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => toggle(n.path)}
+                onContextMenu={(e) => { const paths = files; openContextMenu(e, [
+                  { label: t('Cherry-Pick Selected'), run: () => { if (window.confirm(t('Cherry-pick {n} selected file(s)?', { n: paths.length }))) void store.cherryPickSelected(commit, paths) } },
+                  { label: t('Download Selected'), run: () => void store.downloadCommitFiles(commit, paths) },
+                ]) }}>
+                <Icon name={open ? 'chevronDown' : 'chevronRight'} size={12} />
+                <Icon name="folder" size={13} style={{ color: 'var(--fg-subtle)' }} />
                 <span>{n.name}</span>
                 <span className="dig-dfile-count">{n.count}</span>
               </div>
-              {open && n.children ? <FileNodes nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} commit={commit} shortId={shortId} t={t} /> : null}
+              {open && n.children ? <FileNodes nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} commit={commit} shortId={shortId} t={t} range={range} selected={selected} onSelectFile={onSelectFile} onToggleDir={onToggleDir} /> : null}
             </React.Fragment>
           )
         }
         const f = n.file!
+        const sel = selected.has(f.path)
         const letter = f.kind === 'added' ? 'A' : f.kind === 'deleted' ? 'D' : f.kind === 'renamed' ? 'R' : 'M'
         const color = f.kind === 'added' ? 'var(--vcs-added)' : f.kind === 'deleted' ? 'var(--vcs-deleted)' : 'var(--vcs-modified)'
+        const pathsForMenu = () => (selected.size ? [...selected] : [f.path])
         return (
-          <div key={'f:' + n.path} className="dig-dfile" style={{ paddingLeft: 22 + depth * 14 }} title={f.path}
-            onClick={() => range ? void store.openRangeDiff(range.from, range.to, f.path, range.from + '..' + range.to + ': ' + f.path) : void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path })}
-            onContextMenu={(e) => openContextMenu(e, [
-              { label: t('Show Diff'), run: () => range ? void store.openRangeDiff(range.from, range.to, f.path, range.from + '..' + range.to + ': ' + f.path) : void store.openDiff({ title: shortId + ': ' + f.path, commit, path: f.path }) },
+          <div key={'f:' + n.path} className="dig-dfile" data-selected={sel ? 'true' : undefined} style={{ paddingLeft: 22 + depth * 14 }} title={f.path}
+            onClick={(e) => onSelectFile(f.path, e)}
+            onDoubleClick={() => openDiff(f.path)}
+            onContextMenu={(e) => { const paths = pathsForMenu(); openContextMenu(e, [
+              { label: t('Show Diff'), run: () => openDiff(f.path) },
               { label: t('Show History'), run: () => store.openHistory(f.path) },
               { label: t('Annotate with Git Blame'), run: () => void store.openBlame(f.path, f.path) },
               { separator: true },
+              { label: t('Cherry-Pick Selected'), run: () => { if (window.confirm(t('Cherry-pick {n} selected file(s)?', { n: paths.length }))) void store.cherryPickSelected(commit, paths) } },
+              { label: paths.length > 1 ? t('Download Selected (zip)') : t('Download'), run: () => void store.downloadCommitFiles(commit, paths) },
+              { separator: true },
               { label: t('Copy Path'), run: () => copyText(f.path) },
               { label: t('Copy Relative Path'), run: () => copyText(f.path) },
-            ])}>
+            ]) }}>
             <span className="dig-dfile__letter" style={{ color }}>{letter}</span>
             <span className="dig-dfile__name">{n.name}</span>
           </div>
@@ -255,20 +281,39 @@ function DetailsPane() {
   const s = useGit()
   const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
+  const [selected, setSelected] = React.useState<Set<string>>(() => new Set())
   const commit = s.commits.find((c) => c.id === s.selectedCommit)
   const tree = React.useMemo(() => buildFileTree(s.commitFiles), [s.commitFiles])
   React.useEffect(() => {
     const all = new Set<string>()
     const walk = (ns: FNode[]) => ns.forEach((n) => { if (n.dir) { all.add(n.path); walk(n.children || []) } })
-    walk(tree); setExpanded(all)
+    walk(tree); setExpanded(all); setSelected(new Set())
   }, [tree])
   if (!commit) return <div className="dig-details"><div className="dig-empty">{t('Select a commit to see details')}</div></div>
   const toggle = (p: string) => setExpanded((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n })
+  const flatPaths = React.useMemo(() => { const out: string[] = []; const walk = (ns: FNode[]) => ns.forEach((n) => { if (n.dir) walk(n.children || []); else out.push(n.path) }); walk(tree); return out }, [tree])
+  const anchor = React.useRef<string | null>(null)
+  const onSelectFile = (p: string, e: React.MouseEvent) => {
+    setSelected((prev) => {
+      let next: Set<string>
+      if (e.shiftKey && anchor.current) {
+        const a = flatPaths.indexOf(anchor.current), b = flatPaths.indexOf(p)
+        if (a >= 0 && b >= 0) { const [s0, e0] = a < b ? [a, b] : [b, a]; next = new Set(flatPaths.slice(s0, e0 + 1)) } else next = new Set([p])
+      } else if (e.metaKey || e.ctrlKey) { next = new Set(prev); if (next.has(p)) next.delete(p); else next.add(p) }
+      else next = new Set([p])
+      return next
+    })
+    if (!e.shiftKey) anchor.current = p
+  }
+  const onToggleDir = (node: FNode) => {
+    const files = filesUnder(node)
+    setSelected((prev) => { const allOn = files.length > 0 && files.every((f) => prev.has(f)); const n = new Set(prev); for (const f of files) { if (allOn) n.delete(f); else n.add(f) } return n })
+  }
   return (
     <div className="dig-details">
-      <div className="dig-details__fileshead">{t('{n} files', { n: s.commitFiles.length })}{s.detailRange ? ' · ' + t('selected commits') : ''}</div>
+      <div className="dig-details__fileshead">{t('{n} files', { n: s.commitFiles.length })}{s.detailRange ? ' · ' + t('selected commits') : ''}{selected.size ? ` · ${t('{n} selected', { n: selected.size })}` : ''}</div>
       <div className="dig-details__files">
-        <FileNodes nodes={tree} depth={0} expanded={expanded} toggle={toggle} commit={commit.id} shortId={commit.shortId} t={t} range={s.detailRange} />
+        <FileNodes nodes={tree} depth={0} expanded={expanded} toggle={toggle} commit={commit.id} shortId={commit.shortId} t={t} range={s.detailRange} selected={selected} onSelectFile={onSelectFile} onToggleDir={onToggleDir} />
       </div>
       <div className="dig-details__msg">
         <div className="dig-details__subject">{commit.subject}</div>

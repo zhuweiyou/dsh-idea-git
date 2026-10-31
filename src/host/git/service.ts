@@ -12,6 +12,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import { clearGitPathCache, gitOrThrow, resolveGitPath, runGit, runGitBytes } from './exec.js'
 import { getSettings } from '../settings.js'
+import { zipStore } from './zip.js'
 
 export interface RepoInfo {
   root: string
@@ -1047,6 +1048,69 @@ export async function lfsUntrack(info: RepoInfo, payload: any, signal?: AbortSig
   const patterns: string[] = Array.isArray(payload?.patterns) ? payload.patterns.map(String) : payload?.pattern ? [String(payload.pattern)] : []
   if (!patterns.length) throw new RepoError('git/bad-pattern', 'Missing patterns')
   await runWrite(info, ['lfs', 'untrack', ...patterns], signal)
+  return { ok: true }
+}
+
+export async function saveCommitFiles(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const dir = String(payload?.dir ?? '').trim()
+  const commit = String(payload?.commit ?? '')
+  const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
+  if (!dir || !commit || !paths.length) throw new RepoError('git/bad-request', 'Missing dir/commit/paths')
+  fs.mkdirSync(dir, { recursive: true })
+  if (paths.length === 1) {
+    const file = paths[0]
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${file}`], signal })
+    if (r.code !== 0) throw new Error(`Cannot read ${file}`)
+    const target = path.join(dir, path.basename(file))
+    fs.writeFileSync(target, r.stdout)
+    return { path: target }
+  }
+  const entries: Array<{ name: string; data: Buffer }> = []
+  for (const p of paths) {
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${p}`], signal })
+    if (r.code === 0) entries.push({ name: p, data: r.stdout })
+  }
+  if (!entries.length) throw new RepoError('git/empty-patch', 'No files to save')
+  const target = path.join(dir, `${commit.slice(0, 7)}.zip`)
+  fs.writeFileSync(target, zipStore(entries))
+  return { path: target }
+}
+
+export async function commitFileBase64(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commit = String(payload?.commit ?? '')
+  const file = String(payload?.file ?? '')
+  if (!commit || !file) throw new RepoError('git/bad-ref', 'Missing commit/file')
+  const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${file}`], signal })
+  if (r.code !== 0) throw new Error(`Cannot read ${file} at ${commit}`)
+  return { name: file.split('/').pop() || 'file', base64: r.stdout.toString('base64') }
+}
+
+export async function commitFilesZip(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commit = String(payload?.commit ?? '')
+  const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
+  if (!commit || !paths.length) throw new RepoError('git/bad-ref', 'Missing commit/paths')
+  const entries: Array<{ name: string; data: Buffer }> = []
+  for (const p of paths) {
+    const r = await runGitBytes(info.gitPath, { cwd: info.root, args: ['show', `${commit}:${p}`], signal })
+    if (r.code === 0) entries.push({ name: p, data: r.stdout })
+  }
+  if (!entries.length) throw new RepoError('git/empty-patch', 'No files to zip')
+  return { name: `${commit.slice(0, 7)}.zip`, base64: zipStore(entries).toString('base64') }
+}
+
+export async function cherryPickPaths(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commit = String(payload?.commit ?? '')
+  const paths: string[] = Array.isArray(payload?.paths) ? payload.paths.map(String) : []
+  if (!commit || !paths.length) throw new RepoError('git/bad-ref', 'Missing commit/paths')
+  const diff = await runGit(info.gitPath, { cwd: info.root, signal, args: ['diff', '--no-color', `${commit}^`, commit, '--', ...paths], maxBuffer: 32 * 1024 * 1024 })
+  if (diff.code !== 0 || !diff.stdout.trim()) throw new Error('No changes to cherry-pick for the selected files')
+  const check = await runGit(info.gitPath, { cwd: info.root, signal, args: ['apply', '--check', '--index', '-'], input: diff.stdout })
+  if (check.code !== 0) throw new Error(check.stderr.trim() || 'Selected changes do not apply cleanly')
+  const apply = await runGit(info.gitPath, { cwd: info.root, signal, args: ['apply', '--index', '-'], input: diff.stdout })
+  if (apply.code !== 0) throw new Error(apply.stderr.trim() || 'Cherry-pick apply failed')
+  const msg = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '-1', '--pretty=%B', commit] })
+  const message = (msg.stdout.trim() || `cherry-pick ${commit.slice(0, 7)}`) + `\n\n(partial: ${paths.length} file(s))`
+  await runWrite(info, ['commit', '-m', message], signal)
   return { ok: true }
 }
 

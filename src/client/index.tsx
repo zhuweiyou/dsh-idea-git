@@ -8,7 +8,7 @@
 import React from 'react'
 import './theme/tokens.css'
 import './styles/app.css'
-import { setConnection } from './api'
+import { setConnection, setUiWorkspace } from './api'
 import { setActiveLocale } from './lib/i18n'
 import * as store from './store'
 import { useWindow, getWindow, setTarget, openPanel, closePanel, setTheme } from './window'
@@ -100,6 +100,7 @@ export function apply(ctx: any) {
   try {
     ctx.inject(['connection'], (scope: any) => {
       try { setConnection(scope.connection ?? scope.get?.('connection')) } catch {}
+      try { setUiWorkspace(ctx.get?.('uiWorkspace')) } catch {}
     })
   } catch {}
 
