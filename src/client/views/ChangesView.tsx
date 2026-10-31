@@ -273,6 +273,8 @@ export function ChangesView() {
             <MenuItem onClick={async () => { close(); const p = await askText(t('Patch file path')); if (p) void store.applyPatchFromPath(p) }}>{t('Apply Patch…')}</MenuItem>
             <MenuItem onClick={() => { close(); void store.createPatch({ paths: s.files.map((f) => f.path) }) }}>{t('Create Patch…')}</MenuItem>
             <MenuItem onClick={async () => { close(); const pat = await askText(t('LFS pattern (e.g. *.psd)')); if (pat) void store.lfsTrack(pat) }}>{t('LFS Track…')}</MenuItem>
+            <MenuItem onClick={async () => { close(); const p = await askText(t('File path to lock')); if (p) void store.lfsLock(p) }}>{t('LFS Lock…')}</MenuItem>
+            <MenuItem onClick={async () => { close(); const p = await askText(t('File path to unlock')); if (p) void store.lfsUnlock(p) }}>{t('LFS Unlock…')}</MenuItem>
           </>)}
         </Dropdown>
         <span className="dig-toolbar__sep" />

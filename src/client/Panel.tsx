@@ -9,6 +9,7 @@ import { LogView } from './views/LogView'
 import { ConsoleView } from './views/ConsoleView'
 import { StashView } from './views/StashView'
 import { WorktreeView } from './views/WorktreeView'
+import { SubmoduleView } from './views/SubmoduleView'
 import { DiffView } from './views/DiffView'
 import { ConflictView } from './views/ConflictView'
 import { CompareView } from './views/CompareView'
@@ -21,6 +22,7 @@ const TABS: Array<{ id: store.TabId; label: string }> = [
   { id: 'log', label: 'Log' },
   { id: 'console', label: 'Console' },
   { id: 'worktree', label: 'Worktrees' },
+  { id: 'submodule', label: 'Submodules' },
   { id: 'stash', label: 'Stash' },
 ]
 
@@ -72,6 +74,7 @@ function Body() {
     case 'console': return <ConsoleView />
     case 'stash': return <StashView />
     case 'worktree': return <WorktreeView />
+    case 'submodule': return <SubmoduleView />
     default: return null
   }
 }

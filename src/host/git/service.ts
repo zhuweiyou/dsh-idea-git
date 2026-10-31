@@ -1180,6 +1180,57 @@ export async function cherryPickPaths(info: RepoInfo, payload: any, signal?: Abo
   return { ok: true }
 }
 
+export interface SubmoduleItem { path: string; sha: string; state: 'ok' | 'uninitialized' | 'modified' | 'conflict'; describe: string }
+
+export async function readSubmodules(info: RepoInfo, signal?: AbortSignal): Promise<SubmoduleItem[]> {
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['submodule', 'status', '--recursive'] })
+  if (r.code !== 0) return []
+  const out: SubmoduleItem[] = []
+  for (const line of r.stdout.split('\n')) {
+    if (!line.trim()) continue
+    const flag = line[0]
+    const rest = line.slice(1).trim()
+    const m = /^([0-9a-f]+)\s+(\S+)(?:\s+\((.*)\))?$/.exec(rest)
+    if (!m) continue
+    const state = flag === '-' ? 'uninitialized' : flag === '+' ? 'modified' : flag === 'U' ? 'conflict' : 'ok'
+    out.push({ sha: m[1], path: m[2], state, describe: m[3] || '' })
+  }
+  return out
+}
+
+export async function submoduleUpdate(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const args = ['submodule', 'update', '--init', '--recursive']
+  if (payload?.path) args.push('--', String(payload.path))
+  await runWrite(info, args, signal)
+  return { ok: true }
+}
+
+export async function lfsLocks(info: RepoInfo, signal?: AbortSignal): Promise<Array<{ path: string; owner: string; id?: string }>> {
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['lfs', 'locks', '--json'] })
+  if (r.code !== 0) return []
+  try {
+    const data = JSON.parse(r.stdout)
+    const arr = Array.isArray(data?.locks) ? data.locks : []
+    return arr.map((l: any) => ({ path: String(l.path ?? ''), owner: String(l.owner?.name ?? ''), id: l.id ? String(l.id) : undefined }))
+  } catch { return [] }
+}
+
+export async function lfsLock(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const p = String(payload?.path ?? '').trim()
+  if (!p) throw new RepoError('git/bad-path', 'Missing path')
+  await runWrite(info, ['lfs', 'lock', p], signal)
+  return { ok: true }
+}
+
+export async function lfsUnlock(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const p = String(payload?.path ?? '').trim()
+  if (!p) throw new RepoError('git/bad-path', 'Missing path')
+  const args = ['lfs', 'unlock', p]
+  if (payload?.force === true) args.push('--force')
+  await runWrite(info, args, signal)
+  return { ok: true }
+}
+
 /* ------------------------------------------------------------------ */
 /* Diagnostics                                                         */
 /* ------------------------------------------------------------------ */

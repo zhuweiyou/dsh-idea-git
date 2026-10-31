@@ -88,6 +88,21 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'applyPatch':
         return withRepo(ctx, payload, signal, (info) => svc.applyPatch(info, payload, signal))
 
+      case 'submoduleStatus':
+        return withRepo(ctx, payload, signal, (info) => svc.readSubmodules(info, signal))
+
+      case 'submoduleUpdate':
+        return withRepo(ctx, payload, signal, (info) => svc.submoduleUpdate(info, payload, signal))
+
+      case 'lfsLocks':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsLocks(info, signal))
+
+      case 'lfsLock':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsLock(info, payload, signal))
+
+      case 'lfsUnlock':
+        return withRepo(ctx, payload, signal, (info) => svc.lfsUnlock(info, payload, signal))
+
       case 'lfsTrack':
         return withRepo(ctx, payload, signal, (info) => svc.lfsTrack(info, payload, signal))
 

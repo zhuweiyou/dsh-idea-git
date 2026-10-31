@@ -341,6 +341,21 @@ try {
     ok('drop removed file b', !fs.existsSync(path.join(repo2.repo, 'b')))
     ok('drop kept file c', fs.existsSync(path.join(repo2.repo, 'c')))
   }
+
+  /* ---------------- submodules / lfs locks ---------------- */
+  console.log('\n[submodule/lfs-lock]')
+  {
+    const main = makeRepo()
+    const subrepo = makeRepo()
+    fs.writeFileSync(path.join(subrepo.repo, 's.txt'), 'S\n'); subrepo.g(['add', '.']); subrepo.g(['commit', '-qm', 'sub1'])
+    fs.writeFileSync(path.join(main.repo, 'a.txt'), 'A\n'); main.g(['add', '.']); main.g(['commit', '-qm', 'c1'])
+    main.g(['-c', 'protocol.file.allow=always', 'submodule', 'add', subrepo.repo, 'sub'])
+    main.g(['commit', '-qm', 'add sub'])
+    const subs = await call('submoduleStatus', D(main.repo))
+    ok('submoduleStatus lists sub', subs.value.some((m) => m.path === 'sub'))
+    ok('submoduleUpdate', (await call('submoduleUpdate', { ...D(main.repo) })).ok)
+    ok('lfsLocks array', Array.isArray((await call('lfsLocks', D(main.repo))).value))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

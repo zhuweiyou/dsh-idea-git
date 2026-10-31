@@ -5,7 +5,7 @@
 import * as api from './api'
 import type { BlameLine, BranchItem, CommitItem, ConsoleEntry, FileEntry, RemoteItem, RepoInfoResult, StashItem, StatusResult, WorktreeItem } from './types'
 
-export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'worktree'
+export type TabId = 'changes' | 'log' | 'console' | 'stash' | 'worktree' | 'submodule'
 
 export interface Target {
   sessionId: string
@@ -40,6 +40,7 @@ export interface GitState {
   include: Record<string, boolean>
   stashes: StashItem[]
   worktrees: WorktreeItem[]
+  submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   blame: { title: string; lines: BlameLine[]; loading: boolean } | null
   aiBusy: boolean
   logFilterFile: string | null
@@ -93,6 +94,7 @@ const initial: GitState = {
   compare: null,
   stashes: [],
   worktrees: [],
+  submodules: [],
   blame: null,
   aiBusy: false,
   logFilterFile: null,
@@ -130,6 +132,7 @@ export function setTab(tab: TabId) {
   if (tab === 'log' && state.commits.length === 0) void loadLog(true)
   if (tab === 'stash') void loadStashes()
   if (tab === 'worktree') void loadWorktrees()
+  if (tab === 'submodule') void loadSubmodules()
 }
 
 export function setMessage(message: string) {
@@ -843,4 +846,20 @@ export function dropCommit(commit: string) {
 }
 export async function silentFetch() {
   try { await api.rpc('remote', { ...targetPayload(), op: 'fetch' }) } catch {}
+}
+
+
+/* Submodules / LFS locks */
+export async function loadSubmodules() {
+  if (!state.target) return
+  try { set({ submodules: await api.rpc<Array<{ path: string; sha: string; state: string; describe: string }>>('submoduleStatus', targetPayload()) }) } catch {}
+}
+export function updateSubmodule(path?: string) {
+  return withBusy('Updating submodules…', async () => { await api.rpc('submoduleUpdate', { ...targetPayload(), path }); await loadSubmodules() })
+}
+export function lfsLock(path: string) {
+  return withBusy('Locking…', async () => { await api.rpc('lfsLock', { ...targetPayload(), path }); setToast('Locked: ' + path) })
+}
+export function lfsUnlock(path: string) {
+  return withBusy('Unlocking…', async () => { await api.rpc('lfsUnlock', { ...targetPayload(), path }); setToast('Unlocked: ' + path) })
 }
