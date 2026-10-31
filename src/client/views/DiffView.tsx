@@ -111,7 +111,19 @@ function highlightCode(text: string, lang: string): React.ReactNode {
   return <>{parts}</>
 }
 
-function Fragments({ text, other, enabled, lang }: { text: string; other: string; enabled: boolean; lang?: string }) {
+function Fragments({
+  text,
+  other,
+  enabled,
+  lang,
+  tone,
+}: {
+  text: string
+  other: string
+  enabled: boolean
+  lang?: string
+  tone?: "deleted" | "inserted"
+}) {
   const code = (t: string) => highlightCode(t, lang || "")
   if (!enabled || text === other) return <>{code(text)}</>
   const r = wordRanges(text, other)
@@ -119,7 +131,7 @@ function Fragments({ text, other, enabled, lang }: { text: string; other: string
   return (
     <>
       {code(text.slice(0, r.aStart))}
-      <mark className="dig-word">{code(text.slice(r.aStart, r.aEnd))}</mark>
+      <mark className={tone ? `dig-word dig-word--${tone}` : "dig-word"}>{code(text.slice(r.aStart, r.aEnd))}</mark>
       {code(text.slice(r.aEnd))}
     </>
   )
@@ -275,7 +287,13 @@ function UnifiedView({
             <span className="dig-durow__no" />
             <span className="dig-durow__sign">−</span>
             <span className="dig-durow__text">
-              <Fragments text={r.oldText} other={r.newText} enabled={highlight === "words"} lang={lang} />
+              <Fragments
+                text={r.oldText}
+                other={r.newText}
+                enabled={highlight === "words"}
+                lang={lang}
+                tone="deleted"
+              />
             </span>
           </div>,
         )
@@ -297,7 +315,13 @@ function UnifiedView({
             </span>
             <span className="dig-durow__sign">＋</span>
             <span className="dig-durow__text">
-              <Fragments text={r.newText} other={r.oldText} enabled={highlight === "words"} lang={lang} />
+              <Fragments
+                text={r.newText}
+                other={r.oldText}
+                enabled={highlight === "words"}
+                lang={lang}
+                tone="inserted"
+              />
             </span>
           </div>,
         )
