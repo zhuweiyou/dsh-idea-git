@@ -356,6 +356,21 @@ try {
     ok('submoduleUpdate', (await call('submoduleUpdate', { ...D(main.repo) })).ok)
     ok('lfsLocks array', Array.isArray((await call('lfsLocks', D(main.repo))).value))
   }
+
+  /* ---------------- merge editor content ---------------- */
+  console.log('\n[merge-editor]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'base\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    g(['checkout', '-q', '-b', 'feature']); fs.writeFileSync(path.join(repo, 'a.txt'), 'theirs\n'); g(['commit', '-qam', 'f'])
+    g(['checkout', '-q', 'main']); fs.writeFileSync(path.join(repo, 'a.txt'), 'ours\n'); g(['commit', '-qam', 'm'])
+    try { g(['merge', 'feature']) } catch {}
+    const w = await call('conflictWorking', { ...D(repo), file: 'a.txt' })
+    ok('conflictWorking has markers', w.value.content.includes('<<<<<<<') && w.value.content.includes('>>>>>>>'))
+    ok('resolveConflictContent', (await call('resolveConflictContent', { ...D(repo), file: 'a.txt', content: 'resolved\n' })).ok)
+    ok('resolved content written', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'resolved\n')
+    ok('file no longer conflicted', !(await call('status', D(repo))).value.files.some((f) => f.kind === 'conflicted'))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

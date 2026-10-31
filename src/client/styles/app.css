@@ -1834,3 +1834,16 @@ button.dig-filterbtn,
 
 .dig-dfile[data-selected='true'] { background: var(--bg-selected); color: var(--fg-strong); }
 .dig-dfile[data-selected='true']:hover { background: var(--bg-selected); }
+
+/* merge editor */
+.dig-merge { font-family: var(--font-mono); font-size: var(--fs-small); }
+.dig-merge__text { margin: 0; padding: 2px 12px; color: var(--fg-secondary); white-space: pre-wrap; }
+.dig-merge__conflict { margin: 6px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.dig-merge__cols { display: flex; }
+.dig-merge__pane { flex: 1; min-width: 0; padding: 6px 10px; }
+.dig-merge__pane--ours { background: color-mix(in srgb, var(--vcs-added) 10%, transparent); border-right: 1px solid var(--border); }
+.dig-merge__pane--theirs { background: color-mix(in srgb, var(--vcs-modified) 10%, transparent); }
+.dig-merge__pane pre { margin: 4px 0 0; white-space: pre-wrap; word-break: break-word; }
+.dig-merge__label { color: var(--fg-subtle); font-size: var(--fs-tiny); }
+.dig-merge__actions { display: flex; gap: 6px; padding: 6px 10px; }
+.dig-merge__actions .dig-btn[data-active='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }

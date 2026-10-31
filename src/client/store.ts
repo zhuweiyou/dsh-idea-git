@@ -48,7 +48,7 @@ export interface GitState {
   logPath: string | null
   logHeadOnly: boolean
   logSort: 'date' | 'reverse' | 'topo'
-  conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string } | null
+  conflict: { file: string; loading: boolean; ours: string; theirs: string; base: string; working: string } | null
   toast: string | null
   compare: { title: string; from: string; to: string; loading: boolean; files: Array<{ path: string; kind: string }>; sel?: string; diff?: { loading: boolean; oldText: string; newText: string } } | null
   diff: { title: string; loading: boolean; file?: string; commit?: string; kind?: 'text' | 'image' | 'binary'; oldText?: string; newText?: string; oldB64?: string; newB64?: string; mime?: string; oldLabel?: string; newLabel?: string; lfs?: boolean } | null
@@ -593,13 +593,24 @@ export function closeConflict() {
 }
 
 export async function openConflict(file: string) {
-  set({ conflict: { file, loading: true, ours: '', theirs: '', base: '' }, diff: null, blame: null })
+  set({ conflict: { file, loading: true, ours: '', theirs: '', base: '', working: '' }, diff: null, blame: null })
   try {
-    const r = await api.rpc<{ ours: string; theirs: string; base: string }>('conflictVersions', { ...targetPayload(), file })
-    set({ conflict: { file, loading: false, ours: r.ours, theirs: r.theirs, base: r.base } })
+    const [r, w] = await Promise.all([
+      api.rpc<{ ours: string; theirs: string; base: string }>('conflictVersions', { ...targetPayload(), file }),
+      api.rpc<{ content: string }>('conflictWorking', { ...targetPayload(), file }),
+    ])
+    set({ conflict: { file, loading: false, ours: r.ours, theirs: r.theirs, base: r.base, working: w.content } })
   } catch (e: any) {
-    set({ conflict: { file, loading: false, ours: '', theirs: '', base: '' }, error: e?.message || String(e), errorCode: e?.code || null })
+    set({ conflict: { file, loading: false, ours: '', theirs: '', base: '', working: '' }, error: e?.message || String(e), errorCode: e?.code || null })
   }
+}
+
+export function resolveConflictContent(file: string, content: string) {
+  return withBusy('Resolving…', async () => {
+    await api.rpc('resolveConflictContent', { ...targetPayload(), file, content })
+    await refreshStatus()
+    set({ conflict: null })
+  })
 }
 
 export function resolveSide(file: string, side: 'ours' | 'theirs' | 'mark') {

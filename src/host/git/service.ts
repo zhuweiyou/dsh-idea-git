@@ -930,6 +930,23 @@ export async function addIgnore(info: RepoInfo, payload: any, signal?: AbortSign
   return { added }
 }
 
+export async function readConflictWorking(info: RepoInfo, payload: any, signal?: AbortSignal): Promise<{ content: string }> {
+  const file = String(payload?.file ?? '').trim()
+  if (!file) throw new RepoError('git/bad-path', 'Missing file path')
+  try { return { content: fs.readFileSync(path.resolve(info.root, file), 'utf8') } } catch { return { content: '' } }
+}
+
+export async function resolveConflictContent(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const file = String(payload?.file ?? '').trim()
+  const content = String(payload?.content ?? '')
+  if (!file) throw new RepoError('git/bad-path', 'Missing file path')
+  const abs = path.resolve(info.root, file)
+  fs.mkdirSync(path.dirname(abs), { recursive: true })
+  fs.writeFileSync(abs, content)
+  await runWrite(info, ['add', '--', file], signal)
+  return { ok: true }
+}
+
 export async function conflictVersions(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const file = String(payload?.file ?? '').trim()
   if (!file) throw new RepoError('git/bad-path', 'Missing file path')
