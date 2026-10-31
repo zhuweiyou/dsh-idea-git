@@ -1925,3 +1925,27 @@ body.dig-docked #root { height: 100% !important; }
 .dig-hlayout-c__handle:hover { background: var(--accent); opacity: .25; }
 .dig-hlayout-c__side { flex: none; min-width: 0; min-height: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
 .dig-hlayout-c__side .dig-commit { border-top: 0; height: 100%; }
+
+/* Instant custom tooltip for every icon button / icon dropdown trigger. */
+.dig-iconbtn { position: relative; }
+.dig-iconbtn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  z-index: 9999;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--dsw-alias-bg-overlay, #2b2b2b);
+  color: var(--dsw-alias-label-primary, #fff);
+  border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.15));
+  box-shadow: 0 4px 12px rgba(0,0,0,.22);
+  font-size: 11px;
+  line-height: 1.4;
+  pointer-events: none;
+}
