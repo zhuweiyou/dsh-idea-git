@@ -46,7 +46,7 @@ test("host integration", async () => {
     const repo = path.join(base, "repo")
     fs.mkdirSync(repo)
     const g = (args, cwd = repo) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] }).toString()
-    g(["init", "-q"])
+    g(["init", "-q", "-b", "main"])
     g(["config", "user.email", "t@t.io"])
     g(["config", "user.name", "T"])
     g(["config", "commit.gpgsign", "false"])

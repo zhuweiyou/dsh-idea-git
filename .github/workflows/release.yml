@@ -66,6 +66,11 @@ jobs:
           npm version "$SEMVER" --no-git-tag-version --allow-same-version
           pnpm build
 
+      - name: Check and test (before any tag/release)
+        run: |
+          pnpm check
+          pnpm test
+
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"

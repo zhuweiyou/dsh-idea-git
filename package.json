@@ -50,7 +50,8 @@
     "format": "vp fmt . --write",
     "format:check": "vp fmt . --check",
     "prepack": "npm run build",
-    "prepublishOnly": "npm run build && npm run test"
+    "prepublishOnly": "npm run build && npm run test",
+    "check": "vp check"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -60,6 +61,7 @@
     "typescript": "^5.7.0",
     "vite-plus": "catalog:"
   },
+  "packageManager": "pnpm@11.25.0",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -75,6 +77,5 @@
         "@deepseek-ai/dsh-client-ui-workspace"
       ]
     }
-  },
-  "packageManager": "pnpm@11.25.0"
+  }
 }
