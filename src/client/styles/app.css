@@ -1895,5 +1895,8 @@ button.dig-filterbtn,
 .dig-commit__len[data-warn='true'] { color: var(--warning); }
 .dig-filerow[draggable] { cursor: grab; }
 
-/* In-flow docked panel inside conversation.composer.dock. */
-.dig-panel { position: relative !important; left: auto !important; right: auto !important; bottom: auto !important; width: 100% !important; flex: none; border-radius: 0; box-shadow: none; }
+/* Reserve space for the bottom panel (push content up) and let the panel cover
+   the diff's bottom edge so the diff is always flush with the panel top. */
+body.dig-docked { height: calc(100vh - var(--dig-panel-h, 0px)) !important; overflow: hidden !important; }
+body.dig-docked #root { height: 100% !important; }
+.dig-diffarea { top: 0 !important; bottom: 0 !important; }
