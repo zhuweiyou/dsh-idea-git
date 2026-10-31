@@ -2,12 +2,14 @@
 import React from 'react'
 import { useT } from './lib/i18n'
 import * as api from './api'
+import { useWindow } from './window'
 
 interface VersionInfo { found: boolean; path?: string; version?: string }
 interface LfsInfo { installed: boolean; version?: string }
 
 export function SettingsSection() {
   const t = useT()
+  const w = useWindow()
   const [info, setInfo] = React.useState<VersionInfo | null>(null)
   const [lfs, setLfs] = React.useState<LfsInfo | null>(null)
   const [pathInput, setPathInput] = React.useState('')
@@ -35,7 +37,7 @@ export function SettingsSection() {
   }
 
   return (
-    <div className="dig-settings">
+    <div className="dig-theme dig-settings" data-theme={w.theme}>
       <h3 className="dig-settings__title">IDEA Git</h3>
       <p className="dig-settings__desc">
         {t('IDEA Git shows the active workspace repository as a bottom panel. Open it from the Git button in the composer.')}

@@ -516,7 +516,18 @@ export function resolveConflict(file: string, side: 'ours' | 'theirs' | 'mark') 
 export function mergeBranch(name: string) {
   return withBusy('Merging…', async () => {
     const r = await api.rpc<{ ok: boolean; output: string }>('merge', { ...targetPayload(), branch: name })
-    if (!r || !r.ok) throw new Error((r?.output || '').trim() || 'Merge failed (see Console)')
+    if (!r || !r.ok) {
+      const out = (r?.output || '').trim()
+      await refreshStatus()
+      const conflicts = state.files.filter((f) => f.kind === 'conflicted')
+      if (conflicts.length) {
+        setTab('changes')
+        setToast('合并有冲突：请在合并编辑器中解决后提交')
+        void openConflict(conflicts[0].path)
+        return
+      }
+      throw new Error(out || 'Merge failed (see Console)')
+    }
     setToast((r.output || '').trim() || `Merged ${name}`)
     await refreshAll()
   })
