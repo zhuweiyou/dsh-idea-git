@@ -402,6 +402,23 @@ try {
     ok('shelf empty after pop', (await call('shelfList', D(repo))).value.length === 0)
     ok('content restored', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'A\nB\n')
   }
+
+  /* ---------------- edit non-head message / fixup ---------------- */
+  console.log('\n[edit-fixup]')
+  {
+    const { repo, g } = makeRepo()
+    for (const [f, c] of [['a', 'c1'], ['b', 'c2'], ['c', 'c3']]) { fs.writeFileSync(path.join(repo, f), 'x\n'); g(['add', '.']); g(['commit', '-qm', c]) }
+    const ids = (await call('log', D(repo))).value.commits.map((c) => c.id) // c3,c2,c1
+    const r = await call('editCommitMessage', { ...D(repo), commit: ids[1], message: 'c2-new' })
+    ok('editCommitMessage non-head', r.ok && r.value.ok === true)
+    ok('message changed', (await call('log', D(repo))).value.commits.some((c) => c.subject === 'c2-new'))
+    ok('history length kept', Number(g(['rev-list', '--count', 'HEAD']).trim()) === 3)
+    // prepare fixup! commit from local changes
+    fs.appendFileSync(path.join(repo, 'a'), 'y\n')
+    const fx = await call('prepareFixup', { ...D(repo), message: 'fixup! c2-new' })
+    ok('prepareFixup creates commit', fx.ok && !!fx.value.id)
+    ok('fixup subject', (await call('log', D(repo))).value.commits[0].subject === 'fixup! c2-new')
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

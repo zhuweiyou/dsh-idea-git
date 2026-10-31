@@ -901,3 +901,24 @@ export function shelfApply(index: number, pop: boolean) {
 export function shelfDrop(index: number) {
   return withBusy('Dropping…', async () => { await api.rpc('stashDrop', { ...targetPayload(), index }); await loadShelves() })
 }
+
+
+export function editCommitMessage(commit: string, message: string) {
+  return withBusy('Editing commit…', async () => {
+    const r = await api.rpc<{ ok: boolean; output: string }>('editCommitMessage', { ...targetPayload(), commit, message })
+    if (r && r.ok === false) throw new Error((r as any).output || 'edit failed')
+    await refreshAll()
+  })
+}
+export function fixupCommit(subject: string) {
+  return prepareFixup('fixup', subject)
+}
+export function squashInto(subject: string) {
+  return prepareFixup('squash', subject)
+}
+function prepareFixup(kind: 'fixup' | 'squash', subject: string) {
+  return withBusy(kind === 'fixup' ? 'Fixup…' : 'Squash into…', async () => {
+    await api.rpc('prepareFixup', { ...targetPayload(), message: `${kind}! ${subject}` })
+    await refreshAll()
+  })
+}

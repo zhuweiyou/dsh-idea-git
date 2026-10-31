@@ -1051,6 +1051,44 @@ export async function createPatch(info: RepoInfo, payload: any, signal?: AbortSi
   return { path: target }
 }
 
+async function rebaseInteractive(info: RepoInfo, commit: string, mode: 'reword' | 'fixup', message: string, signal?: AbortSignal) {
+  const short = commit.slice(0, 7)
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dig-rebase-'))
+  const seq = path.join(dir, 'seq.mjs')
+  const ed = path.join(dir, 'ed.mjs')
+  fs.writeFileSync(seq, `import fs from 'node:fs'\nconst f=process.argv[2];const lines=fs.readFileSync(f,'utf8').split('\\n');const out=lines.map((l)=>{const m=/^(pick|p)\\s+(\\S+)/.exec(l);if(m&&m[2].startsWith(${JSON.stringify(short)}))return l.replace(/^(pick|p)/, ${JSON.stringify(mode)});return l});fs.writeFileSync(f,out.join('\\n'))\n`)
+  fs.writeFileSync(ed, `import fs from 'node:fs'\nfs.writeFileSync(process.argv[2], ${JSON.stringify(message + '\n')})\n`)
+  try {
+    const r = await runGit(info.gitPath, {
+      cwd: info.root, signal, args: ['rebase', '-i', `${commit}^`], timeoutMs: 180000,
+      env: { GIT_SEQUENCE_EDITOR: `"${process.execPath}" "${seq}"`, GIT_EDITOR: `"${process.execPath}" "${ed}"` },
+    })
+    return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+  } finally {
+    try { fs.rmSync(dir, { recursive: true, force: true }) } catch {}
+  }
+}
+
+export async function editCommitMessage(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const commit = String(payload?.commit ?? '')
+  const message = String(payload?.message ?? '')
+  if (!commit) throw new RepoError('git/bad-commit', 'Missing commit')
+  if (!message.trim()) throw new RepoError('git/empty-message', 'Empty message')
+  const head = (await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-parse', 'HEAD'] })).stdout.trim()
+  if (commit === head) { await runWrite(info, ['commit', '--amend', '-m', message], signal); return { ok: true } }
+  return rebaseInteractive(info, commit, 'reword', message, signal)
+}
+
+/** OpenIDEA "Fixup…"/"Squash Into…": commit current local changes as `fixup!`/`squash! <subject>`. */
+export async function prepareFixupCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const message = String(payload?.message ?? '').trim()
+  if (!message) throw new RepoError('git/empty-message', 'Empty message')
+  const args = ['commit', '-a', '-m', message]
+  await runWrite(info, args, signal)
+  const id = await runWrite(info, ['rev-parse', 'HEAD'], signal)
+  return { id: id.trim() }
+}
+
 export async function squashRange(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const ids: string[] = Array.isArray(payload?.ids) ? payload.ids.map(String) : []
   if (ids.length < 2) throw new RepoError('git/bad-commit', 'Need at least two commits')

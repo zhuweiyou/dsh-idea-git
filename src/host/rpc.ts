@@ -61,6 +61,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'tagDelete':
         return withRepo(ctx, payload, signal, (info) => svc.tagDelete(info, payload, signal))
 
+      case 'editCommitMessage':
+        return withRepo(ctx, payload, signal, (info) => svc.editCommitMessage(info, payload, signal))
+
+      case 'prepareFixup':
+        return withRepo(ctx, payload, signal, (info) => svc.prepareFixupCommit(info, payload, signal))
+
       case 'squashRange':
         return withRepo(ctx, payload, signal, (info) => svc.squashRange(info, payload, signal))
 
