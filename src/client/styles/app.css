@@ -1950,3 +1950,16 @@ body.dig-docked #root { height: 100% !important; }
   pointer-events: none;
 }
 .dig-filterbtn { display: inline-flex; align-items: center; gap: 2px; }
+
+/* Keep instant tooltips inside the viewport for edge-anchored icon buttons. */
+.dig-filerow__actions .dig-iconbtn[title]:hover::after,
+.dig-panel__header .dig-iconbtn[title]:hover::after,
+.dig-commit__bar .dig-iconbtn[title]:hover::after,
+.dig-filterbar .dig-iconbtn[title]:hover::after,
+.dig-details__files .dig-iconbtn[title]:hover::after {
+  left: auto; right: 0; transform: none;
+}
+.dig-branches__rail .dig-iconbtn[title]:hover::after,
+.dig-hlayout-c__handle + * .dig-iconbtn[title]:hover::after {
+  left: 0; right: auto; transform: none;
+}
