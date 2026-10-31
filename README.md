@@ -14,6 +14,15 @@ IDEA 风格的 Git 工具窗口，作为 DeepSeek Harness（DSH）插件运行�
 dsh plugin --profile web add dsh-idea-git
 ```
 
+## 开发
+
+```sh
+vp build          # Host + Client 构建
+vp test           # Vitest（Host 集成测试）
+vp check          # 格式 + lint + 类型检查
+vp fmt . --write  # 按 2 空格 / 无分号 / 双引号 / printWidth 120 格式化
+```
+
 ## 入口
 
 - **GIT 按钮**：会话输入框左侧（“完全权限”右侧），hover 高亮、打开态与控件 hover 一致，点击 toggle。
