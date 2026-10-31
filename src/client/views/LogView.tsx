@@ -511,23 +511,23 @@ function FilterBar({ text, setText, regex, setRegex, caseSensitive, setCase, aut
         <button type="button" className="dig-toggle" data-on={caseSensitive ? 'true' : undefined} title={t('Case sensitive')} onClick={() => setCase(!caseSensitive)}>Cc</button>
       </div>
       {s.info?.branch?.head ? <span className="dig-chip dig-chip--static" title={s.info.branch.head}>{t('Branch')}: {s.info.branch.head}</span> : null}
-      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={author ? 'true' : undefined}>{author || t('User')} ▾</span>}>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={author ? 'true' : undefined}>{author || t('User')}<Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: 'var(--fg-subtle)' }} /></span>}>
         {(close) => (<>
           <MenuItem checked={!author} onClick={() => { close(); setAuthor(null) }}>{t('All users')}</MenuItem>
           {authors.map((a) => <MenuItem key={a} checked={author === a} onClick={() => { close(); setAuthor(a) }}>{a}</MenuItem>)}
         </>)}
       </Dropdown>
-      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={dateDays != null ? 'true' : undefined}>{dateDays != null ? (dateOpts.find((o) => o.v === dateDays)?.label || t('Date')) : t('Date')} ▾</span>}>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={dateDays != null ? 'true' : undefined}>{dateDays != null ? (dateOpts.find((o) => o.v === dateDays)?.label || t('Date')) : t('Date')}<Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: 'var(--fg-subtle)' }} /></span>}>
         {(close) => (<>{dateOpts.map((o) => <MenuItem key={String(o.v)} checked={dateDays === o.v} onClick={() => { close(); setDateDays(o.v) }}>{o.label}</MenuItem>)}</>)}
       </Dropdown>
-      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={s.logPath ? 'true' : undefined}>{s.logPath ? s.logPath : t('Paths')} ▾</span>}>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" data-active={s.logPath ? 'true' : undefined}>{s.logPath ? s.logPath : t('Paths')}<Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: 'var(--fg-subtle)' }} /></span>}>
         {(close) => (<>
           <MenuItem onClick={async () => { close(); const p = await askText(t('Filter by path'), s.logPath || ''); if (p) store.setPathFilter(p) }}>{t('Filter by Path…')}</MenuItem>
           {s.logPath ? <MenuItem onClick={() => { close(); store.clearPathFilter() }}>{t('Clear filter')}</MenuItem> : null}
         </>)}
       </Dropdown>
       <button type="button" className="dig-filterbtn" data-active={s.logHeadOnly ? 'true' : undefined} title={s.logHeadOnly ? t('Current branch') : t('All branches')} onClick={() => store.setLogHeadOnly(!s.logHeadOnly)}>{s.logHeadOnly ? t('Current branch') : t('All branches')}</button>
-      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" title={t('Sort')}>{s.logSort === 'reverse' ? t('Sort: Date (old→new)') : s.logSort === 'topo' ? t('Sort: Topology') : t('Sort: Date (new→old)')} ▾</span>}>
+      <Dropdown align="right" trigger={() => <span className="dig-filterbtn" title={t('Sort')}>{s.logSort === 'reverse' ? t('Sort: Date (old→new)') : s.logSort === 'topo' ? t('Sort: Topology') : t('Sort: Date (new→old)')}<Icon name="chevronDown" size={12} style={{ marginLeft: 2, color: 'var(--fg-subtle)' }} /></span>}>
         {(close) => (<>
           <MenuItem checked={s.logSort === 'date'} onClick={() => { close(); store.setLogSort('date') }}>{t('Sort: Date (new→old)')}</MenuItem>
           <MenuItem checked={s.logSort === 'reverse'} onClick={() => { close(); store.setLogSort('reverse') }}>{t('Sort: Date (old→new)')}</MenuItem>
