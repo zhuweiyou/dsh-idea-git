@@ -403,6 +403,7 @@ const zh: Record<string, string> = {
   'Favorites': '收藏',
   'Added to Favorites': '已添加到收藏',
   'Removed from Favorites': '已取消收藏',
+  'Refreshed': '已刷新',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
