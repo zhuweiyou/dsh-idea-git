@@ -453,7 +453,8 @@ async function withBusy(label: string, fn: () => Promise<void>) {
   const toastBefore = toastSeq
   let ok = true
   let errMsg = ""
-  set({ busy: true, busyLabel: t(label) })
+  const action = t(label).replace(/(中…|…)$/, "")
+  set({ busy: true, busyLabel: t("Doing: {action}", { action }) })
   try {
     await fn()
   } catch (e: any) {
@@ -470,10 +471,7 @@ async function withBusy(label: string, fn: () => Promise<void>) {
   } finally {
     set({ busy: false, busyLabel: null })
     if (ok) {
-      if (toastSeq === toastBefore) {
-        const action = t(label).replace(/(中…|…)$/, "")
-        setToast(t("Completed: {action}", { action }))
-      }
+      if (toastSeq === toastBefore) setToast(t("Completed: {action}", { action }))
     } else {
       setToast(t("Failed: {message}", { message: errMsg }))
     }

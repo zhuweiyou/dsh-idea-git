@@ -407,6 +407,7 @@ const zh: Record<string, string> = {
   'Refreshing…': '刷新中…',
   'Done': '完成',
   'Completed: {action}': '已{action}',
+  'Doing: {action}': '正在{action}…',
   'Failed: {message}': '失败：{message}',
   'Stage Hunk…': '暂存块…',
   'Unstage Hunk…': '取消暂存块…',
