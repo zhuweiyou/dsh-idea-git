@@ -578,10 +578,10 @@ export async function loadConsole() {
 }
 
 export async function clearConsole() {
-  try {
+  return withBusy("Clearing console…", async () => {
     await api.rpc("clearConsole", targetPayload())
     set({ consoleEntries: [] })
-  } catch {}
+  })
 }
 
 export function dismissError() {
@@ -1677,10 +1677,12 @@ export function toggleHunkExcluded(file: string, index: number) {
 export async function readIgnoreFile(destination: "gitignore" | "exclude") {
   return api.rpc<{ path: string; content: string }>("readIgnoreFile", { ...targetPayload(), destination })
 }
-export async function saveIgnoreFile(destination: "gitignore" | "exclude", content: string) {
-  await api.rpc("writeIgnoreFile", { ...targetPayload(), destination, content })
-  await refreshStatus()
-  setToast(t("Saved {file}", { file: destination === "exclude" ? ".git/info/exclude" : ".gitignore" }))
+export function saveIgnoreFile(destination: "gitignore" | "exclude", content: string) {
+  return withBusy("Saving ignore rules…", async () => {
+    await api.rpc("writeIgnoreFile", { ...targetPayload(), destination, content })
+    await refreshStatus()
+    setToast(t("Saved {file}", { file: destination === "exclude" ? ".git/info/exclude" : ".gitignore" }))
+  })
 }
 export function applyPatchText(text: string) {
   return withBusy("Applying patch…", async () => {
