@@ -457,19 +457,6 @@ export function Panel() {
             </button>
           </div>
         ) : null}
-        {s.busy || s.toasts.length
-          ? createPortal(
-              <div className="dig-toast-stack">
-                {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div> : null}
-                {s.toasts.map((x) => (
-                  <div key={x.id} className="dig-banner dig-banner--toast">
-                    {x.message}
-                  </div>
-                ))}
-              </div>,
-              document.body,
-            )
-          : null}
         {!w.minimized ? (
           <div className="dig-panel__body">
             <ViewBoundary>
@@ -477,6 +464,11 @@ export function Panel() {
             </ViewBoundary>
           </div>
         ) : null}
+        <div className="dig-statusbar">
+          <span className="dig-statusbar__msg">
+            {s.busy ? s.busyLabel || t("Loading") : s.toasts.length ? s.toasts[s.toasts.length - 1].message : ""}
+          </span>
+        </div>
       </div>
       <ContextMenuHost />
       <PromptHost />

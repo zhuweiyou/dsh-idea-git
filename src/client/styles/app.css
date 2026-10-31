@@ -3149,3 +3149,23 @@ body.dig-docked #root {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
   animation: dig-toast-in 0.16s ease-out;
 }
+
+/* Bottom status bar: single latest operation message, right-aligned. */
+.dig-statusbar {
+  flex: none;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-app);
+  font-size: var(--fs-tiny);
+  color: var(--fg-subtle);
+}
+.dig-statusbar__msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
