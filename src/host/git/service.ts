@@ -453,6 +453,7 @@ export async function commit(info: RepoInfo, payload: any, signal?: AbortSignal)
   const args = ['commit', '-m', message]
   if (payload?.amend === true) args.push('--amend')
   if (payload?.signoff === true) args.push('--signoff')
+  if (typeof payload?.author === 'string' && payload.author.trim()) args.push(`--author=${payload.author.trim()}`)
   if (payload?.all === true) args.push('-a')
   if (payload?.amend !== true && Array.isArray(payload?.paths) && payload.paths.length) args.push('--', ...payload.paths.map(String))
   await runWrite(info, args, signal)

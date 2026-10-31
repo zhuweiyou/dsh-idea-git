@@ -394,6 +394,12 @@ const zh: Record<string, string> = {
   'Set Active Changelist': '设为活动变更列表',
   'Commit…': '提交…',
   'Commit and Push…': '提交并推送…',
+  'Commit Options': '提交选项',
+  'Set Author…': '设置作者…',
+  'Author (Name <email>)': '作者（姓名 <邮箱>）',
+  'Sign-off commit': 'Signed-off-by 署名',
+  'Subject line is longer than 72 characters': '主题行超过 72 个字符',
+  'Missing blank line between subject and body': '主题与正文之间缺少空行',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

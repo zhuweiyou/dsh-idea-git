@@ -224,13 +224,26 @@ function CommitPanel() {
   const includedCount = s.files.filter((f) => s.include[f.path] !== false).length
   const canCommit = includedCount > 0 || s.amend
   const firstLine = s.message.split('\n')[0] || ''
+  const problems: string[] = []
+  if (firstLine.length > 72) problems.push(t('Subject line is longer than 72 characters'))
+  {
+    const lines = s.message.split('\n')
+    if (lines.length > 1 && lines[1].trim() !== '') problems.push(t('Missing blank line between subject and body'))
+  }
   return (
     <div className="dig-commit">
       <div className="dig-commit__bar">
         <Checkbox checked={s.amend} onChange={store.setAmend} label={t('Amend')} />
         <IconButton icon="sparkle" title={t('Generate commit message')} size={14} disabled={s.aiBusy} onClick={() => store.generateCommitMessage(getActiveLocale())} />
         <CommitHistory onPick={(m) => store.setMessage(m)} t={t} />
+        <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('Commit Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="more" size={14} /></span>}>
+          {(close) => (<>
+            <MenuItem onClick={async () => { close(); const a = await askText(t('Author (Name <email>)'), s.commitAuthor); if (a !== null) store.setCommitAuthor(a) }}>{t('Set Author…')}{s.commitAuthor ? ' · ' + s.commitAuthor : ''}</MenuItem>
+            <MenuItem checked={s.commitSignoff} onClick={() => { close(); store.setCommitSignoff(!s.commitSignoff) }}>{t('Sign-off commit')}</MenuItem>
+          </>)}
+        </Dropdown>
         <span style={{ flex: 1 }} />
+        {problems.length ? <span className="dig-commit__probs" title={problems.join('\n')}><Icon name="warning" size={13} /></span> : null}
         <span className="dig-commit__len" data-warn={firstLine.length > 72 ? 'true' : undefined}>{firstLine.length}</span>
       </div>
       <textarea

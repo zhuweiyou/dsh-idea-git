@@ -462,6 +462,16 @@ try {
     ok('save & stage', (await call('saveWorktreeFile', { ...D(repo), file: 'a.txt', content: 'edited2\n', stage: true })).ok)
     ok('staged', (await call('status', D(repo))).value.files.some((f) => f.path === 'a.txt' && f.staged))
   }
+
+  /* ---------------- commit author / signoff ---------------- */
+  console.log('\n[commit-opts]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.'])
+    ok('commit author/signoff', (await call('commit', { ...D(repo), message: 'c1', author: 'Alice <alice@example.com>', signoff: true })).ok)
+    ok('author applied', g(['log', '-1', '--format=%an']).trim() === 'Alice')
+    ok('signoff applied', g(['log', '-1', '--format=%B']).includes('Signed-off-by:'))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

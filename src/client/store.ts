@@ -32,6 +32,8 @@ export interface GitState {
   commitFiles: FileEntry[]
   message: string
   amend: boolean
+  commitAuthor: string
+  commitSignoff: boolean
   busy: boolean
   busyLabel: string | null
   consoleEntries: ConsoleEntry[]
@@ -86,6 +88,8 @@ const initial: GitState = {
   commitFiles: [],
   message: '',
   amend: false,
+  commitAuthor: '',
+  commitSignoff: false,
   busy: false,
   busyLabel: null,
   consoleEntries: [],
@@ -157,6 +161,8 @@ export function setMessage(message: string) {
 export function setAmend(amend: boolean) {
   set({ amend })
 }
+export function setCommitAuthor(author: string) { set({ commitAuthor: author }) }
+export function setCommitSignoff(v: boolean) { set({ commitSignoff: v }) }
 
 export function toggleSelect(path: string) {
   const has = state.selection.includes(path)
@@ -323,7 +329,7 @@ export function commitNow(push: boolean) {
       if (checked.length === 0) throw new Error('没有勾选要提交的文件')
       await api.rpc('stage', { ...targetPayload(), paths: checked })
     }
-    await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, paths: state.amend ? undefined : checked })
+    await api.rpc('commit', { ...targetPayload(), message: state.message, amend: state.amend, signoff: state.commitSignoff, author: state.commitAuthor || undefined, paths: state.amend ? undefined : checked })
     try {
       const h: string[] = JSON.parse(localStorage.getItem('dig.msgHistory') || '[]')
       const msg = state.message.trim()

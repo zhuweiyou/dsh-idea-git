@@ -1916,3 +1916,4 @@ body.dig-docked #root { height: 100% !important; }
 /* Invisible resize grip at the panel's top edge (drag works, nothing is drawn). */
 .dig-panel__grip { position: absolute; left: 0; right: 0; top: 0; height: 5px; z-index: 5; cursor: row-resize; background: transparent !important; }
 .dig-panel__grip:hover, .dig-panel__grip:active { background: transparent !important; }
+.dig-commit__probs { display: inline-flex; align-items: center; color: var(--warning); }
