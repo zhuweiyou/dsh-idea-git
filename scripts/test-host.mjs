@@ -450,6 +450,18 @@ try {
     ok('reword applied', log.some((c) => c.subject === 'c2-reworded'))
     ok('drop applied', !log.some((c) => c.subject === 'c3') && log.length === 2)
   }
+
+  /* ---------------- editable worktree file ---------------- */
+  console.log('\n[worktree-file]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'base\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    ok('readWorktreeFile', (await call('readWorktreeFile', { ...D(repo), file: 'a.txt' })).value.content === 'base\n')
+    ok('saveWorktreeFile', (await call('saveWorktreeFile', { ...D(repo), file: 'a.txt', content: 'edited\n', stage: false })).ok)
+    ok('content written', fs.readFileSync(path.join(repo, 'a.txt'), 'utf8') === 'edited\n')
+    ok('save & stage', (await call('saveWorktreeFile', { ...D(repo), file: 'a.txt', content: 'edited2\n', stage: true })).ok)
+    ok('staged', (await call('status', D(repo))).value.files.some((f) => f.path === 'a.txt' && f.staged))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

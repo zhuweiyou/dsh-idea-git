@@ -1266,6 +1266,23 @@ export async function lfsUntrack(info: RepoInfo, payload: any, signal?: AbortSig
   return { ok: true }
 }
 
+export async function readWorktreeFile(info: RepoInfo, payload: any): Promise<{ content: string }> {
+  const file = String(payload?.file ?? '').trim()
+  if (!file) throw new RepoError('git/bad-path', 'Missing file')
+  try { return { content: fs.readFileSync(path.resolve(info.root, file), 'utf8') } } catch { return { content: '' } }
+}
+
+export async function saveWorktreeFile(info: RepoInfo, payload: any, signal?: AbortSignal) {
+  const file = String(payload?.file ?? '').trim()
+  const content = String(payload?.content ?? '')
+  if (!file) throw new RepoError('git/bad-path', 'Missing file')
+  const abs = path.resolve(info.root, file)
+  fs.mkdirSync(path.dirname(abs), { recursive: true })
+  fs.writeFileSync(abs, content)
+  if (payload?.stage === true) await runWrite(info, ['add', '--', file], signal)
+  return { ok: true }
+}
+
 export async function saveCommitFiles(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const dir = String(payload?.dir ?? '').trim()
   const commit = String(payload?.commit ?? '')

@@ -380,6 +380,9 @@ const zh: Record<string, string> = {
   'Fixup': 'fixup',
   'Run': '执行',
   'Oldest first. Drag not supported; choose an action per commit.': '从上到下（旧→新）。不支持拖拽，请为每个提交选择动作。',
+  'Edit': '编辑',
+  'Save & Stage': '保存并暂存',
+  'Editing worktree file': '编辑工作区文件',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

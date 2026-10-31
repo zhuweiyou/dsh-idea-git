@@ -986,3 +986,12 @@ export function runRebasePlan() {
     await refreshAll()
   })
 }
+
+
+export function saveWorktreeFile(file: string, content: string, stage: boolean) {
+  return withBusy('Saving…', async () => {
+    await api.rpc('saveWorktreeFile', { ...targetPayload(), file, content, stage })
+    await refreshStatus()
+    set({ diff: null })
+  })
+}

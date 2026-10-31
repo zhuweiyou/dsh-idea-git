@@ -1866,3 +1866,8 @@ button.dig-filterbtn,
 .dig-rebase-row__sha { font-family: var(--font-mono); color: var(--fg-subtle); width: 64px; flex: none; }
 .dig-rebase-row__summary { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dig-rebase-row__msg { flex: 1; height: 24px; }
+
+/* editable worktree diff */
+.dig-edit-overlay { position: absolute; inset: 0; background: var(--bg-app); display: flex; flex-direction: column; z-index: 5; }
+.dig-edit-overlay__bar { height: 36px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--border); font-size: var(--fs-small); }
+.dig-edit-overlay__text { flex: 1; width: 100%; box-sizing: border-box; resize: none; border: 0; outline: none; padding: 8px 10px; font-family: var(--font-mono); font-size: var(--fs-small); background: var(--bg-input); color: var(--fg); }

@@ -82,6 +82,12 @@ export async function dispatch(ctx: any, method: string, payload: any, signal?: 
       case 'dropHead':
         return withRepo(ctx, payload, signal, (info) => svc.dropHead(info, payload, signal))
 
+      case 'readWorktreeFile':
+        return withRepo(ctx, payload, signal, (info) => svc.readWorktreeFile(info, payload))
+
+      case 'saveWorktreeFile':
+        return withRepo(ctx, payload, signal, (info) => svc.saveWorktreeFile(info, payload, signal))
+
       case 'saveCommitFiles':
         return withRepo(ctx, payload, signal, (info) => svc.saveCommitFiles(info, payload, signal))
 

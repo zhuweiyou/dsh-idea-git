@@ -162,6 +162,8 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
   const s = useGit()
   const t = useT()
   const [opts, setOpts] = React.useState<Opts>(loadOpts)
+  const [editing, setEditing] = React.useState(false)
+  const [draft, setDraft] = React.useState('')
   const [expanded, setExpanded] = React.useState<Set<number>>(() => new Set())
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const d = s.diff
@@ -202,6 +204,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
           <button type="button" className="dig-btn" onClick={() => store.clearBlame()}>{t('Diff')}</button>
         ) : d && d.file && !d.commit ? (
           <>
+            <button type="button" className="dig-btn" onClick={() => { setDraft(d.newText || ''); setEditing(true) }}>{t('Edit')}</button>
             <button type="button" className="dig-btn" onClick={() => { store.closeDiff(); store.openHistory(d.file!) }}>{t('History')}</button>
             <button type="button" className="dig-btn" onClick={() => void store.openBlame(d.file!, d.file!)}>{t('Blame')}</button>
           </>
@@ -280,6 +283,18 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: 'light' | '
           <UnifiedView rows={rows} highlight={opts.highlight} collapse={opts.collapse} expanded={expanded} onExpand={(start) => setExpanded((e) => new Set(e).add(start))} />
         )}
       </div>
+      {editing && d && d.file ? (
+        <div className="dig-edit-overlay">
+          <div className="dig-edit-overlay__bar">
+            <span>{t('Editing worktree file')}: {d.file}</span>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="dig-btn" onClick={() => setEditing(false)}>{t('Cancel')}</button>
+            <button type="button" className="dig-btn" onClick={() => { setEditing(false); void store.saveWorktreeFile(d.file!, draft, false) }}>{t('Save')}</button>
+            <button type="button" className="dig-btn dig-btn--primary" onClick={() => { setEditing(false); void store.saveWorktreeFile(d.file!, draft, true) }}>{t('Save & Stage')}</button>
+          </div>
+          <textarea className="dig-edit-overlay__text" value={draft} spellCheck={false} onChange={(e) => setDraft(e.target.value)} />
+        </div>
+      ) : null}
     </div>
   )
 }
