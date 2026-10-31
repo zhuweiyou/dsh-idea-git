@@ -263,6 +263,7 @@ export function ChangesView() {
         <span className="dig-toolbar__sep" />
         <IconButton icon="undo" title={t('Rollback All')} disabled={s.files.length === 0} onClick={() => { if (window.confirm(t('Rollback all changes? This cannot be undone.'))) void store.discard(s.files.map((f) => f.path)) }} />
         <IconButton icon="download" title={t('Update')} onClick={() => void store.remoteOp('pull')} />
+        <IconButton icon={groupByDir ? 'folder' : 'list'} title={groupByDir ? t('Directory Tree (click for flat)') : t('Flat List (click for directories)')} active={!groupByDir} onClick={() => { const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }} />
         <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('View Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="eye" size={14} /></span>}>
           {(close) => (<MenuItem checked={groupByDir} onClick={() => { close(); const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }}>{t('Group by Directory')}</MenuItem>)}
         </Dropdown>
