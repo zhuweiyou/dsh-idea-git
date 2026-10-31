@@ -5,9 +5,24 @@ import path from "node:path"
 const PKG_ID = "dsh-idea-git"
 
 const shared = {
-  fmt: { semi: false, singleQuote: false, tabWidth: 2, useTabs: false, printWidth: 120 },
-  test: { include: ["tests/**/*.test.ts"], testTimeout: 180000, hookTimeout: 180000 },
-  lint: { options: { typeAware: true, typeCheck: true } },
+  fmt: {
+    semi: false,
+    singleQuote: false,
+    tabWidth: 2,
+    useTabs: false,
+    printWidth: 120,
+  },
+  test: {
+    include: ["tests/**/*.test.ts"],
+    testTimeout: 180000,
+    hookTimeout: 180000,
+  },
+  lint: {
+    options: {
+      typeAware: true,
+      typeCheck: true,
+    },
+  },
 }
 
 const clientWrap: any = {
