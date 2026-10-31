@@ -2695,3 +2695,12 @@ body.dig-docked #root {
   display: flex;
   flex-direction: column;
 }
+
+/* Diff colors: use OpenIDEA's diff surface tokens (legible in light/dark). */
+.dig-dsrow--rep .dig-dsrow__cell--old,
+.dig-dsrow--del .dig-dsrow__cell--old { background: var(--diff-deleted); }
+.dig-dsrow--rep .dig-dsrow__cell--new,
+.dig-dsrow--add .dig-dsrow__cell--new { background: var(--diff-inserted); }
+.dig-durow--del { background: var(--diff-deleted); }
+.dig-durow--add { background: var(--diff-inserted); }
+.dig-word { background: color-mix(in srgb, var(--fg) 20%, transparent); color: inherit; }
