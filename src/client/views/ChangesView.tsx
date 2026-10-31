@@ -340,9 +340,7 @@ export function ChangesView() {
         <span className="dig-toolbar__hint">{t('{n} changes', { n: s.files.length })}</span>
       </div>
       <div className="dig-treewrap">
-        {s.files.length === 0 ? (
-          <div className="dig-empty">{t('No local changes')}</div>
-        ) : (
+        {s.files.length === 0 ? null : (
           <>
             {(() => {
               const cl = s.changelists
@@ -353,7 +351,7 @@ export function ChangesView() {
               const multi = lists.length > 1
               return lists.map((l) => {
                 const fs2 = forList(l.id)
-                if (!fs2.length && !multi) return null
+                if (!fs2.length) return null
                 return <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={fs2} groupByDir={groupByDir} listId={l.id} active={l.id === active} />
               })
             })()}
