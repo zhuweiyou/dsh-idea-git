@@ -476,10 +476,11 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           {s.tags
             .filter((t) => !q || t.toLowerCase().includes(q))
             .map((tag) => (
-              <div
+              <TreeRow
                 key={tag}
-                className="dig-branchrow"
-                style={{ paddingLeft: 22 }}
+                depth={0}
+                icon={<Icon name="tag" size={16} style={{ color: "var(--fg-subtle)" }} />}
+                label={tag}
                 title={tag}
                 onClick={(e) => {
                   setSelectedName(tag)
@@ -512,10 +513,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                     },
                   ])
                 }
-              >
-                <Icon name="tag" size={13} style={{ color: "var(--fg-subtle)" }} />
-                <span className="dig-branchrow__name">{tag}</span>
-              </div>
+              />
             ))}
         </div>
       </div>
