@@ -2015,3 +2015,4 @@ body.dig-docked #root { height: 100% !important; }
 
 @keyframes dig-spin { to { transform: rotate(360deg); } }
 .dig-spin { animation: dig-spin .8s linear infinite; }
+.dig-group[data-active='true'] .dig-group__title { font-weight: 600; }

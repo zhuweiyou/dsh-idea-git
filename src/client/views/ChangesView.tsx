@@ -185,7 +185,7 @@ function Group({ title, files, groupByDir, listId, active }: { title: string; fi
     return next
   })
   return (
-    <div className="dig-group" data-inactive={listId && active === false ? 'true' : undefined}
+    <div className="dig-group" data-active={active ? 'true' : undefined} data-inactive={listId && active === false ? 'true' : undefined}
       onDragOver={listId ? (e) => { if (e.dataTransfer.types.includes('application/x-dsh-changes')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } } : undefined}
       onDrop={listId ? (e) => { const p = e.dataTransfer.getData('application/x-dsh-changes'); if (p) { e.preventDefault(); store.moveToChangelist(p.split('\n'), listId) } } : undefined}>
       <div className="dig-group__head" style={listId ? { cursor: 'context-menu' } : undefined}
