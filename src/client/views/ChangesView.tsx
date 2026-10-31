@@ -83,7 +83,7 @@ function dirMenuItems(node: { path: string }, gs: any, t: (x: string, p?: any) =
   ]
 }
 
-function FileRow({ file }: { file: FileEntry }) {
+function FileRow({ file, selected, onSelect }: { file: FileEntry; selected?: boolean; onSelect?: (p: string) => void }) {
   const t = useT()
   const gs = useGit()
   const root = gs.info?.root || ''
@@ -91,9 +91,9 @@ function FileRow({ file }: { file: FileEntry }) {
   const canUnstage = file.staged
   const included = gs.include[file.path] !== false
   return (
-    <div className="dig-filerow" title={file.path} draggable
+    <div className="dig-filerow" title={file.path} draggable data-selected={selected ? 'true' : undefined}
       onDragStart={(e) => { try { e.dataTransfer.setData('application/x-dsh-changes', file.path); e.dataTransfer.effectAllowed = 'move' } catch {} }}
-      onClick={() => store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged })}
+      onClick={() => { onSelect?.(file.path); store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged }) }}
       onContextMenu={(e) => openContextMenu(e, fileMenuItems(file, root, t))}>
       <span className="dig-check__box" data-on={included ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); store.toggleInclude(file.path) }}>{included ? <Icon name="check" size={10} /> : null}</span>
       <span className="dig-filerow__icon" style={{ color: fileIconColor(file.path) }}>
@@ -136,7 +136,7 @@ function collectFiles(node: TreeNode): string[] {
   return out
 }
 
-function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void }) {
+function TreeView({ nodes, depth, expanded, toggle, selected, onSelect }: { nodes: TreeNode[]; depth: number; expanded: Set<string>; toggle: (p: string) => void; selected?: string; onSelect?: (p: string) => void }) {
   const gs = useGit()
   const t = useT()
   const root = gs.info?.root || ''
@@ -154,13 +154,13 @@ function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth
                 <Icon name="folder" size={13} style={{ color: 'var(--fg-subtle)' }} />
                 <span>{n.name}</span>
               </div>
-              {open && n.children ? <TreeView nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} /> : null}
+              {open && n.children ? <TreeView nodes={n.children} depth={depth + 1} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} /> : null}
             </React.Fragment>
           )
         }
         return (
           <div key={'f:' + n.path} style={{ paddingLeft: depth * 14 }}>
-            <FileRow file={n.file!} />
+            <FileRow file={n.file!} selected={selected === n.file!.path} onSelect={onSelect} />
           </div>
         )
       })}
@@ -168,7 +168,7 @@ function TreeView({ nodes, depth, expanded, toggle }: { nodes: TreeNode[]; depth
   )
 }
 
-function Group({ title, files, groupByDir, listId, active }: { title: string; files: FileEntry[]; groupByDir: boolean; listId?: string; active?: boolean }) {
+function Group({ title, files, groupByDir, listId, active, selected, onSelect, signal }: { title: string; files: FileEntry[]; groupByDir: boolean; listId?: string; active?: boolean; selected?: string; onSelect?: (p: string) => void; signal?: { n: number; mode: 'expand' | 'collapse' } }) {
   const gs = useGit()
   const t = useT()
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
@@ -180,6 +180,15 @@ function Group({ title, files, groupByDir, listId, active }: { title: string; fi
     walk(tree)
     setExpanded((prev) => (prev.size === 0 ? all : prev))
   }, [tree])
+  React.useEffect(() => {
+    if (!signal || signal.n === 0) return
+    if (signal.mode === 'expand') {
+      const all = new Set<string>()
+      const walk = (nodes: TreeNode[]) => nodes.forEach((n) => { if (n.dir) { all.add(n.path); walk(n.children || []) } })
+      walk(tree); setExpanded(all)
+    } else setExpanded(new Set())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signal?.n])
   const toggle = (p: string) => setExpanded((prev) => {
     const next = new Set(prev)
     if (next.has(p)) next.delete(p); else next.add(p)
@@ -211,7 +220,7 @@ function Group({ title, files, groupByDir, listId, active }: { title: string; fi
         <span className="dig-group__title">{title}</span>
         <span className="dig-group__count">{files.length}</span>
       </div>
-      {groupByDir ? <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} /> : files.slice().sort((a, b) => a.path.localeCompare(b.path)).map((f) => <div key={f.path} style={{ paddingLeft: 8 }}><FileRow file={f} /></div>)}
+      {groupByDir ? <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} /> : files.slice().sort((a, b) => a.path.localeCompare(b.path)).map((f) => <div key={f.path} style={{ paddingLeft: 8 }}><FileRow file={f} selected={selected === f.path} onSelect={onSelect} /></div>)}
     </div>
   )
 }
@@ -283,6 +292,8 @@ export function ChangesView() {
   const t = useT()
   React.useEffect(() => { void store.loadChangelists() }, [])
   const [groupByDir, setGroupByDir] = React.useState<boolean>(() => localStorage.getItem('dig.groupByDir') !== '0')
+  const [selectedPath, setSelectedPath] = React.useState('')
+  const [treeSignal, setTreeSignal] = React.useState<{ n: number; mode: 'expand' | 'collapse' }>({ n: 0, mode: 'expand' })
   const [commitWidth, setCommitWidth] = React.useState(() => Number(localStorage.getItem('dig.commitWidth')) || 380)
   const widthRef = React.useRef(commitWidth)
   widthRef.current = commitWidth
@@ -311,6 +322,8 @@ export function ChangesView() {
         <IconButton icon="undo" title={t('Rollback All')} disabled={s.files.length === 0} onClick={() => { if (window.confirm(t('Rollback all changes? This cannot be undone.'))) void store.discard(s.files.map((f) => f.path)) }} />
         <IconButton icon="download" title={t('Update')} onClick={() => void store.remoteOp('pull')} />
         <IconButton icon={groupByDir ? 'folder' : 'list'} title={groupByDir ? t('Directory Tree (click for flat)') : t('Flat List (click for directories)')} active={!groupByDir} onClick={() => { const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }} />
+        <IconButton icon="expandAll" title={t('Expand All')} onClick={() => setTreeSignal((x) => ({ n: x.n + 1, mode: 'expand' }))} />
+        <IconButton icon="collapse-all" title={t('Collapse All')} onClick={() => setTreeSignal((x) => ({ n: x.n + 1, mode: 'collapse' }))} />
         <Dropdown align="right" trigger={() => <span className="dig-iconbtn" title={t('View Options')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icon name="eye" size={14} /></span>}>
           {(close) => (<MenuItem checked={groupByDir} onClick={() => { close(); const v = !groupByDir; setGroupByDir(v); localStorage.setItem('dig.groupByDir', v ? '1' : '0') }}>{t('Group by Directory')}</MenuItem>)}
         </Dropdown>
@@ -340,14 +353,21 @@ export function ChangesView() {
         <span className="dig-toolbar__sep" />
         <span className="dig-toolbar__hint">{t('{n} changes', { n: s.files.length })}</span>
       </div>
-      <div className="dig-treewrap">
+      <div className="dig-treewrap" tabIndex={0} onKeyDownCapture={(e) => {
+        if (!selectedPath) return
+        if (e.key === ' ') { e.preventDefault(); e.stopPropagation(); store.toggleInclude(selectedPath) }
+        else if (e.key === 'Delete' || e.key === 'Backspace') {
+          const cl = s.changelists; const active = cl?.active || 'default'
+          if (active !== 'default') { e.preventDefault(); if (window.confirm(t('Delete this changelist?'))) store.deleteChangelist(active) }
+        } else if (e.key === 'F4') { e.preventDefault(); store.openDiff({ title: selectedPath, path: selectedPath }) }
+      }}>
         {(() => {
           const cl = s.changelists
           const lists = cl && cl.lists.length ? cl.lists : [{ id: 'default', name: t('Changes'), comment: '' }]
           const active = cl?.active || 'default'
           const assign = cl?.files || {}
           const forList = (id: string) => s.files.filter((f) => (assign[f.path] || active) === id)
-          return lists.map((l) => <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={forList(l.id)} groupByDir={groupByDir} listId={l.id} active={l.id === active} />)
+          return lists.map((l) => <Group key={l.id} title={l.name + (l.id === active ? ' *' : '')} files={forList(l.id)} groupByDir={groupByDir} listId={l.id} active={l.id === active} selected={selectedPath} onSelect={setSelectedPath} signal={treeSignal} />)
         })()}
       </div>
     </div>

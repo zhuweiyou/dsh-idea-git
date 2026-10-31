@@ -39,6 +39,7 @@ const MAP: Record<string, string> = {
   split: 'split',
   list: 'list',
   'collapse-all': 'collapse-all',
+  expandAll: 'expand-all',
   'arrow-up': 'arrow-up',
   'arrow-down': 'arrow-down',
   edit: 'edit',

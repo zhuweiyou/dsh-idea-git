@@ -415,6 +415,8 @@ const zh: Record<string, string> = {
   'Edit Result…': '编辑结果…',
   'Result': '结果',
   'Base': '基线',
+  'Expand All': '全部展开',
+  'Collapse All': '全部折叠',
 }
 
 export function setActiveLocale(id: string | null | undefined) {
