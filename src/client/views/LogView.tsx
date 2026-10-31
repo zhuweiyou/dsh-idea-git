@@ -175,7 +175,7 @@ function BranchNodes({
           )
         }
         return (
-          <div key={"b:" + n.path} style={{ paddingLeft: depth * 16 + 8 + 16 }}>
+          <div key={"b:" + n.path} style={{ paddingLeft: depth * 16 + 8 }}>
             {n.branch ? <BranchRow b={n.branch} t={t} label={n.name} onSelect={onSelect} /> : null}
           </div>
         )
@@ -330,7 +330,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 <span>{t("Favorites")}</span>
               </div>
               {favBranches.map((b) => (
-                <div key={"fav:" + b.ref} style={{ paddingLeft: 24 }}>
+                <div key={"fav:" + b.ref} style={{ paddingLeft: 8 }}>
                   <BranchRow b={b} t={t} label={b.name.split("/").pop()} onSelect={setSelectedName} />
                 </div>
               ))}
@@ -352,7 +352,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
           </div>
           <BranchNodes
             nodes={localTree}
-            depth={1}
+            depth={0}
             expanded={expanded}
             toggle={toggle}
             t={t}

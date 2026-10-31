@@ -710,7 +710,7 @@
   align-items: center;
   gap: 6px;
   height: 22px;
-  padding: 0 8px;
+  padding: 0;
   cursor: pointer;
   white-space: nowrap;
   color: var(--fg-secondary);
