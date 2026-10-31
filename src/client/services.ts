@@ -1,10 +1,32 @@
 /** Late-bound DSH theme/locale services + resync helpers (handle cold-start ordering). */
+import React from "react"
 import { setTheme } from "./window"
 import { setActiveLocale } from "./lib/i18n"
 
 let context: any = null
 let themeSvc: any = null
 let localeSvc: any = null
+
+let dshTheme: "light" | "dark" = "dark"
+const dshThemeSubs = new Set<() => void>()
+function setDshTheme(v: "light" | "dark") {
+  if (dshTheme === v) return
+  dshTheme = v
+  dshThemeSubs.forEach((f) => {
+    try {
+      f()
+    } catch {}
+  })
+}
+export function useDshTheme(): "light" | "dark" {
+  return React.useSyncExternalStore(
+    (cb) => {
+      dshThemeSubs.add(cb)
+      return () => dshThemeSubs.delete(cb)
+    },
+    () => dshTheme,
+  )
+}
 
 export function installServices(ctx: any) {
   context = ctx
@@ -22,17 +44,18 @@ function refreshServices() {
 
 export function syncTheme() {
   refreshServices()
+  let scheme: "light" | "dark" | undefined
   try {
-    const ov = localStorage.getItem("dig.themeOverride")
-    if (ov === "light" || ov === "dark") {
-      setTheme(ov)
-      return
-    }
+    const v = themeSvc?.getTheme?.()?.active?.colorScheme
+    if (v === "light" || v === "dark") scheme = v
   } catch {}
+  if (scheme) setDshTheme(scheme)
+  let ov: string | null = null
   try {
-    const scheme = themeSvc?.getTheme?.()?.active?.colorScheme
-    if (scheme === "light" || scheme === "dark") setTheme(scheme)
+    ov = localStorage.getItem("dig.themeOverride")
   } catch {}
+  if (ov === "light" || ov === "dark") setTheme(ov)
+  else if (scheme) setTheme(scheme)
 }
 
 export function syncLocale() {

@@ -2,8 +2,7 @@
 import React from "react"
 import { useT } from "./lib/i18n"
 import * as api from "./api"
-import { useWindow } from "./window"
-import { syncAll, setThemeOverride, setLocaleOverride } from "./services"
+import { syncAll, setThemeOverride, setLocaleOverride, useDshTheme } from "./services"
 import * as store from "./store"
 
 interface VersionInfo {
@@ -18,7 +17,7 @@ interface LfsInfo {
 
 export function SettingsSection() {
   const t = useT()
-  const w = useWindow()
+  const dshTheme = useDshTheme()
   const [info, setInfo] = React.useState<VersionInfo | null>(null)
   const [lfs, setLfs] = React.useState<LfsInfo | null>(null)
   const [pathInput, setPathInput] = React.useState("")
@@ -99,7 +98,7 @@ export function SettingsSection() {
   }
 
   return (
-    <div className="dig-theme dig-settings" data-theme={w.theme}>
+    <div className="dig-theme dig-settings" data-theme={dshTheme}>
       <h3 className="dig-settings__title">IDEA Git</h3>
       <p className="dig-settings__desc">
         {t(

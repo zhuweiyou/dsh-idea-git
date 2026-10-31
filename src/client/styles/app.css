@@ -3004,17 +3004,33 @@ body.dig-docked #root {
   background: var(--bg-hover);
 }
 
-
-
 /* Clear diff contrast: red for deletions, green for insertions. */
 .dig-dsrow--rep .dig-dsrow__cell--old,
-.dig-dsrow--del .dig-dsrow__cell--old { background: color-mix(in srgb, var(--danger) 18%, transparent) !important; }
+.dig-dsrow--del .dig-dsrow__cell--old {
+  background: color-mix(in srgb, var(--danger) 18%, transparent) !important;
+}
 .dig-dsrow--rep .dig-dsrow__cell--new,
-.dig-dsrow--add .dig-dsrow__cell--new { background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important; }
-.dig-durow--del { background: color-mix(in srgb, var(--danger) 18%, transparent) !important; }
-.dig-durow--add { background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important; }
-.dig-word--deleted { background: color-mix(in srgb, var(--danger) 50%, transparent) !important; color: inherit !important; }
-.dig-word--inserted { background: color-mix(in srgb, var(--vcs-added) 50%, transparent) !important; color: inherit !important; }
+.dig-dsrow--add .dig-dsrow__cell--new {
+  background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important;
+}
+.dig-durow--del {
+  background: color-mix(in srgb, var(--danger) 18%, transparent) !important;
+}
+.dig-durow--add {
+  background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important;
+}
+.dig-word--deleted {
+  background: color-mix(in srgb, var(--danger) 50%, transparent) !important;
+  color: inherit !important;
+}
+.dig-word--inserted {
+  background: color-mix(in srgb, var(--vcs-added) 50%, transparent) !important;
+  color: inherit !important;
+}
 .dig-dsrow--rep .dig-dsrow__no,
-.dig-dsrow--del .dig-dsrow__no { box-shadow: inset 3px 0 0 var(--danger) !important; }
-.dig-dsrow--add .dig-dsrow__no:last-of-type { box-shadow: inset -3px 0 0 var(--vcs-added) !important; }
+.dig-dsrow--del .dig-dsrow__no {
+  box-shadow: inset 3px 0 0 var(--danger) !important;
+}
+.dig-dsrow--add .dig-dsrow__no:last-of-type {
+  box-shadow: inset -3px 0 0 var(--vcs-added) !important;
+}
