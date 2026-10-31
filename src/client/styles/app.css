@@ -3113,3 +3113,22 @@ body.dig-docked #root {
     transform: translateY(0);
   }
 }
+
+/* Stacked toast container: oldest on top, newest enters from bottom. */
+.dig-toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--dig-panel-h, 0px) + 16px);
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(420px, 64vw);
+  pointer-events: none;
+}
+.dig-toast-stack .dig-banner--toast {
+  position: static !important;
+  max-width: 100%;
+  animation: dig-toast-in 0.18s ease-out;
+}

@@ -458,7 +458,18 @@ export function Panel() {
           </div>
         ) : null}
         {s.busy ? <div className="dig-banner dig-banner--busy">{t(s.busyLabel || "Loading")}</div> : null}
-        {s.toast ? <div className="dig-banner dig-banner--toast">{s.toast}</div> : null}
+        {s.toasts.length
+          ? createPortal(
+              <div className="dig-toast-stack">
+                {s.toasts.map((x) => (
+                  <div key={x.id} className="dig-banner dig-banner--toast">
+                    {x.message}
+                  </div>
+                ))}
+              </div>,
+              document.body,
+            )
+          : null}
         {!w.minimized ? (
           <div className="dig-panel__body">
             <ViewBoundary>

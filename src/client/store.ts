@@ -105,7 +105,7 @@ export interface GitState {
     working: string
     diff3: string
   } | null
-  toast: string | null
+  toasts: Array<{ id: number; message: string }>
   compare: {
     title: string
     from: string
@@ -186,7 +186,7 @@ const initial: GitState = {
   detailRange: null,
   include: {},
   conflict: null,
-  toast: null,
+  toasts: [],
   compare: null,
   stashes: [],
   shelves: [],
@@ -1091,11 +1091,13 @@ export async function openCommitInBrowser(commit: string) {
   }
 }
 
+let toastSeq = 0
 export function setToast(message: string) {
-  set({ toast: message })
+  const id = ++toastSeq
+  set({ toasts: [...state.toasts, { id, message }].slice(-6) })
   setTimeout(() => {
-    if (state.toast === message) set({ toast: null })
-  }, 3500)
+    set({ toasts: state.toasts.filter((x) => x.id !== id) })
+  }, 4000)
 }
 
 export function createPatch(target: { commit?: string; paths?: string[] }) {
