@@ -22,7 +22,7 @@ import { saveCurrentWorkspace } from './workspaceState'
 import { PromptHost, askText } from './lib/prompt'
 
 const TABS: Array<{ id: store.TabId; label: string }> = [
-  { id: 'changes', label: 'Git' },
+  { id: 'changes', label: 'Commit' },
   { id: 'log', label: 'Log' },
   { id: 'console', label: 'Console' },
   { id: 'worktree', label: 'Worktrees' },
