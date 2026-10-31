@@ -1963,3 +1963,15 @@ body.dig-docked #root { height: 100% !important; }
 .dig-hlayout-c__handle + * .dig-iconbtn[title]:hover::after {
   left: 0; right: auto; transform: none;
 }
+
+/* Disabled primary button must not lighten on hover. */
+.dig-btn--primary:disabled,
+.dig-btn--primary:disabled:hover,
+.dig-btn--primary:disabled:active {
+  background: color-mix(in srgb, var(--accent, #3871e1) 30%, var(--bg-elev, #eee)) !important;
+  border-color: var(--border-strong, #ccc) !important;
+  color: var(--fg-subtle, #888) !important;
+  filter: none !important;
+  opacity: 1 !important;
+  cursor: default;
+}
