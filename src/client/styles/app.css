@@ -1894,3 +1894,6 @@ button.dig-filterbtn,
 }
 .dig-commit__len[data-warn='true'] { color: var(--warning); }
 .dig-filerow[draggable] { cursor: grab; }
+
+/* Docked in-flow panel (inside conversation.composer.dock). */
+.dig-panel { position: relative !important; left: auto !important; right: auto !important; bottom: auto !important; width: 100% !important; flex: none; border-radius: 0; box-shadow: none; }
