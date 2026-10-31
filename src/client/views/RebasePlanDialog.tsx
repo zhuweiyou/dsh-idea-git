@@ -19,7 +19,10 @@ export function RebasePlanDialog({ theme }: { theme: 'light' | 'dark' }) {
         <div className="dig-rebase-dialog__hint">{t('Oldest first. Drag not supported; choose an action per commit.')}</div>
         <div className="dig-rebase-dialog__list">
           {p.rows.map((r, i) => (
-            <div className="dig-rebase-row" key={r.commit}>
+            <div className="dig-rebase-row" key={r.commit} draggable
+              onDragStart={(e) => { try { e.dataTransfer.setData('text/x-rebase-row', String(i)); e.dataTransfer.effectAllowed = 'move' } catch {} }}
+              onDragOver={(e) => { if (e.dataTransfer.types.includes('text/x-rebase-row')) e.preventDefault() }}
+              onDrop={(e) => { const from = Number(e.dataTransfer.getData('text/x-rebase-row')); if (!Number.isNaN(from)) store.moveRebaseRow(from, i) }}>
               <select className="dig-rebase-row__action" value={r.action} onChange={(e) => store.setRebaseRow(i, { action: e.target.value as any })}>
                 {ACTIONS.map((a) => <option key={a} value={a}>{label(a)}</option>)}
               </select>

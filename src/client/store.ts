@@ -990,13 +990,45 @@ export function moveToChangelist(paths: string[], id: string) {
 
 
 /* Interactive rebase plan (port of OpenIDEA rebasePlan) */
+type RebaseRow = { commit: string; short: string; summary: string; action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message: string }
+
+/** Port of OpenIDEA rebasePlan.autosquash: move fixup!/squash! commits right after their target. */
+function autosquashRows(rows: RebaseRow[]): RebaseRow[] {
+  const targetOf = (r: RebaseRow, idx: number): { target: RebaseRow; action: 'fixup' | 'squash' } | null => {
+    const m = /^(fixup|squash)! (.+)$/.exec(r.summary)
+    if (!m) return null
+    const subject = (m[2] || '').trim()
+    const target = rows.slice(0, idx).find((t) => t.summary === subject || (subject.length >= 4 && t.commit.startsWith(subject)))
+    return target ? { target, action: m[1] as 'fixup' | 'squash' } : null
+  }
+  const moved = new Map<string, RebaseRow[]>()
+  rows.forEach((r, idx) => {
+    const t = targetOf(r, idx)
+    if (!t) return
+    let root = t.target
+    for (let next = targetOf(root, rows.indexOf(root)); next; next = targetOf(root, rows.indexOf(root))) root = next.target
+    moved.set(root.commit, [...(moved.get(root.commit) || []), { ...r, action: t.action }])
+  })
+  const placed = new Set([...moved.values()].flat().map((r) => r.commit))
+  return rows.filter((r) => !placed.has(r.commit)).flatMap((r) => [r, ...(moved.get(r.commit) || [])])
+}
+
 export function openRebasePlan(commitId: string) {
   const cs = state.commits
   const idx = cs.findIndex((c) => c.id === commitId)
   if (idx < 0) return
   const target = cs[idx]
-  const rows = cs.slice(0, idx + 1).reverse().map((c) => ({ commit: c.id, short: c.shortId, summary: c.subject, action: 'pick' as const, message: c.subject }))
-  set({ rebasePlan: { base: target.parents[0] ?? null, rows } })
+  const rows: RebaseRow[] = cs.slice(0, idx + 1).reverse().map((c) => ({ commit: c.id, short: c.shortId, summary: c.subject, action: 'pick' as const, message: c.subject }))
+  set({ rebasePlan: { base: target.parents[0] ?? null, rows: autosquashRows(rows) } })
+}
+
+export function moveRebaseRow(from: number, to: number) {
+  const p = state.rebasePlan
+  if (!p || from === to) return
+  const rows = [...p.rows]
+  const [row] = rows.splice(from, 1)
+  rows.splice(to, 0, row)
+  set({ rebasePlan: { ...p, rows } })
 }
 export function setRebaseRow(i: number, patch: Partial<{ action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message: string }>) {
   const p = state.rebasePlan; if (!p) return
