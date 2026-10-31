@@ -472,6 +472,18 @@ try {
     ok('author applied', g(['log', '-1', '--format=%an']).trim() === 'Alice')
     ok('signoff applied', g(['log', '-1', '--format=%B']).includes('Signed-off-by:'))
   }
+
+  /* ---------------- merge ---------------- */
+  console.log('\n[merge]')
+  {
+    const { repo, g } = makeRepo()
+    fs.writeFileSync(path.join(repo, 'a.txt'), 'A\n'); g(['add', '.']); g(['commit', '-qm', 'c1'])
+    g(['checkout', '-q', '-b', 'feature']); fs.writeFileSync(path.join(repo, 'b.txt'), 'B\n'); g(['add', '.']); g(['commit', '-qm', 'f1'])
+    g(['checkout', '-q', 'main']); fs.writeFileSync(path.join(repo, 'c.txt'), 'C\n'); g(['add', '.']); g(['commit', '-qm', 'm1'])
+    const r = await call('merge', { ...D(repo), branch: 'feature' })
+    ok('merge ok', r.ok && r.value.ok === true)
+    ok('merged file exists', fs.existsSync(path.join(repo, 'b.txt')))
+  }
 } finally {
   for (const b of bases) { try { fs.rmSync(b, { recursive: true, force: true }) } catch {} }
   try { fs.rmSync(outfile, { force: true }) } catch {}

@@ -516,7 +516,8 @@ export function resolveConflict(file: string, side: 'ours' | 'theirs' | 'mark') 
 export function mergeBranch(name: string) {
   return withBusy('Merging…', async () => {
     const r = await api.rpc<{ ok: boolean; output: string }>('merge', { ...targetPayload(), branch: name })
-    if (!r || !r.ok) throw new Error(r?.output || 'Merge failed')
+    if (!r || !r.ok) throw new Error((r?.output || '').trim() || 'Merge failed (see Console)')
+    setToast((r.output || '').trim() || `Merged ${name}`)
     await refreshAll()
   })
 }

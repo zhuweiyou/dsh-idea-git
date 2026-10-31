@@ -494,7 +494,7 @@ export async function deleteBranch(info: RepoInfo, payload: any, signal?: AbortS
 export async function merge(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const branch = String(payload?.branch ?? '')
   if (!branch) throw new RepoError('git/bad-branch', 'Missing branch name')
-  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['merge', branch], timeoutMs: 120_000 })
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['merge', '--no-edit', branch], timeoutMs: 120_000 })
   return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n'), code: r.code }
 }
 
