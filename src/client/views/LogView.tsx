@@ -414,7 +414,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
               {!collapsed.has("remote:" + remote) ? (
                 <BranchNodes
                   nodes={remoteTrees.get(remote) || []}
-                  depth={0}
+                  depth={1}
                   expanded={expanded}
                   toggle={toggle}
                   t={t}
