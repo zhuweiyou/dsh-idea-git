@@ -1051,22 +1051,66 @@ export async function createPatch(info: RepoInfo, payload: any, signal?: AbortSi
   return { path: target }
 }
 
-async function rebaseInteractive(info: RepoInfo, commit: string, mode: 'reword' | 'fixup', message: string, signal?: AbortSignal) {
-  const short = commit.slice(0, 7)
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dig-rebase-'))
-  const seq = path.join(dir, 'seq.mjs')
-  const ed = path.join(dir, 'ed.mjs')
-  fs.writeFileSync(seq, `import fs from 'node:fs'\nconst f=process.argv[2];const lines=fs.readFileSync(f,'utf8').split('\\n');const out=lines.map((l)=>{const m=/^(pick|p)\\s+(\\S+)/.exec(l);if(m&&m[2].startsWith(${JSON.stringify(short)}))return l.replace(/^(pick|p)/, ${JSON.stringify(mode)});return l});fs.writeFileSync(f,out.join('\\n'))\n`)
-  fs.writeFileSync(ed, `import fs from 'node:fs'\nfs.writeFileSync(process.argv[2], ${JSON.stringify(message + '\n')})\n`)
-  try {
-    const r = await runGit(info.gitPath, {
-      cwd: info.root, signal, args: ['rebase', '-i', `${commit}^`], timeoutMs: 180000,
-      env: { GIT_SEQUENCE_EDITOR: `"${process.execPath}" "${seq}"`, GIT_EDITOR: `"${process.execPath}" "${ed}"` },
-    })
-    return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
-  } finally {
-    try { fs.rmSync(dir, { recursive: true, force: true }) } catch {}
+function shq(p: string): string {
+  return "'" + p.replace(/\\/g, '/').replace(/'/g, "'\\''") + "'"
+}
+
+async function listRange(info: RepoInfo, base: string | null, signal?: AbortSignal): Promise<string[]> {
+  const range = base ? `${base}..HEAD` : 'HEAD'
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--reverse', '--end-of-options', range] })
+  if (r.code !== 0) throw new Error(r.stderr.trim() || 'rev-list failed')
+  return r.stdout.split('\n').map((x) => x.trim()).filter(Boolean)
+}
+
+interface PlanEntry { commit: string; action: 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'; message?: string }
+
+/** Port of OpenIDEA ops.rs interactive_rebase: write a todo (with exec amend lines) and run rebase -i. */
+async function runRebasePlan(info: RepoInfo, base: string | null, entries: PlanEntry[], signal?: AbortSignal) {
+  if (!entries.length) throw new RepoError('git/bad-commit', 'No commits to rebase')
+  const firstKept = entries.findIndex((e) => e.action !== 'drop')
+  if (firstKept < 0) throw new RepoError('git/bad-range', 'At least one commit must be kept')
+  if (entries[firstKept].action === 'squash' || entries[firstKept].action === 'fixup') {
+    throw new RepoError('git/bad-range', 'The first commit cannot be squashed or fixed up into a previous one')
   }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dig-rebase-'))
+  const todo: string[] = []
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i]
+    const verb = e.action === 'reword' ? 'pick' : e.action
+    todo.push(`${verb} ${e.commit}`)
+    const nextJoins = entries[i + 1] && (entries[i + 1].action === 'squash' || entries[i + 1].action === 'fixup')
+    const msg = (e.message ?? '').trim()
+    if (msg && (e.action === 'reword' || e.action === 'squash' || e.action === 'pick')) {
+      if (nextJoins) throw new RepoError('git/bad-range', 'Set the message on the last commit of a squash group')
+      const mf = path.join(dir, `msg-${i}`)
+      fs.writeFileSync(mf, msg)
+      todo.push(`exec git commit --amend --allow-empty --no-verify --quiet --cleanup=strip -F ${shq(mf)}`)
+    }
+  }
+  const todoFile = path.join(dir, 'todo')
+  fs.writeFileSync(todoFile, todo.join('\n') + '\n')
+  const seq = path.join(dir, 'seq.mjs')
+  fs.writeFileSync(seq, `import fs from 'node:fs'\nfs.copyFileSync(${JSON.stringify(todoFile)}, process.argv[2])\n`)
+  const noop = path.join(dir, 'noop.mjs')
+  fs.writeFileSync(noop, '// keep the editor buffer as-is\n')
+  try {
+    const args = ['rebase', '--interactive', '--autostash', '--no-autosquash', base || '--root']
+    const r = await runGit(info.gitPath, {
+      cwd: info.root, signal, args, timeoutMs: 180000,
+      env: { GIT_SEQUENCE_EDITOR: `"${process.execPath}" "${seq}"`, GIT_EDITOR: `"${process.execPath}" "${noop}"` },
+    })
+    if (r.code === 0) { try { fs.rmSync(dir, { recursive: true, force: true }) } catch {} }
+    return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+  } catch (e) {
+    try { fs.rmSync(dir, { recursive: true, force: true }) } catch {}
+    throw e
+  }
+}
+
+async function parentOf(info: RepoInfo, commit: string, signal?: AbortSignal): Promise<string | null> {
+  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', commit] })
+  const f = r.stdout.trim().split(/\s+/)
+  return f.length > 1 ? f[1] : null
 }
 
 export async function editCommitMessage(info: RepoInfo, payload: any, signal?: AbortSignal) {
@@ -1076,46 +1120,59 @@ export async function editCommitMessage(info: RepoInfo, payload: any, signal?: A
   if (!message.trim()) throw new RepoError('git/empty-message', 'Empty message')
   const head = (await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-parse', 'HEAD'] })).stdout.trim()
   if (commit === head) { await runWrite(info, ['commit', '--amend', '-m', message], signal); return { ok: true } }
-  return rebaseInteractive(info, commit, 'reword', message, signal)
+  const base = await parentOf(info, commit, signal)
+  const commits = base ? await listRange(info, base, signal) : await listRange(info, null, signal)
+  const entries: PlanEntry[] = commits.map((c) => (c === commit ? { commit: c, action: 'reword', message } : { commit: c, action: 'pick' }))
+  return runRebasePlan(info, base, entries, signal)
 }
 
-/** OpenIDEA "Fixup…"/"Squash Into…": commit current local changes as `fixup!`/`squash! <subject>`. */
 export async function prepareFixupCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const message = String(payload?.message ?? '').trim()
   if (!message) throw new RepoError('git/empty-message', 'Empty message')
-  const args = ['commit', '-a', '-m', message]
-  await runWrite(info, args, signal)
+  await runWrite(info, ['commit', '-a', '-m', message], signal)
   const id = await runWrite(info, ['rev-parse', 'HEAD'], signal)
   return { id: id.trim() }
 }
 
 export async function squashRange(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const ids: string[] = Array.isArray(payload?.ids) ? payload.ids.map(String) : []
-  if (ids.length < 2) throw new RepoError('git/bad-commit', 'Need at least two commits')
-  const newest = ids[0]
-  const oldest = ids[ids.length - 1]
-  const parents = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', oldest] })
-  const fields = parents.stdout.trim().split(/\s+/)
-  if (fields.length < 2) throw new RepoError('git/bad-commit', 'Range includes the root commit; cannot squash')
-  const base = fields[1]
-  const cnt = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--count', `${base}..${newest}`] })
-  if (Number(cnt.stdout.trim()) !== ids.length) throw new RepoError('git/bad-range', 'Selected commits are not a contiguous range')
-  const logs = await runGit(info.gitPath, { cwd: info.root, signal, args: ['log', '--reverse', '--format=%B', `${base}..${newest}`], maxBuffer: 4 * 1024 * 1024 })
-  const combined = logs.stdout.split('\n').map((x) => x.trim()).filter(Boolean).join('\n\n')
-  await runWrite(info, ['reset', '--soft', base], signal)
-  await runWrite(info, ['commit', '-m', combined || 'squash'], signal)
-  return { ok: true }
+  const idSet = new Set(ids)
+  if (idSet.size < 2) throw new RepoError('git/bad-commit', 'Need at least two commits')
+  // Oldest-first commits of the whole current history (like rebaseRange from HEAD).
+  const all = await listRange(info, null, signal)
+  const selected = all.filter((c) => idSet.has(c))
+  if (selected.length !== idSet.size) throw new RepoError('git/bad-range', 'Selected commits are not in the current branch')
+  const base = await parentOf(info, selected[0], signal)
+  const commits = base ? await listRange(info, base, signal) : all
+  const first = commits.findIndex((c) => idSet.has(c))
+  let combined = String(payload?.message ?? '').trim()
+  if (!combined) {
+    const parts: string[] = []
+    for (const c of selected) {
+      const m = await runGit(info.gitPath, { cwd: info.root, signal, args: ['show', '-s', '--format=%B', c] })
+      if (m.stdout.trim()) parts.push(m.stdout.trim())
+    }
+    combined = parts.join('\n\n')
+  }
+  const entries: PlanEntry[] = []
+  for (const c of commits.slice(0, first)) entries.push({ commit: c, action: 'pick' })
+  selected.forEach((c, i) => {
+    if (i === 0) entries.push({ commit: c, action: 'pick' })
+    else entries.push({ commit: c, action: 'squash', ...(i === selected.length - 1 && combined ? { message: combined } : {}) })
+  })
+  for (const c of commits.slice(first + 1)) if (!idSet.has(c)) entries.push({ commit: c, action: 'pick' })
+  return runRebasePlan(info, base, entries, signal)
 }
 
 export async function dropCommit(info: RepoInfo, payload: any, signal?: AbortSignal) {
   const commit = String(payload?.commit ?? '').trim()
   if (!commit) throw new RepoError('git/bad-commit', 'Missing commit')
-  const parents = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rev-list', '--parents', '-n', '1', commit] })
-  const fields = parents.stdout.trim().split(/\s+/)
-  if (fields.length < 2) throw new RepoError('git/bad-commit', 'Cannot drop the root commit')
-  const parent = fields[1]
-  const r = await runGit(info.gitPath, { cwd: info.root, signal, args: ['rebase', '--onto', parent, commit, 'HEAD'], timeoutMs: 180000 })
-  return { ok: r.code === 0, output: [r.stdout, r.stderr].filter(Boolean).join('\n') }
+  const base = await parentOf(info, commit, signal)
+  if (!base) throw new RepoError('git/bad-commit', 'Cannot drop the root commit')
+  const commits = await listRange(info, base, signal)
+  if (!commits.includes(commit)) throw new RepoError('git/bad-range', 'Commit not in current branch')
+  const entries: PlanEntry[] = commits.map((c) => ({ commit: c, action: c === commit ? 'drop' : 'pick' }))
+  return runRebasePlan(info, base, entries, signal)
 }
 
 export async function squashHead(info: RepoInfo, payload: any, signal?: AbortSignal) {
