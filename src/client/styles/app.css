@@ -1880,3 +1880,17 @@ button.dig-filterbtn,
 .dig-log__restore:hover { color: var(--fg); }
 .dig-group[data-inactive='true'] .dig-group__title { color: var(--fg-subtle); }
 .dig-group[data-inactive='true'] .dig-dfile { opacity: .75; }
+
+/* commit area: code font + right margin guide (OpenIDEA CommitView.message) */
+.dig-commit__message {
+  font-family: var(--font-mono);
+  font-size: var(--fs-code, 12px);
+  line-height: var(--lh-code, 18px);
+  --pad: 10px;
+  --guide: 72ch;
+  background:
+    linear-gradient(to right, transparent calc(var(--pad) + var(--guide)), var(--border) calc(var(--pad) + var(--guide)), var(--border) calc(var(--pad) + var(--guide) + 1px), transparent calc(var(--pad) + var(--guide) + 1px)) no-repeat,
+    var(--bg-input);
+}
+.dig-commit__len[data-warn='true'] { color: var(--warning); }
+.dig-filerow[draggable] { cursor: grab; }

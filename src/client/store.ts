@@ -995,3 +995,11 @@ export function saveWorktreeFile(file: string, content: string, stage: boolean) 
     set({ diff: null })
   })
 }
+
+
+export function commitChangelist(paths: string[], push: boolean) {
+  const inc: Record<string, boolean> = {}
+  for (const f of state.files) inc[f.path] = paths.includes(f.path)
+  set({ include: inc })
+  return commitNow(push)
+}

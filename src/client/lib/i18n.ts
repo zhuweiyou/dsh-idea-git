@@ -392,6 +392,8 @@ const zh: Record<string, string> = {
   'Remove from Favorites': '取消收藏',
   'Show Branches': '显示分支',
   'Set Active Changelist': '设为活动变更列表',
+  'Commit…': '提交…',
+  'Commit and Push…': '提交并推送…',
 }
 
 export function setActiveLocale(id: string | null | undefined) {

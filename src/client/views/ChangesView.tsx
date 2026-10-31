@@ -91,7 +91,8 @@ function FileRow({ file }: { file: FileEntry }) {
   const canUnstage = file.staged
   const included = gs.include[file.path] !== false
   return (
-    <div className="dig-filerow" title={file.path}
+    <div className="dig-filerow" title={file.path} draggable
+      onDragStart={(e) => { try { e.dataTransfer.setData('application/x-dsh-changes', file.path); e.dataTransfer.effectAllowed = 'move' } catch {} }}
       onClick={() => store.openDiff({ title: file.path, path: file.path, staged: file.staged && !file.unstaged })}
       onContextMenu={(e) => openContextMenu(e, fileMenuItems(file, root, t))}>
       <span className="dig-check__box" data-on={included ? 'true' : undefined} style={{ flex: 'none', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); store.toggleInclude(file.path) }}>{included ? <Icon name="check" size={10} /> : null}</span>
@@ -178,9 +179,14 @@ function Group({ title, files, groupByDir, listId, active }: { title: string; fi
   return (
     <div className="dig-group" data-inactive={listId && active === false ? 'true' : undefined}>
       <div className="dig-group__head" style={listId ? { cursor: 'context-menu' } : undefined}
+        onDragOver={listId ? (e) => { if (e.dataTransfer.types.includes('application/x-dsh-changes')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } } : undefined}
+        onDrop={listId ? (e) => { const p = e.dataTransfer.getData('application/x-dsh-changes'); if (p) { e.preventDefault(); store.moveToChangelist(p.split('\n'), listId) } } : undefined}
         onContextMenu={listId ? (e) => {
           const paths = files.map((f) => f.path)
           openContextMenu(e, [
+            { label: t('Commit…'), disabled: !files.length, run: () => void store.commitChangelist(paths, false) },
+            { label: t('Commit and Push…'), disabled: !files.length, run: () => void store.commitChangelist(paths, true) },
+            { separator: true },
             { label: t('New Changelist'), run: async () => { const n = await askText(t('New Changelist')); if (n) store.newChangelist(n) } },
             { label: t('Rename Changelist'), run: async () => { const n = await askText(t('Rename Changelist'), title.replace(/ \*$/, '')); if (n) store.renameChangelist(listId, n) } },
             { separator: true },
@@ -225,7 +231,7 @@ function CommitPanel() {
         <IconButton icon="sparkle" title={t('Generate commit message')} size={14} disabled={s.aiBusy} onClick={() => store.generateCommitMessage(getActiveLocale())} />
         <CommitHistory onPick={(m) => store.setMessage(m)} t={t} />
         <span style={{ flex: 1 }} />
-        <span className="dig-commit__len">{firstLine.length}</span>
+        <span className="dig-commit__len" data-warn={firstLine.length > 72 ? 'true' : undefined}>{firstLine.length}</span>
       </div>
       <textarea
         className="dig-commit__message"
