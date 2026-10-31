@@ -168,7 +168,6 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
       </div>
       <div className="dig-branches__list">
         <div className="dig-branches__section"><Icon name="folder" size={15} /><span>{t('Local')}</span><span style={{ flex: 1 }} /><IconButton icon="refresh" title={t('Refresh')} size={13} onClick={() => void store.refreshAll()} /></div>
-        {current ? <div style={{ paddingLeft: 8 }}><BranchRow b={current} t={t} label={current.name.split('/').pop()} /></div> : null}
         <BranchNodes nodes={localTree} depth={1} expanded={expanded} toggle={toggle} t={t} />
         {remoteGroups.size ? <div className="dig-branches__section" style={{ marginTop: 4 }}><Icon name="cloud" size={15} /><span>{t('Remote')}</span><span style={{ flex: 1 }} /><IconButton icon="plus" title={t('Add Remote…')} size={13} onClick={async () => { const n = await askText(t('Remote name')); if (!n) return; const u = await askText(t('Remote URL')); if (u) void store.addRemote(n, u) }} /></div> : null}
         {[...remoteGroups.entries()].map(([remote, list]) => (
