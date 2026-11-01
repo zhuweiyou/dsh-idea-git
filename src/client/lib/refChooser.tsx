@@ -3,6 +3,7 @@ import React from "react"
 import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
 import { useGit } from "./ui"
 import { useT } from "./i18n"
+import { useDshTheme } from "../services"
 
 interface Req { title: string; resolve: (v: string | null) => void }
 let pending: Req | null = null
@@ -19,6 +20,7 @@ export function chooseRef(title: string): Promise<string | null> {
 export function RefChooserHost() {
   const s = useGit()
   const t = useT()
+  const theme = useDshTheme()
   const req = React.useSyncExternalStore((cb) => { subs.add(cb); return () => subs.delete(cb) }, () => pending)
   const [q, setQ] = React.useState("")
   React.useEffect(() => { if (req) setQ("") }, [req])
@@ -32,7 +34,7 @@ export function RefChooserHost() {
       onClose={() => req.resolve(null)}
       footer={<Button variant="outline" onClick={() => req.resolve(null)}>{t("Cancel")}</Button>}
     >
-      <div className="dig-refchooser">
+      <div className="dig-theme dig-refchooser" data-theme={theme}>
         <input className="dig-modal__input" autoFocus placeholder={t("Search branches, tags or revisions")} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="dig-refchooser__list">
           {refs.map((r) => (

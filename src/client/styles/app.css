@@ -216,6 +216,9 @@
   color: #fff;
 }
 .dig-btn--primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
   filter: brightness(1.08);
 }
 .dig-check {

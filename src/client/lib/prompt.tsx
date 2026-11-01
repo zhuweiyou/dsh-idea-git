@@ -2,6 +2,7 @@
 import React from "react"
 import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
 import { t } from "./i18n"
+import { useDshTheme } from "../services"
 
 interface Pending {
   title: string
@@ -35,6 +36,7 @@ function finish(v: string | null) {
 }
 
 export function PromptHost() {
+  const theme = useDshTheme()
   const p = React.useSyncExternalStore(
     (cb) => { subs.add(cb); return () => subs.delete(cb) },
     () => pending,
@@ -62,6 +64,7 @@ export function PromptHost() {
         </>
       }
     >
+      <div className="dig-theme" data-theme={theme}>
       {p.multiline ? (
         <textarea
           ref={ref as any}
@@ -83,6 +86,7 @@ export function PromptHost() {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ok() } }}
         />
       )}
+      </div>
     </Modal>
   )
 }

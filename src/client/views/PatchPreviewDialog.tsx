@@ -4,10 +4,12 @@ import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
 import { useGit } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
+import { useDshTheme } from "../services"
 
 export function PatchPreviewDialog() {
   const s = useGit()
   const t = useT()
+  const theme = useDshTheme()
   const p = s.patchPreview
   if (!p) return null
   return (
@@ -31,7 +33,7 @@ export function PatchPreviewDialog() {
         </>
       }
     >
-      <div className="dig-patchpreview">
+      <div className="dig-theme dig-patchpreview" data-theme={theme}>
         {p.files.length ? (
           <div className="dig-patchpreview__files">
             {p.files.map((f) => (

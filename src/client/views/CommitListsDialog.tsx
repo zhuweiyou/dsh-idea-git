@@ -4,6 +4,7 @@ import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
 import { useGit } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
+import { useDshTheme } from "../services"
 
 type C = { id: string; short: string; subject: string; author: string; date: number }
 
@@ -25,6 +26,7 @@ function CommitList({ items, empty }: { items: C[]; empty: string }) {
 export function IncomingOutgoingDialog() {
   const s = useGit()
   const t = useT()
+  const theme = useDshTheme()
   const d = s.incomingDialog
   if (!d) return null
   return (
@@ -42,7 +44,7 @@ export function IncomingOutgoingDialog() {
       {!d.upstream ? (
         <div className="dig-empty">{t("No upstream configured")}</div>
       ) : (
-        <div className="dig-commitlists">
+        <div className="dig-theme dig-commitlists" data-theme={theme}>
           <div className="dig-commitlists__col">
             <div className="dig-commitlists__title">
               {t("Incoming")} ({d.behind.length})
@@ -64,6 +66,7 @@ export function IncomingOutgoingDialog() {
 export function CompareBranchesDialog() {
   const s = useGit()
   const t = useT()
+  const theme = useDshTheme()
   const d = s.compareDialog
   if (!d) return null
   return (
@@ -78,7 +81,7 @@ export function CompareBranchesDialog() {
         </Button>
       }
     >
-      <div className="dig-commitlists">
+      <div className="dig-theme dig-commitlists" data-theme={theme}>
         <div className="dig-commitlists__col">
           <div className="dig-commitlists__title">
             {d.from} ({d.left.length})

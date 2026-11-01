@@ -4,10 +4,12 @@ import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
 import { useGit } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
+import { useDshTheme } from "../services"
 
 export function TagDialog() {
   const s = useGit()
   const t = useT()
+  const theme = useDshTheme()
   const commit = s.tagDialogCommit
   const [name, setName] = React.useState("")
   const [message, setMessage] = React.useState("")
@@ -43,7 +45,7 @@ export function TagDialog() {
         </>
       }
     >
-      <div className="dig-tagdialog">
+      <div className="dig-theme dig-tagdialog" data-theme={theme}>
         <label className="dig-tagdialog__row">
           <span>{t("Tag name")}</span>
           <input className="dig-modal__input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
