@@ -4,14 +4,15 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "版本号，格式 vX.Y.Z（例：v0.1.1）"
+      bump:
+        description: "版本升级类型（major / minor / patch）"
         required: true
-        type: string
-      description:
-        description: "Release 说明（会作为 GitHub Release 正文）"
-        required: true
-        type: string
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
   contents: write
@@ -41,29 +42,24 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
-      - name: Validate version
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Bump version and build
         env:
-          VERSION: ${{ inputs.version }}
+          BUMP: ${{ inputs.bump }}
         run: |
-          if ! printf '%s' "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::version 必须形如 vX.Y.Z，收到：$VERSION"
-            exit 1
-          fi
-          TAG="$VERSION"
-          SEMVER="${VERSION#v}"
+          PREV_TAG="$(git describe --tags --abbrev=0 HEAD 2>/dev/null || true)"
+          echo "PREV_TAG=$PREV_TAG" >> "$GITHUB_ENV"
+          npm version "$BUMP" --no-git-tag-version >/dev/null
+          TAG="v$(node -p 'require("./package.json").version')"
+          SEMVER="${TAG#v}"
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "SEMVER=$SEMVER" >> "$GITHUB_ENV"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             echo "::error::tag $TAG 已存在"
             exit 1
           fi
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set version and build
-        run: |
-          npm version "$SEMVER" --no-git-tag-version --allow-same-version
           pnpm build
 
       - name: Check and test (before any tag/release)
@@ -89,9 +85,55 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          NOTES: ${{ inputs.description }}
         run: |
-          gh release create "$TAG" --title "$TAG" --notes "$NOTES"
+          python3 - "$PREV_TAG" <<'PY'
+          import re
+          import subprocess
+          import sys
+
+          prev = sys.argv[1] if len(sys.argv) > 1 else ""
+          rng = f"{prev}..HEAD" if prev else "HEAD"
+          raw = subprocess.check_output(["git", "log", rng, "--pretty=format:%s"], text=True)
+          subjects = [x.strip() for x in raw.splitlines() if x.strip()]
+
+          groups = [
+              ("feat", "新功能"),
+              ("fix", "修复"),
+              ("perf", "性能"),
+              ("refactor", "重构"),
+              ("docs", "文档"),
+              ("test", "测试"),
+              ("build", "构建"),
+              ("ci", "CI"),
+              ("style", "样式"),
+              ("chore", "杂项"),
+          ]
+          buckets = {key: [] for key, _ in groups}
+          buckets["other"] = []
+          for subject in subjects:
+              if subject.lower().startswith("chore(release)"):
+                  continue
+              m = re.match(r"^(\w+)(?:\([^)]*\))?!?:\s*(.+)$", subject)
+              key = m.group(1).lower() if m else "other"
+              text = m.group(2) if m else subject
+              buckets.setdefault(key, []).append(text)
+
+          lines = ["## 更新内容"] + ([f"\n相比 {prev}"] if prev else [])
+          for key, title in groups:
+              items = buckets.get(key, [])
+              if items:
+                  lines.append(f"\n### {title} ({key})")
+                  lines.extend(f"- {item}" for item in items)
+          if buckets.get("other"):
+              lines.append("\n### 其他")
+              lines.extend(f"- {item}" for item in buckets["other"])
+          if len(lines) == 1:
+              lines.append("\n无提交记录")
+          with open("release-notes.md", "w", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n")
+          PY
+
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md
 
       - name: Publish to npm
         env:
