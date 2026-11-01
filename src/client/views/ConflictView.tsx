@@ -121,6 +121,12 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
   const apply = () => {
     void store.resolveConflictContent(c.file, resultEditing ? resultText : buildResult())
   }
+  const acceptAll = (side: "ours" | "theirs") => {
+    const next: Record<number, "ours" | "theirs" | "both"> = {}
+    for (let i = 0; i < conflictCount; i++) next[i] = side
+    setChoices(next)
+    setEdits({})
+  }
 
   return (
     <div className="dig-theme dig-diffarea" data-theme={theme} style={{ bottom }}>
@@ -265,6 +271,23 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
             })()}
           </div>
         )}
+        {conflictCount ? (
+          <div className="dig-merge__bottom">
+            <button type="button" className="dig-btn" onClick={() => acceptAll("ours")}>
+              {t("Accept Left")}
+            </button>
+            <button type="button" className="dig-btn" onClick={() => acceptAll("theirs")}>
+              {t("Accept Right")}
+            </button>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="dig-btn" onClick={apply}>
+              {t("Save and Close")}
+            </button>
+            <button type="button" className="dig-btn dig-btn--primary" onClick={apply}>
+              {t("Apply Changes")}
+            </button>
+          </div>
+        ) : null}
       </div>
       {showBase ? (
         <div className="dig-edit-overlay">

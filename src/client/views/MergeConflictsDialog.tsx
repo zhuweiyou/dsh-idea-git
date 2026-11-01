@@ -1,7 +1,7 @@
 /** Conflict hub: file table with ours/theirs status, accept actions, grouping and manual merge. */
 import React from "react"
 import { Modal, Button } from "@deepseek-ai/dsh-client-ui-primitives"
-import { useGit } from "../lib/ui"
+import { useGit, Icon } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import * as store from "../store"
 import { useDshTheme } from "../services"
@@ -96,6 +96,12 @@ export function MergeConflictsDialog() {
           <span>{t("Manual")}</span>
         </div>
         <div className="dig-conflicttable__body">
+          {conflicts.length ? (
+            <div className="dig-conflicttable__grouphead">
+              <Icon name="warning" size={14} style={{ color: "var(--danger)" }} />
+              {t("Unresolved {n} files", { n: conflicts.length })}
+            </div>
+          ) : null}
           {conflicts.length ? (
             groups.map((group) => (
               <React.Fragment key={group.title || "all"}>
