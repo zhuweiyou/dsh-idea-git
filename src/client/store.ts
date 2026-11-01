@@ -1880,3 +1880,25 @@ export async function runRefresh(load: () => Promise<unknown>) {
     setStatus(t("Failed: {message}", { message: e?.message || String(e) }), "error")
   }
 }
+
+export function resolveSimpleConflicts() {
+  return withBusy("Resolving simple conflicts…", async () => {
+    const files = state.files.filter((f) => f.kind === "conflicted")
+    for (const f of files) {
+      const v = await api.rpc<{ ours: string; theirs: string; base: string }>("conflictVersions", {
+        ...targetPayload(),
+        file: f.path,
+      })
+      const same = (a: string, b: string) => a.replace(/\r\n/g, "\n") === b.replace(/\r\n/g, "\n")
+      if (same(v.ours, v.base) && !same(v.theirs, v.base)) {
+        await api.rpc("resolveConflict", { ...targetPayload(), file: f.path, side: "theirs" })
+      } else if (same(v.theirs, v.base) && !same(v.ours, v.base)) {
+        await api.rpc("resolveConflict", { ...targetPayload(), file: f.path, side: "ours" })
+      }
+    }
+    await refreshStatus()
+    if (state.files.some((f) => f.kind === "conflicted"))
+      setStatus(t("Simple conflicts resolved; manual merge still required"), "info")
+    else setStatus(t("All conflicts resolved"), "info")
+  })
+}

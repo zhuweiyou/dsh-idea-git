@@ -57,6 +57,20 @@ function parseConflicts(text: string): Seg[] {
   return segs
 }
 
+function Numbered({ text }: { text: string }) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n")
+  return (
+    <div className="dig-merge__numbered">
+      {lines.map((line, i) => (
+        <div className="dig-merge__line" key={i}>
+          <span className="dig-merge__no">{i + 1}</span>
+          <span className="dig-merge__code">{line || " "}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function ConflictView({ bottom, theme }: { bottom: number; theme: "light" | "dark" }) {
   const s = useGit()
   const t = useT()
@@ -191,7 +205,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                             →
                           </button>
                         </div>
-                        <pre>{seg.ours || " "}</pre>
+                        <Numbered text={seg.ours} />
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--result">
                         <div className="dig-merge__label">
@@ -226,7 +240,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                             →
                           </button>
                         </div>
-                        <pre>{seg.theirs || " "}</pre>
+                        <Numbered text={seg.theirs} />
                       </div>
                     </div>
                   </div>

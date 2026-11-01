@@ -2794,12 +2794,10 @@ body.dig-docked #root {
 }
 
 /* Merge conflicts dialog */
-.dig-conflicttable {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  overflow: hidden;
+.dig-conflicttable__summary {
+  padding: 0 0 10px;
+  color: var(--fg-secondary);
+  font-size: var(--fs-small);
 }
 .dig-conflicttable__head,
 .dig-conflicttable__row {
@@ -2808,23 +2806,14 @@ body.dig-docked #root {
   gap: 0;
 }
 .dig-conflicttable__head {
+  padding: 7px 10px;
   background: var(--bg-elev);
-  border-bottom: 1px solid var(--border-strong);
+  border: 1px solid var(--border-strong);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
   color: var(--fg-subtle);
   font-size: var(--fs-small);
   font-weight: 600;
-}
-.dig-conflicttable__head > span,
-.dig-conflicttable__row > span {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  padding: 8px 10px;
-  border-left: 1px solid var(--border);
-}
-.dig-conflicttable__head > span:first-child,
-.dig-conflicttable__row > span:first-child {
-  border-left: 0;
 }
 .dig-conflicttable__head > span:first-child,
 .dig-conflicttable__path {
@@ -2833,20 +2822,28 @@ body.dig-docked #root {
 }
 .dig-conflicttable__head > span:nth-child(n + 2),
 .dig-conflicttable__cell {
-  flex: 0 0 150px;
-  justify-content: center;
+  flex: 0 0 210px;
+}
+.dig-conflicttable__head > span:nth-child(n + 2) {
   text-align: center;
 }
 .dig-conflicttable__body {
-  max-height: 50vh;
+  max-height: min(52vh, 420px);
   overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 0 0 6px 6px;
 }
 .dig-conflicttable__row {
+  padding: 7px 10px;
   border-bottom: 1px solid var(--border);
   min-height: 38px;
+  cursor: pointer;
 }
 .dig-conflicttable__row:last-child {
   border-bottom: 0;
+}
+.dig-conflicttable__row[data-selected="true"] {
+  background: var(--bg-hover);
 }
 .dig-conflicttable__path {
   overflow: hidden;
@@ -2855,8 +2852,16 @@ body.dig-docked #root {
   font-family: var(--font-mono);
   font-size: var(--fs-small);
 }
+.dig-conflicttable__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
+}
 .dig-conflicttable__cell .dig-btn {
-  padding: 4px 10px;
+  padding: 3px 10px;
   border: 1px solid var(--border-strong);
   border-radius: 5px;
   background: var(--bg-app);
@@ -2868,13 +2873,21 @@ body.dig-docked #root {
   background: var(--bg-hover);
   border-color: var(--accent);
 }
-.dig-conflicttable__cell .dig-btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+.dig-conflicttable__group {
+  padding: 7px 10px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-secondary);
+  font-weight: 600;
+  font-size: var(--fs-small);
 }
-.dig-conflicttable__cell .dig-btn--primary:hover {
-  filter: brightness(1.05);
+.dig-conflicttable__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  color: var(--fg-subtle);
+  font-size: var(--fs-small);
 }
 
 /* Give the conflict table a wider dialog than the 380px Modal default. */
@@ -2891,4 +2904,35 @@ body.dig-docked #root {
   border-color: var(--accent);
   color: #fff;
   filter: brightness(1.08);
+}
+
+/* Merge editor line numbers */
+.dig-merge__numbered {
+  max-height: 220px;
+  overflow: auto;
+  margin-top: 4px;
+}
+.dig-merge__line {
+  display: flex;
+  gap: 8px;
+  min-height: 18px;
+  line-height: 18px;
+}
+.dig-merge__no {
+  flex: none;
+  width: 28px;
+  text-align: right;
+  color: var(--fg-subtle);
+  user-select: none;
+  opacity: 0.75;
+}
+.dig-merge__code {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dig-conflicttable__toolbar {
+  padding: 0 0 10px;
 }
