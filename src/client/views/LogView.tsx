@@ -1484,6 +1484,10 @@ function FilterBar({
 export function LogView() {
   const s = useGit()
   const t = useT()
+  // Refresh silently whenever the Log view is shown.
+  React.useEffect(() => {
+    void store.loadLog(true)
+  }, [])
   const [showBranches, setShowBranches] = React.useState(() => localStorage.getItem("dig.showBranches") !== "0")
   const hideBranches = () => {
     setShowBranches(false)
