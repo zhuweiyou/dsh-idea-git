@@ -406,6 +406,7 @@ const zh: Record<string, string> = {
   'Refreshed': '已刷新',
   'Refreshing…': '刷新中…',
   'Done': '完成',
+  'Confirm': '确认',
   'Tracking LFS…': '跟踪 LFS 中…',
   'Dropping shelf…': '删除货架中…',
   'Downloading files…': '下载文件中…',
