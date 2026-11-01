@@ -811,6 +811,7 @@ export function mergeBranch(name: string) {
 export function deleteBranch(name: string, force = false) {
   return withBusy("Deleting branch…", async () => {
     await api.rpc("deleteBranch", { ...targetPayload(), name, force })
+    if (state.logBranch === name) set({ logBranch: null, commits: [], selectedCommit: null, commitFiles: [] })
     await refreshAll()
   })
 }
@@ -874,6 +875,7 @@ export function createTag(name: string, commit: string, message?: string, force 
 export function renameBranch(from: string, to: string) {
   return withBusy("Renaming…", async () => {
     await api.rpc("renameBranch", { ...targetPayload(), from, to })
+    if (state.logBranch === from) set({ logBranch: to })
     await refreshAll()
   })
 }
@@ -1175,6 +1177,7 @@ export function rebaseBranch(onto: string) {
 export function deleteTag(name: string) {
   return withBusy("Deleting tag…", async () => {
     await api.rpc("tagDelete", { ...targetPayload(), name })
+    if (state.logBranch === name) set({ logBranch: null, commits: [], selectedCommit: null, commitFiles: [] })
     await refreshAll()
   })
 }

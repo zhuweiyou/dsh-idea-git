@@ -359,7 +359,11 @@ export async function readLog(
   const r = await runGit(info.gitPath, { cwd: info.root, signal, args, timeoutMs: 60_000 })
   if (r.code !== 0) {
     const msg = (r.stderr || "") + (r.stdout || "")
-    if (/does not have any commits|your current branch .* does not have any commits|bad default revision/i.test(msg)) {
+    if (
+      /does not have any commits|your current branch .* does not have any commits|bad default revision|unknown revision|ambiguous argument|not a valid object name/i.test(
+        msg,
+      )
+    ) {
       return { commits: [], hasMore: false }
     }
     throw new Error(r.stderr.trim() || `git log exited with code ${r.code}`)
