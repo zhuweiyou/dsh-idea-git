@@ -87,10 +87,7 @@ export function MergeConflictsDialog() {
                     <button
                       type="button"
                       className="dig-btn dig-btn--primary"
-                      onClick={() => {
-                        close()
-                        void store.openConflict(f.path)
-                      }}
+                      onClick={() => store.openConflictFromMergeDialog(f.path)}
                     >
                       {t("Merge…")}
                     </button>
