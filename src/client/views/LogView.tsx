@@ -94,6 +94,7 @@ function TreeRow({
   title,
   className,
   onClick,
+  onDoubleClick,
   onContextMenu,
   dataRef,
   dataCurrent,
@@ -107,6 +108,7 @@ function TreeRow({
   title?: string
   className?: string
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
+  onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void
   onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void
   dataRef?: string
   dataCurrent?: boolean
@@ -118,6 +120,7 @@ function TreeRow({
       style={{ ["--tree-depth" as any]: depth }}
       title={title}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
       data-ref={dataRef}
       data-current={dataCurrent ? "true" : undefined}
@@ -174,6 +177,7 @@ function BranchRow({
           el.removeAttribute("data-selected")
         ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
       }}
+      onDoubleClick={() => store.openBranchHistory(b.name)}
       onContextMenu={(e) => openContextMenu(e, branchMenuItems(b, t))}
     />
   )
@@ -488,6 +492,7 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                     el.removeAttribute("data-selected")
                   ;(e.currentTarget as HTMLElement).setAttribute("data-selected", "true")
                 }}
+                onDoubleClick={() => store.openBranchHistory(tag)}
                 onContextMenu={(e) =>
                   openContextMenu(e, [
                     { label: t("Checkout"), run: () => void store.checkout(tag) },
