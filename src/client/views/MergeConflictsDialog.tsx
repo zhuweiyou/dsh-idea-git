@@ -17,8 +17,8 @@ export function MergeConflictsDialog() {
     if (!conflicts.some((f) => f.path === selected)) setSelected(conflicts[0]?.path || "")
   }, [s.files, selected])
   if (!s.mergeDialog) return null
-  const oursName = s.info?.branch?.head || t("Yours")
-  const theirsName = s.mergeSource || t("Theirs")
+  const oursName = s.info?.branch?.head || "?"
+  const theirsName = s.mergeSource || "?"
   const close = () => store.closeMergeDialog()
   const groups = (() => {
     if (!groupByDir) return [{ title: "", files: conflicts }]
