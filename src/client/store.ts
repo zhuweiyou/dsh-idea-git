@@ -60,6 +60,7 @@ export interface GitState {
   submodules: Array<{ path: string; sha: string; state: string; describe: string }>
   excludedHunks: Record<string, number[]>
   mergeDialog: boolean
+  reopenMergeDialog: boolean
   tagDialogCommit: string | null
   patchPreview: { text: string; stat: string; files: Array<{ path: string; added: number; deleted: number }> } | null
   incomingDialog: {
@@ -198,6 +199,7 @@ const initial: GitState = {
   submodules: [],
   excludedHunks: {},
   mergeDialog: false,
+  reopenMergeDialog: false,
   tagDialogCommit: null,
   patchPreview: null,
   incomingDialog: null,
@@ -929,8 +931,20 @@ export function addIgnore(files: string[], destination: "gitignore" | "exclude" 
 /* Conflict resolution                                                 */
 /* ------------------------------------------------------------------ */
 
+function maybeReopenMergeDialog() {
+  if (!state.reopenMergeDialog) return
+  set({ reopenMergeDialog: false })
+  if (state.files.some((f) => f.kind === "conflicted")) set({ mergeDialog: true })
+}
+
 export function closeConflict() {
   set({ conflict: null })
+  maybeReopenMergeDialog()
+}
+
+export function openConflictFromMergeDialog(file: string) {
+  set({ mergeDialog: false, reopenMergeDialog: true })
+  void openConflict(file)
 }
 
 export async function openConflict(file: string) {
@@ -973,6 +987,7 @@ export function resolveConflictContent(file: string, content: string) {
     await api.rpc("resolveConflictContent", { ...targetPayload(), file, content })
     await refreshStatus()
     set({ conflict: null })
+    maybeReopenMergeDialog()
   })
 }
 
@@ -985,6 +1000,7 @@ export function resolveSide(file: string, side: "ours" | "theirs" | "mark") {
     })
     await refreshStatus()
     set({ conflict: null })
+    maybeReopenMergeDialog()
   })
 }
 
