@@ -991,6 +991,38 @@ test("host integration", async () => {
           const r = await call("refDiff", { ...D(repo), from: "HEAD^", to: "HEAD", file: "pic.png" })
           ok("refDiff image kind", r.ok && r.value.kind === "image" && !!r.value.oldB64 && !!r.value.newB64)
         }
+
+        /* ---------------- checkout remote branch ---------------- */
+        console.log("\n[checkout-remote]")
+        {
+          const { repo, g } = makeRepo()
+          fs.writeFileSync(path.join(repo, "a.txt"), "A\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c1"])
+          const bare = path.join(path.dirname(repo), "remote.git")
+          fs.mkdirSync(bare)
+          execFileSync("git", ["init", "--bare", "-q"], { cwd: bare })
+          g(["remote", "add", "origin", bare])
+          g(["push", "-q", "origin", "main"])
+          g(["fetch", "-q", "origin"])
+          ok("checkout origin/main stays on main", (await call("checkout", { ...D(repo), branch: "origin/main" })).ok)
+          ok(
+            "head is branch main",
+            execFileSync("git", ["symbolic-ref", "--short", "HEAD"], { cwd: repo }).toString().trim() === "main",
+          )
+          g(["checkout", "-q", "-b", "feat/x"])
+          fs.writeFileSync(path.join(repo, "b.txt"), "B\n")
+          g(["add", "."])
+          g(["commit", "-qm", "c2"])
+          g(["push", "-q", "origin", "feat/x"])
+          g(["checkout", "-q", "main"])
+          g(["fetch", "-q", "origin"])
+          ok("checkout remote-only creates local", (await call("checkout", { ...D(repo), branch: "origin/feat/x" })).ok)
+          ok(
+            "tracking branch feat/x",
+            execFileSync("git", ["symbolic-ref", "--short", "HEAD"], { cwd: repo }).toString().trim() === "feat/x",
+          )
+        }
       } finally {
         try {
           fs.rmSync(base, { recursive: true, force: true })

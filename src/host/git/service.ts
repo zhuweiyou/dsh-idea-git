@@ -627,7 +627,33 @@ export async function checkout(info: RepoInfo, payload: any, signal?: AbortSigna
     if (payload?.start) args.push(String(payload.start))
     await runWrite(info, args, signal)
   } else {
-    await runWrite(info, ["checkout", branch], signal)
+    // Checkout of a remote ref should not detach HEAD: use the same-named local
+    // branch when it exists, otherwise create a local tracking branch.
+    const remoteMatch = branch.match(/^([^/]+)\/(.+)$/)
+    if (remoteMatch) {
+      const localName = remoteMatch[2]
+      const local = await runGit(info.gitPath, {
+        cwd: info.root,
+        signal,
+        args: ["rev-parse", "--verify", "--quiet", `refs/heads/${localName}`],
+      })
+      if (local.code === 0 && local.stdout.trim()) {
+        await runWrite(info, ["checkout", localName], signal)
+      } else {
+        const remote = await runGit(info.gitPath, {
+          cwd: info.root,
+          signal,
+          args: ["rev-parse", "--verify", "--quiet", `refs/remotes/${branch}`],
+        })
+        if (remote.code === 0 && remote.stdout.trim()) {
+          await runWrite(info, ["checkout", "--track", "-b", localName, branch], signal)
+        } else {
+          await runWrite(info, ["checkout", branch], signal)
+        }
+      }
+    } else {
+      await runWrite(info, ["checkout", branch], signal)
+    }
   }
   return { ok: true }
 }
