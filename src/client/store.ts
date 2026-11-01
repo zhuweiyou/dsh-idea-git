@@ -280,9 +280,11 @@ export function setAmend(amend: boolean) {
 }
 export function setCommitAuthor(author: string) {
   set({ commitAuthor: author })
+  setStatus(author ? t("Author set") : t("Author cleared"), "info")
 }
 export function setCommitSignoff(v: boolean) {
   set({ commitSignoff: v })
+  setStatus(v ? t("Signed-off-by enabled") : t("Signed-off-by disabled"), "info")
 }
 
 export function toggleSelect(path: string) {
@@ -737,13 +739,21 @@ export function removeWorktree(worktreePath: string) {
 export function generateCommitMessage(locale: string) {
   if (state.aiBusy) return
   set({ aiBusy: true })
+  setStatus(t("Generating commit message…"), "info")
   void (async () => {
     try {
       const r = await api.rpc<{ message: string }>("aiCommit", { ...targetPayload(), locale })
-      if (r.message) set({ message: r.message, aiBusy: false })
-      else set({ aiBusy: false, error: "No staged changes to describe", errorCode: null })
+      if (r.message) {
+        set({ message: r.message, aiBusy: false })
+        setStatus(t("Commit message generated"), "info")
+      } else {
+        set({ aiBusy: false, error: "No staged changes to describe", errorCode: null })
+        setStatus(t("No staged changes to describe"), "error")
+      }
     } catch (e: any) {
-      set({ aiBusy: false, error: e?.message || String(e), errorCode: e?.code || null })
+      const msg = e?.message || String(e)
+      set({ aiBusy: false, error: msg, errorCode: e?.code || null })
+      setStatus(t("Failed: {message}", { message: msg }), "error")
     }
   })()
 }
