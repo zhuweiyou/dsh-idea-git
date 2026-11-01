@@ -81,6 +81,9 @@ export function MergeConflictsDialog() {
           >
             {t("Resolve All Simple Conflicts")}
           </button>
+          <button type="button" className="dig-btn" onClick={() => setGroupByDir((v) => !v)}>
+            {t("Group by directory")}
+          </button>
         </div>
         <div className="dig-conflicttable__head">
           <span>{t("File")}</span>
@@ -90,6 +93,7 @@ export function MergeConflictsDialog() {
           <span title={`${t("Theirs")} (${theirsName})`}>
             {t("Theirs")} ({theirsName})
           </span>
+          <span>{t("Manual")}</span>
         </div>
         <div className="dig-conflicttable__body">
           {conflicts.length ? (
@@ -102,6 +106,7 @@ export function MergeConflictsDialog() {
                     key={f.path}
                     data-selected={selected === f.path ? "true" : undefined}
                     onClick={() => setSelected(f.path)}
+                    onDoubleClick={() => store.openConflictFromMergeDialog(f.path)}
                   >
                     <span className="dig-conflicttable__path" title={f.path}>
                       {f.path}
@@ -132,6 +137,18 @@ export function MergeConflictsDialog() {
                         {t("Accept")}
                       </button>
                     </span>
+                    <span className="dig-conflicttable__cell">
+                      <button
+                        type="button"
+                        className="dig-btn dig-btn--primary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          store.openConflictFromMergeDialog(f.path)
+                        }}
+                      >
+                        {t("Merge…")}
+                      </button>
+                    </span>
                   </div>
                 ))}
               </React.Fragment>
@@ -142,9 +159,6 @@ export function MergeConflictsDialog() {
         </div>
         <div className="dig-conflicttable__foot">
           <span>{t("Unresolved {n} files", { n: conflicts.length })}</span>
-          <button type="button" className="dig-btn" onClick={() => setGroupByDir((v) => !v)}>
-            {t("Group by directory")}
-          </button>
         </div>
       </div>
     </Modal>
