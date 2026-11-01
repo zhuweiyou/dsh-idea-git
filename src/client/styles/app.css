@@ -2833,7 +2833,7 @@ body.dig-docked #root {
 }
 .dig-conflicttable__head > span:nth-child(n + 2),
 .dig-conflicttable__cell {
-  flex: 0 0 104px;
+  flex: 0 0 150px;
   justify-content: center;
   text-align: center;
 }

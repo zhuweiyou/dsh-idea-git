@@ -11,6 +11,8 @@ export function MergeConflictsDialog() {
   const t = useT()
   const theme = useDshTheme()
   if (!s.mergeDialog) return null
+  const oursName = s.info?.branch?.head || t("Ours")
+  const theirsName = s.mergeSource || t("Theirs")
   const conflicts = s.files.filter((f) => f.kind === "conflicted")
   const close = () => store.closeMergeDialog()
   return (
@@ -55,8 +57,12 @@ export function MergeConflictsDialog() {
           <div className="dig-conflicttable">
             <div className="dig-conflicttable__head">
               <span>{t("File")}</span>
-              <span>{t("Ours")}</span>
-              <span>{t("Theirs")}</span>
+              <span title={oursName}>
+                {t("Ours")} ({oursName})
+              </span>
+              <span title={theirsName}>
+                {t("Theirs")} ({theirsName})
+              </span>
               <span>{t("Manual")}</span>
             </div>
             <div className="dig-conflicttable__body">

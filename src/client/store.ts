@@ -61,6 +61,7 @@ export interface GitState {
   excludedHunks: Record<string, number[]>
   mergeDialog: boolean
   reopenMergeDialog: boolean
+  mergeSource: string | null
   tagDialogCommit: string | null
   patchPreview: { text: string; stat: string; files: Array<{ path: string; added: number; deleted: number }> } | null
   incomingDialog: {
@@ -200,6 +201,7 @@ const initial: GitState = {
   excludedHunks: {},
   mergeDialog: false,
   reopenMergeDialog: false,
+  mergeSource: null,
   tagDialogCommit: null,
   patchPreview: null,
   incomingDialog: null,
@@ -799,6 +801,7 @@ export function resolveConflict(file: string, side: "ours" | "theirs" | "mark") 
 
 export function mergeBranch(name: string) {
   return withBusy("Merging…", async () => {
+    set({ mergeSource: name })
     const r = await api.rpc<{ ok: boolean; output: string }>("merge", {
       ...targetPayload(),
       branch: name,
@@ -1750,6 +1753,7 @@ export function cloneRepo(url: string, parent: string) {
 export function abortOperation() {
   return withBusy("Aborting…", async () => {
     await api.rpc("abortOperation", { ...targetPayload() })
+    set({ mergeSource: null })
     await refreshAll()
     setToast(t("Operation aborted"))
   })
