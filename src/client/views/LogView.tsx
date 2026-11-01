@@ -1131,6 +1131,7 @@ function CommitRow({
   return (
     <div
       className="dig-crow"
+      data-commit={commit.id}
       data-selected={selected ? "true" : undefined}
       onClick={(e) =>
         void store.selectCommit(commit.id, e.shiftKey ? "range" : e.metaKey || e.ctrlKey ? "toggle" : "single")
@@ -1171,6 +1172,13 @@ function CommitList({
   const s = useGit()
   const t = useT()
   const scrollRef = React.useRef<HTMLDivElement>(null)
+  const anchorId = React.useRef<string>("")
+  React.useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el || !anchorId.current) return
+    const row = el.querySelector<HTMLElement>(`[data-commit="${CSS.escape(anchorId.current)}"]`)
+    if (row) el.scrollTop = row.offsetTop - 24
+  }, [s.commits])
   const filtered = React.useMemo(() => {
     let list = s.commits
     const q = text.trim()
@@ -1207,6 +1215,13 @@ function CommitList({
     const el = scrollRef.current
     if (!el) return
     const onScroll = () => {
+      const rows = el.querySelectorAll<HTMLElement>(".dig-crow[data-commit]")
+      for (const row of rows) {
+        if (row.offsetTop + row.offsetHeight > el.scrollTop + 2) {
+          anchorId.current = row.dataset.commit || ""
+          break
+        }
+      }
       if (s.logHasMore && !s.logLoading && el.scrollTop + el.clientHeight >= el.scrollHeight - 200)
         void store.loadLog(false)
     }
