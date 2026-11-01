@@ -97,16 +97,16 @@ jobs:
           subjects = [x.strip() for x in raw.splitlines() if x.strip()]
 
           groups = [
-              ("feat", "新功能"),
-              ("fix", "修复"),
-              ("perf", "性能"),
-              ("refactor", "重构"),
-              ("docs", "文档"),
-              ("test", "测试"),
-              ("build", "构建"),
+              ("feat", "Features"),
+              ("fix", "Fixes"),
+              ("perf", "Performance"),
+              ("refactor", "Refactor"),
+              ("docs", "Docs"),
+              ("test", "Tests"),
+              ("build", "Build"),
               ("ci", "CI"),
-              ("style", "样式"),
-              ("chore", "杂项"),
+              ("style", "Style"),
+              ("chore", "Chores"),
           ]
           buckets = {key: [] for key, _ in groups}
           buckets["other"] = []
@@ -118,17 +118,17 @@ jobs:
               text = m.group(2) if m else subject
               buckets.setdefault(key, []).append(text)
 
-          lines = ["## 更新内容"] + ([f"\n相比 {prev}"] if prev else [])
+          lines = ["## What's Changed"] + ([f"\nCompared to {prev}"] if prev else [])
           for key, title in groups:
               items = buckets.get(key, [])
               if items:
-                  lines.append(f"\n### {title} ({key})")
+                  lines.append(f"\n### {title}")
                   lines.extend(f"- {item}" for item in items)
           if buckets.get("other"):
-              lines.append("\n### 其他")
+              lines.append("\n### Other")
               lines.extend(f"- {item}" for item in buckets["other"])
           if len(lines) == 1:
-              lines.append("\n无提交记录")
+              lines.append("\nNo commits")
           with open("release-notes.md", "w", encoding="utf-8") as f:
               f.write("\n".join(lines) + "\n")
           PY
