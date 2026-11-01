@@ -1484,9 +1484,9 @@ function FilterBar({
 export function LogView() {
   const s = useGit()
   const t = useT()
-  // Refresh silently whenever the Log view is shown.
+  // Initial load only; subsequent updates are detected by autoRefresh polling.
   React.useEffect(() => {
-    void store.loadLog(true)
+    if (!s.commits.length) void store.loadLog(true)
   }, [])
   const [showBranches, setShowBranches] = React.useState(() => localStorage.getItem("dig.showBranches") !== "0")
   const hideBranches = () => {
@@ -1569,15 +1569,15 @@ export function LogView() {
             orientation="horizontal"
             first={center}
             second={right}
-            initial={Math.max(320, (typeof window !== "undefined" ? window.innerWidth : 900) - 780)}
-            min={240}
-            storageKey="logDetails"
+            initial={340}
+            min={180}
+            anchor="second"
+            storageKey="logDetailsV4"
           />
         }
         initial={240}
-        min={160}
-        max={420}
-        storageKey="branches"
+        min={120}
+        storageKey="branchesV4"
       />
     </div>
   )

@@ -3114,3 +3114,72 @@ body.dig-docked #root {
 .dig-statusbar__msg:hover {
   color: var(--fg-secondary);
 }
+
+/* Three-way merge: Ours | Result | Theirs */
+.dig-merge__cols {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+}
+.dig-merge__pane--result {
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  display: flex;
+  flex-direction: column;
+}
+.dig-merge__result {
+  flex: 1;
+  width: 100%;
+  min-height: 48px;
+  resize: vertical;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+.dig-merge__arrow {
+  margin-left: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: var(--fs-tiny);
+  line-height: 1;
+  padding: 2px 5px;
+}
+.dig-merge__arrow:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Large diff: limit initial rendering with show-all control. */
+.dig-diff__more {
+  position: sticky;
+  bottom: 8px;
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+  pointer-events: none;
+}
+.dig-diff__more .dig-btn {
+  pointer-events: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+/* Image diff click-to-zoom */
+.dig-imgpane__img {
+  cursor: zoom-in;
+}
+.dig-imgdiff[data-zoom="true"] {
+  overflow: auto;
+  align-items: flex-start;
+}
+.dig-imgdiff[data-zoom="true"] .dig-imgpane__img {
+  max-width: none;
+  max-height: none;
+  cursor: zoom-out;
+}

@@ -5,12 +5,14 @@ export function SplitPane(props: {
   orientation: 'horizontal' | 'vertical'
   first: React.ReactNode
   second: React.ReactNode
-  initial?: number // px of the first pane
+  initial?: number // px of the anchored pane (first by default)
   min?: number
   max?: number
+  anchor?: 'first' | 'second'
   storageKey?: string
 }) {
   const horizontal = props.orientation === 'horizontal' // side by side
+  const anchorSecond = props.anchor === 'second'
   const containerRef = React.useRef<HTMLDivElement>(null)
   const [size, setSize] = React.useState<number>(() => {
     if (props.storageKey) {
@@ -47,7 +49,13 @@ export function SplitPane(props: {
     const rect = containerRef.current?.getBoundingClientRect()
     if (!rect) return
     const move = (ev: PointerEvent) => {
-      const raw = horizontal ? ev.clientX - rect.left : ev.clientY - rect.top
+      const raw = horizontal
+        ? anchorSecond
+          ? rect.right - ev.clientX
+          : ev.clientX - rect.left
+        : anchorSecond
+          ? rect.bottom - ev.clientY
+          : ev.clientY - rect.top
       const max = props.max ?? (horizontal ? rect.width - 180 : rect.height - 120)
       const next = Math.max(props.min ?? 120, Math.min(max, raw))
       setSize(next)
@@ -63,11 +71,35 @@ export function SplitPane(props: {
 
   return (
     <div ref={containerRef} className={'dig-split dig-split--' + (horizontal ? 'h' : 'v')}>
-      <div className="dig-split__first" style={horizontal ? { width: size } : { height: size }}>
+      <div
+        className="dig-split__first"
+        style={
+          horizontal
+            ? anchorSecond
+              ? { flex: 1 }
+              : { width: size }
+            : anchorSecond
+              ? { flex: 1 }
+              : { height: size }
+        }
+      >
         {props.first}
       </div>
       <div className="dig-split__handle" role="separator" onPointerDown={onDown} />
-      <div className="dig-split__second">{props.second}</div>
+      <div
+        className="dig-split__second"
+        style={
+          horizontal
+            ? anchorSecond
+              ? { width: size, flex: 'none' }
+              : undefined
+            : anchorSecond
+              ? { height: size, flex: 'none' }
+              : undefined
+        }
+      >
+        {props.second}
+      </div>
     </div>
   )
 }

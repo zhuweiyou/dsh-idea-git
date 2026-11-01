@@ -4,7 +4,7 @@ import { useGit, Icon, IconButton } from "../lib/ui"
 import { useT } from "../lib/i18n"
 import { computeRows, wordRanges, type DiffRow, type IgnorePolicy } from "../lib/textdiff"
 import * as store from "../store"
-import { openContextMenu } from "../lib/contextMenu"
+import { openContextMenu, copyText } from "../lib/contextMenu"
 import styles from "../vendor/vcs/DiffEditor.module.css"
 
 type Mode = "split" | "unified"
@@ -344,12 +344,13 @@ function UnifiedView({
 
 function ImageView({ d, t }: { d: NonNullable<ReturnType<typeof useGit>["diff"]>; t: (s: string, p?: any) => string }) {
   const src = (b64?: string) => (b64 ? `data:${d.mime || "application/octet-stream"};base64,${b64}` : "")
+  const [zoom, setZoom] = React.useState(false)
   return (
-    <div className="dig-imgdiff">
+    <div className="dig-imgdiff" data-zoom={zoom ? "true" : undefined}>
       <div className="dig-imgpane">
         <div className="dig-imgpane__label">{d.oldLabel || t("Before")}</div>
         {d.oldB64 ? (
-          <img className="dig-imgpane__img" src={src(d.oldB64)} alt="old" />
+          <img className="dig-imgpane__img" src={src(d.oldB64)} alt="old" onClick={() => setZoom((v) => !v)} />
         ) : (
           <div className="dig-empty">{t("No image")}</div>
         )}
@@ -357,7 +358,7 @@ function ImageView({ d, t }: { d: NonNullable<ReturnType<typeof useGit>["diff"]>
       <div className="dig-imgpane">
         <div className="dig-imgpane__label">{d.newLabel || t("After")}</div>
         {d.newB64 ? (
-          <img className="dig-imgpane__img" src={src(d.newB64)} alt="new" />
+          <img className="dig-imgpane__img" src={src(d.newB64)} alt="new" onClick={() => setZoom((v) => !v)} />
         ) : (
           <div className="dig-empty">{t("No image")}</div>
         )}
@@ -370,6 +371,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
   const s = useGit()
   const t = useT()
   const [opts, setOpts] = React.useState<Opts>(loadOpts)
+  const [showAllRows, setShowAllRows] = React.useState(false)
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState("")
   const [findOpen, setFindOpen] = React.useState(false)
@@ -380,7 +382,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
   const bodyRef = React.useRef<HTMLDivElement>(null)
   const d = s.diff
   const b = s.blame
-  const [hunks, setHunks] = React.useState<Array<{ index: number; header: string }>>([])
+  const [hunks, setHunks] = React.useState<Array<{ index: number; header: string; patch?: string }>>([])
   React.useEffect(() => {
     let live = true
     const file = d?.file
@@ -441,6 +443,8 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
   }
   const excluded = new Set<number>(d?.file ? s.excludedHunks?.[d.file] || [] : [])
   const title = b ? b.title : d!.title
+  const ROW_LIMIT = 800
+  const shownRows = showAllRows ? rows : rows.slice(0, ROW_LIMIT)
 
   return (
     <div className="dig-theme dig-diffarea" data-theme={theme} data-wrap={wrap ? "true" : undefined} style={{ bottom }}>
@@ -480,6 +484,9 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
                       label: h.header + "  " + t(d.staged ? "Unstage Hunk" : "Stage Hunk"),
                       run: () => void store.applyHunks(d.file!, [h.index], d.staged ? "unstage" : "stage"),
                     },
+                    ...(h.patch
+                      ? [{ label: h.header + "  " + t("Copy Hunk Patch"), run: () => copyText(h.patch!) }]
+                      : []),
                     ...(d.staged
                       ? []
                       : [
@@ -639,7 +646,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
           <div className="dig-empty">{t("No differences")}</div>
         ) : opts.mode === "split" ? (
           <SplitView
-            rows={rows}
+            rows={shownRows}
             highlight={opts.highlight}
             collapse={opts.collapse}
             expanded={expanded}
@@ -652,7 +659,7 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
           />
         ) : (
           <UnifiedView
-            rows={rows}
+            rows={shownRows}
             highlight={opts.highlight}
             collapse={opts.collapse}
             expanded={expanded}
@@ -664,6 +671,13 @@ export function DiffView({ bottom, theme }: { bottom: number; theme: "light" | "
             hunkLabel={t("Include in commit")}
           />
         )}
+        {rows.length > ROW_LIMIT ? (
+          <div className="dig-diff__more">
+            <button type="button" className="dig-btn" onClick={() => setShowAllRows((v) => !v)}>
+              {showAllRows ? t("Show fewer lines") : t("Show all {n} lines", { n: rows.length })}
+            </button>
+          </div>
+        ) : null}
       </div>
       {editing && d && d.file ? (
         <div className="dig-edit-overlay">

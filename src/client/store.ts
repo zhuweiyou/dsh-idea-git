@@ -35,6 +35,7 @@ export interface GitState {
   info: RepoInfoResult | null
   files: FileEntry[]
   status: StatusResult | null
+  statusSignature: string
   branches: BranchItem[]
   tags: string[]
   remotes: RemoteItem[]
@@ -168,6 +169,7 @@ const initial: GitState = {
   info: null,
   files: [],
   status: null,
+  statusSignature: "",
   branches: [],
   tags: [],
   remotes: [],
@@ -320,12 +322,13 @@ export async function refreshAll() {
         commits: [],
         branches: [],
         status: null,
+        statusSignature: "",
       })
       return
     }
     set({ info, ready: true })
     await Promise.all([refreshStatus(), refreshBranches(), refreshTags(), refreshRemotes()])
-    await loadLog(true)
+    if (state.tab === "log") await loadLog(true)
   } catch (e: any) {
     set({ loading: false, ready: true, error: e?.message || String(e), errorCode: e?.code || null })
   }
@@ -346,7 +349,7 @@ export async function refreshStatus() {
     const status = await api.rpc<StatusResult>("status", targetPayload())
     const include: Record<string, boolean> = {}
     for (const f of status.files) include[f.path] = state.include[f.path] !== false
-    set({ status, files: status.files, include, error: null, errorCode: null })
+    set({ status, files: status.files, include, statusSignature: JSON.stringify(status), error: null, errorCode: null })
   } catch (e: any) {
     set({ error: e?.message || String(e), errorCode: e?.code || null })
   }
@@ -1629,7 +1632,7 @@ export function commitChangelist(paths: string[], push: boolean) {
 
 /* Hunk-level staging */
 export async function listHunks(file: string, staged: boolean) {
-  return api.rpc<Array<{ index: number; header: string }>>("listHunks", {
+  return api.rpc<Array<{ index: number; header: string; patch?: string }>>("listHunks", {
     ...targetPayload(),
     file,
     staged,
@@ -1816,4 +1819,21 @@ export function runMenuAction(label: string, run: () => unknown) {
   if (result && typeof (result as any).then === "function") return
   if (state.busy) return
   if (toastSeq === before) setToast(t("Completed: {action}", { action: label }))
+}
+
+export async function autoRefresh() {
+  if (!state.target || state.busy) return
+  try {
+    const status = await api.rpc<StatusResult>("status", targetPayload())
+    const sig = JSON.stringify(status)
+    if (sig === state.statusSignature) return
+    const headChanged = state.status?.head !== status.head || state.status?.upstream !== status.upstream
+    const include: Record<string, boolean> = {}
+    for (const f of status.files) include[f.path] = state.include[f.path] !== false
+    set({ status, files: status.files, include, statusSignature: sig, error: null, errorCode: null })
+    if (headChanged) {
+      await Promise.all([refreshBranches(), refreshTags(), refreshRemotes()])
+      if (state.tab === "log" && !state.logLoading) await loadLog(true)
+    }
+  } catch {}
 }

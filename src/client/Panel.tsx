@@ -289,8 +289,17 @@ export function Panel() {
     }
   }, [w.open, w.height, w.minimized, w.maximized])
   React.useEffect(() => {
-    if (w.open && !w.minimized && s.tab === "log") void store.loadLog(true)
-    // Intentionally only on visibility transitions; tab changes are handled by LogView.
+    if (!w.open || w.minimized) return
+    let stopped = false
+    const tick = () => {
+      if (!stopped && document.visibilityState === "visible") void store.autoRefresh()
+    }
+    tick()
+    const timer = window.setInterval(tick, 2500)
+    return () => {
+      stopped = true
+      window.clearInterval(timer)
+    }
   }, [w.open, w.minimized])
 
   React.useEffect(() => {

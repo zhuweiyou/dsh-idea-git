@@ -68,11 +68,13 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
   }, [c?.working, c?.diff3, c?.loading])
   const conflictCount = React.useMemo(() => segs.filter((x) => x.type === "conflict").length, [segs])
   const [choices, setChoices] = React.useState<Record<number, "ours" | "theirs" | "both">>({})
+  const [edits, setEdits] = React.useState<Record<number, string>>({})
   const [resultEditing, setResultEditing] = React.useState(false)
   const [resultText, setResultText] = React.useState("")
   const [showBase, setShowBase] = React.useState(false)
   React.useEffect(() => {
     setChoices({})
+    setEdits({})
     setResultEditing(false)
     setShowBase(false)
   }, [c?.file])
@@ -84,20 +86,24 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
     for (const seg of segs) {
       if (seg.type === "text") parts.push(seg.text)
       else {
-        const ch = choices[k] || "both"
-        parts.push(
-          ch === "ours"
-            ? seg.ours
-            : ch === "theirs"
-              ? seg.theirs
-              : [seg.ours, seg.theirs].filter((x) => x !== "").join("\n"),
-        )
+        if (edits[k] !== undefined) parts.push(edits[k])
+        else {
+          const ch = choices[k] || "both"
+          parts.push(
+            ch === "ours"
+              ? seg.ours
+              : ch === "theirs"
+                ? seg.theirs
+                : [seg.ours, seg.theirs].filter((x) => x !== "").join("\n"),
+          )
+        }
         k++
       }
     }
     return parts.join("\n")
   }
-  const allChosen = conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => choices[i])
+  const allChosen =
+    conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => !!choices[i] || edits[i] !== undefined)
   const apply = () => {
     void store.resolveConflictContent(c.file, resultEditing ? resultText : buildResult())
   }
@@ -162,36 +168,66 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                     </pre>
                   )
                 const my = k++
+                const derived =
+                  choices[my] === "theirs"
+                    ? seg.theirs
+                    : choices[my] === "ours"
+                      ? seg.ours
+                      : [seg.ours, seg.theirs].filter((x) => x !== "").join("\n")
+                const result = edits[my] !== undefined ? edits[my] : derived
+                const push = (text: string) => setEdits((prev) => ({ ...prev, [my]: text }))
                 return (
                   <div key={idx} className="dig-merge__conflict">
                     <div className="dig-merge__cols">
                       <div className="dig-merge__pane dig-merge__pane--ours">
-                        <div className="dig-merge__label">{t("Ours")}</div>
+                        <div className="dig-merge__label">
+                          {t("Ours")}{" "}
+                          <button
+                            type="button"
+                            className="dig-merge__arrow"
+                            title={t("Use Ours")}
+                            onClick={() => push(seg.ours)}
+                          >
+                            →
+                          </button>
+                        </div>
                         <pre>{seg.ours || " "}</pre>
                       </div>
-                      {seg.base !== undefined ? (
-                        <div className="dig-merge__pane dig-merge__pane--base">
-                          <div className="dig-merge__label">{t("Base")}</div>
-                          <pre>{seg.base || " "}</pre>
+                      <div className="dig-merge__pane dig-merge__pane--result">
+                        <div className="dig-merge__label">
+                          {t("Result")}{" "}
+                          {seg.base !== undefined ? (
+                            <button
+                              type="button"
+                              className="dig-merge__arrow"
+                              title={t("Use Base")}
+                              onClick={() => push(seg.base || "")}
+                            >
+                              Base →
+                            </button>
+                          ) : null}
                         </div>
-                      ) : null}
+                        <textarea
+                          className="dig-merge__result"
+                          value={result}
+                          spellCheck={false}
+                          onChange={(e) => push(e.target.value)}
+                        />
+                      </div>
                       <div className="dig-merge__pane dig-merge__pane--theirs">
-                        <div className="dig-merge__label">{t("Theirs")}</div>
+                        <div className="dig-merge__label">
+                          {t("Theirs")}{" "}
+                          <button
+                            type="button"
+                            className="dig-merge__arrow"
+                            title={t("Use Theirs")}
+                            onClick={() => push(seg.theirs)}
+                          >
+                            →
+                          </button>
+                        </div>
                         <pre>{seg.theirs || " "}</pre>
                       </div>
-                    </div>
-                    <div className="dig-merge__actions">
-                      {(["ours", "theirs", "both"] as const).map((ch) => (
-                        <button
-                          key={ch}
-                          type="button"
-                          className="dig-btn"
-                          data-active={choices[my] === ch ? "true" : undefined}
-                          onClick={() => setChoices((prev) => ({ ...prev, [my]: ch }))}
-                        >
-                          {ch === "ours" ? t("Ours") : ch === "theirs" ? t("Theirs") : t("Both")}
-                        </button>
-                      ))}
                     </div>
                   </div>
                 )
