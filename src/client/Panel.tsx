@@ -333,10 +333,7 @@ export function Panel() {
     if (!w.open) return
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key !== "Escape") return
-      // Do not hijack Esc while typing, or while a prompt dialog is open.
-      const t = ev.target as HTMLElement | null
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable))
-        return
+      // Modal dialogs own Escape; otherwise Escape closes the panel even from inputs.
       if (document.querySelector('.dig-modal-mask, [aria-modal="true"]')) return
       // Esc dismisses the top-most overlay first, otherwise closes the panel (same as the close button).
       if (s.diff || s.blame) {
