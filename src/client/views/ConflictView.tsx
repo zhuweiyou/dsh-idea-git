@@ -116,8 +116,6 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
     }
     return parts.join("\n")
   }
-  const allChosen =
-    conflictCount === 0 || Array.from({ length: conflictCount }).every((_, i) => !!choices[i] || edits[i] !== undefined)
   const apply = () => {
     void store.resolveConflictContent(c.file, resultEditing ? resultText : buildResult())
   }
@@ -137,33 +135,6 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
           {conflictCount ? ` · ${conflictCount}` : ""}
         </span>
         <span style={{ flex: 1 }} />
-        <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, "ours")}>
-          {t("Accept Ours")}
-        </button>
-        <button type="button" className="dig-btn" onClick={() => void store.resolveSide(c.file, "theirs")}>
-          {t("Accept Theirs")}
-        </button>
-        <button type="button" className="dig-btn" onClick={() => setShowBase((v) => !v)}>
-          {t("Base")}
-        </button>
-        <button
-          type="button"
-          className="dig-btn"
-          onClick={() => {
-            setResultText(buildResult())
-            setResultEditing(true)
-          }}
-        >
-          {t("Edit Result…")}
-        </button>
-        <button
-          type="button"
-          className="dig-btn dig-btn--primary"
-          disabled={!allChosen && !resultEditing}
-          onClick={apply}
-        >
-          {t("Apply Current File & Mark Resolved")}
-        </button>
         <IconButton icon="close" title={t("Close")} onClick={() => store.closeConflict()} />
       </div>
       <div className="dig-diff__body">
