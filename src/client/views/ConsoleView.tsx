@@ -23,7 +23,11 @@ export function ConsoleView() {
   return (
     <div className="dig-console">
       <div className="dig-console__bar">
-        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadConsole()} />
+        <IconButton
+          icon="refresh"
+          title={t("Refresh")}
+          onClick={() => void store.runRefresh(() => store.loadConsole())}
+        />
         <span className="dig-toolbar__hint">{t("{n} commands", { n: s.consoleEntries.length })}</span>
         <span style={{ flex: 1 }} />
         <button type="button" className="dig-btn" onClick={() => void store.clearConsole()}>

@@ -22,7 +22,11 @@ export function WorktreeView() {
   return (
     <div className="dig-wt">
       <div className="dig-toolbar">
-        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadWorktrees()} />
+        <IconButton
+          icon="refresh"
+          title={t("Refresh")}
+          onClick={() => void store.runRefresh(() => store.loadWorktrees())}
+        />
         <button type="button" className="dig-btn" onClick={add}>
           ＋ {t("Add worktree…")}
         </button>

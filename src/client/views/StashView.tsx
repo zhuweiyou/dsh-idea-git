@@ -15,7 +15,11 @@ export function StashView() {
   return (
     <div className="dig-stash">
       <div className="dig-toolbar">
-        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadStashes()} />
+        <IconButton
+          icon="refresh"
+          title={t("Refresh")}
+          onClick={() => void store.runRefresh(() => store.loadStashes())}
+        />
         <button type="button" className="dig-btn" onClick={() => void store.stashAll()}>
           ⟱ {t("Stash changes")}
         </button>

@@ -15,7 +15,11 @@ export function ShelfView() {
   return (
     <div className="dig-stash">
       <div className="dig-toolbar">
-        <IconButton icon="refresh" title={t("Refresh")} onClick={() => void store.loadShelves()} />
+        <IconButton
+          icon="refresh"
+          title={t("Refresh")}
+          onClick={() => void store.runRefresh(() => store.loadShelves())}
+        />
         <button
           type="button"
           className="dig-btn"

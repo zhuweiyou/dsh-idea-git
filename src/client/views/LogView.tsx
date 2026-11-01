@@ -1491,7 +1491,11 @@ function FilterBar({
         )}
       </Dropdown>
       <span style={{ flex: 1 }} />
-      <IconButton icon="refresh" title={t("Refresh log")} onClick={() => void store.loadLog(true)} />
+      <IconButton
+        icon="refresh"
+        title={t("Refresh log")}
+        onClick={() => void store.runRefresh(() => store.loadLog(true))}
+      />
     </div>
   )
 }

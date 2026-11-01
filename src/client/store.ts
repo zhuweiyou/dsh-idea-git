@@ -1103,6 +1103,7 @@ export function undoLastCommit() {
 }
 
 export async function openCommitInBrowser(commit: string) {
+  setStatus(t("Opening browser…"), "info")
   try {
     const { url } = await api.rpc<{ url: string | null }>("remoteUrl", targetPayload())
     if (!url) throw new Error(t("No remote URL available"))
@@ -1114,8 +1115,10 @@ export async function openCommitInBrowser(commit: string) {
     else if (/bitbucket/.test(url)) href = `${base}/commits/${commit}`
     else href = `${base}/commit/${commit}`
     window.open(href, "_blank")
+    setStatus(t("Opened in browser"), "info")
   } catch (e: any) {
     set({ error: e?.message || String(e), errorCode: null })
+    setStatus(t("Failed: {message}", { message: e?.message || String(e) }), "error")
   }
 }
 
@@ -1846,4 +1849,14 @@ export async function autoRefresh() {
       if (state.tab === "log" && !state.logLoading) await loadLog(true)
     }
   } catch {}
+}
+
+export async function runRefresh(load: () => Promise<unknown>) {
+  setStatus(t("Refreshing…"), "info")
+  try {
+    await load()
+    setStatus(t("Refreshed"), "info")
+  } catch (e: any) {
+    setStatus(t("Failed: {message}", { message: e?.message || String(e) }), "error")
+  }
 }
