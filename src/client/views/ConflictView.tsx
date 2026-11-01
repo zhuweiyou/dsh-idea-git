@@ -202,7 +202,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                               title={t("Use Base")}
                               onClick={() => push(seg.base || "")}
                             >
-                              Base →
+                              {t("Use Base")} →
                             </button>
                           ) : null}
                         </div>
