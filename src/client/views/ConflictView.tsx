@@ -75,6 +75,8 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
   const s = useGit()
   const t = useT()
   const c = s.conflict
+  const oursName = s.info?.branch?.head || "?"
+  const theirsName = s.mergeSource || "?"
   const segs = React.useMemo(() => {
     if (!c || c.loading) return []
     const src = c.diff3 && c.diff3.includes("|||||||") ? c.diff3 : c.working
@@ -171,7 +173,9 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                   <div key={idx} className="dig-merge__conflict">
                     <div className="dig-merge__cols">
                       <div className="dig-merge__pane dig-merge__pane--ours">
-                        <div className="dig-merge__label">{t("Ours")}</div>
+                        <div className="dig-merge__label">
+                          {t("Ours")} ({oursName})
+                        </div>
                         <Numbered text={seg.ours} />
                         <div className="dig-merge__edges dig-merge__edges--right">
                           <button
@@ -193,19 +197,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                         </div>
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--result">
-                        <div className="dig-merge__label">
-                          {t("Result")}{" "}
-                          {seg.base !== undefined ? (
-                            <button
-                              type="button"
-                              className="dig-merge__arrow"
-                              title={t("Use Base")}
-                              onClick={() => push(seg.base || "")}
-                            >
-                              {t("Use Base")} →
-                            </button>
-                          ) : null}
-                        </div>
+                        <div className="dig-merge__label">{t("Result")}</div>
                         <textarea
                           className="dig-merge__result"
                           value={result}
@@ -214,7 +206,9 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                         />
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--theirs">
-                        <div className="dig-merge__label">{t("Theirs")}</div>
+                        <div className="dig-merge__label">
+                          {t("Theirs")} ({theirsName})
+                        </div>
                         <Numbered text={seg.theirs} />
                         <div className="dig-merge__edges dig-merge__edges--left">
                           <button
