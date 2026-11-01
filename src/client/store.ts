@@ -105,7 +105,6 @@ export interface GitState {
     working: string
     diff3: string
   } | null
-  toasts: Array<{ id: number; message: string }>
   statusText: string | null
   statusKind: "info" | "error"
   compare: {
@@ -188,7 +187,6 @@ const initial: GitState = {
   detailRange: null,
   include: {},
   conflict: null,
-  toasts: [],
   statusText: null,
   statusKind: "info",
   compare: null,
