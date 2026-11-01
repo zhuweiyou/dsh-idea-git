@@ -289,6 +289,11 @@ export function Panel() {
     }
   }, [w.open, w.height, w.minimized, w.maximized])
   React.useEffect(() => {
+    if (w.open && !w.minimized && s.tab === "log") void store.loadLog(true)
+    // Intentionally only on visibility transitions; tab changes are handled by LogView.
+  }, [w.open, w.minimized])
+
+  React.useEffect(() => {
     saveCurrentWorkspace()
   }, [w.open, w.height, w.maximized, w.minimized])
   React.useEffect(() => {
