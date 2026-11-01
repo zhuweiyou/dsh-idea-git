@@ -366,7 +366,7 @@ export function Panel() {
   const content = (
     <>
       {!w.maximized && (s.diff || s.blame) ? <DiffView bottom={bottom} theme={w.theme} /> : null}
-      {!w.maximized && s.conflict ? <ConflictView bottom={bottom} theme={w.theme} /> : null}
+      {!w.maximized && s.conflict ? <ConflictView key={s.conflict.file} bottom={bottom} theme={w.theme} /> : null}
       {!w.maximized && s.compare ? <CompareView bottom={bottom} theme={w.theme} /> : null}
       <div
         className="dig-theme dig-panel"
