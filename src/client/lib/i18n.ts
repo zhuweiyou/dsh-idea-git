@@ -406,6 +406,8 @@ const zh: Record<string, string> = {
   'Refreshed': '已刷新',
   'Refreshing…': '刷新中…',
   'Done': '完成',
+  'Manual': '手动处理',
+  'File': '文件',
   'Opened in browser': '已在浏览器打开',
   'Opening browser…': '正在打开浏览器…',
   'Signed-off-by disabled': '已关闭 Signed-off-by',
