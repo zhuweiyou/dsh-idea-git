@@ -1,5 +1,6 @@
 /** A small fixed-position context menu shared by the panel views. */
 import React from 'react'
+import { runMenuAction } from '../store'
 
 export interface CtxItem {
   label?: string
@@ -67,7 +68,10 @@ export function ContextMenuHost() {
             type="button"
             className={'dig-ctxmenu__item' + (it.danger ? ' dig-ctxmenu__item--danger' : '')}
             disabled={it.disabled}
-            onClick={() => { closeContextMenu(); it.run?.() }}
+            onClick={() => {
+              closeContextMenu()
+              if (it.run) runMenuAction(it.label || '', it.run)
+            }}
           >
             {it.label}
           </button>

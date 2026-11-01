@@ -1801,3 +1801,18 @@ export function refreshWithFeedback() {
     setToast(t("Refreshed"))
   })
 }
+
+export function runMenuAction(label: string, run: () => unknown) {
+  const before = toastSeq
+  let result: unknown
+  try {
+    result = run()
+  } catch (e: any) {
+    setStatus(t("Failed: {message}", { message: e?.message || String(e) }), "error")
+    return
+  }
+  // Async dialog/action handles its own lifecycle; don't emit a premature result.
+  if (result && typeof (result as any).then === "function") return
+  if (state.busy) return
+  if (toastSeq === before) setToast(t("Completed: {action}", { action: label }))
+}
