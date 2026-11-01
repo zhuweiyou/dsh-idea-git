@@ -16,6 +16,7 @@ export function MergeConflictsDialog() {
       open
       title={t("Resolve Conflicts")}
       closeLabel={t("Cancel")}
+      className="dig-conflict-dialog"
       onClose={close}
       footer={
         <>

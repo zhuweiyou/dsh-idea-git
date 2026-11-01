@@ -2792,32 +2792,53 @@ body.dig-docked #root {
 
 /* Merge conflicts dialog */
 .dig-conflicttable {
-  min-width: 600px;
-  border: 1px solid var(--border);
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   overflow: hidden;
 }
 .dig-conflicttable__head,
 .dig-conflicttable__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 110px 110px;
-  align-items: center;
-  gap: 8px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
 }
 .dig-conflicttable__head {
-  padding: 7px 10px;
   background: var(--bg-elev);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-strong);
   color: var(--fg-subtle);
   font-size: var(--fs-small);
   font-weight: 600;
+}
+.dig-conflicttable__head > span,
+.dig-conflicttable__row > span {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-left: 1px solid var(--border);
+}
+.dig-conflicttable__head > span:first-child,
+.dig-conflicttable__row > span:first-child {
+  border-left: 0;
+}
+.dig-conflicttable__head > span:first-child,
+.dig-conflicttable__path {
+  flex: 1;
+  min-width: 0;
+}
+.dig-conflicttable__head > span:nth-child(n + 2),
+.dig-conflicttable__cell {
+  flex: 0 0 104px;
+  justify-content: center;
+  text-align: center;
 }
 .dig-conflicttable__body {
   max-height: 50vh;
   overflow: auto;
 }
 .dig-conflicttable__row {
-  padding: 7px 10px;
   border-bottom: 1px solid var(--border);
   min-height: 38px;
 }
@@ -2825,383 +2846,39 @@ body.dig-docked #root {
   border-bottom: 0;
 }
 .dig-conflicttable__path {
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
   font-size: var(--fs-small);
-}
-.dig-conflicttable__cell {
-  display: flex;
-  justify-content: flex-end;
 }
 .dig-conflicttable__cell .dig-btn {
-  padding: 3px 8px;
-  font-size: var(--fs-tiny);
-}
-
-/* Tag dialog */
-.dig-tagdialog {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 420px;
-}
-.dig-tagdialog__row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.dig-tagdialog__check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.dig-tagdialog__target {
-  color: var(--fg-subtle);
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-}
-
-/* Patch preview */
-.dig-patchpreview {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 460px;
-}
-.dig-patchpreview__files {
-  max-height: 40vh;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-.dig-patchpreview__row {
-  display: flex;
-  gap: 10px;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-}
-.dig-patchpreview__path {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dig-patchpreview__plus {
-  color: var(--vcs-added);
-}
-.dig-patchpreview__minus {
-  color: var(--vcs-deleted);
-}
-.dig-patchpreview__stat {
-  margin: 0;
-  max-height: 24vh;
-  overflow: auto;
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-  color: var(--fg-secondary);
-}
-
-/* Combined Stash + Shelf tabs */
-.dig-committab__stack {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.dig-committab__half {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.dig-committab__half + .dig-committab__half {
-  border-top: 1px solid var(--border);
-}
-
-/* Commit list dialogs */
-.dig-commitlists {
-  display: flex;
-  gap: 12px;
-  min-width: 720px;
-  max-width: 88vw;
-}
-.dig-commitlists__col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.dig-commitlists__title {
-  font-weight: 600;
-  color: var(--fg-strong);
-}
-.dig-commitlistdlg {
-  max-height: 50vh;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-.dig-commitlistdlg__row {
-  display: flex;
-  gap: 8px;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
-  font-size: var(--fs-small);
-}
-.dig-commitlistdlg__sha {
-  color: var(--fg-subtle);
-  font-family: var(--font-mono);
-  flex: none;
-}
-.dig-commitlistdlg__subject {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dig-commitlistdlg__author {
-  color: var(--fg-subtle);
-  flex: none;
-}
-.dig-commit__warnings {
-  flex: none;
-  max-height: 72px;
-  overflow: auto;
   padding: 4px 10px;
-  border-top: 1px solid var(--border);
-  background: color-mix(in srgb, var(--warning) 10%, transparent);
-}
-.dig-commit__warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--warning);
-  font-size: var(--fs-tiny);
-}
-
-/* Reference chooser */
-.dig-refchooser {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 420px;
-}
-.dig-refchooser__list {
-  max-height: 46vh;
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-.dig-refchooser__row {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 6px 10px;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--fg);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-}
-.dig-refchooser__row:hover {
-  background: var(--bg-hover);
-}
-
-/* Clear diff contrast: red for deletions, green for insertions. */
-.dig-dsrow--rep .dig-dsrow__cell--old,
-.dig-dsrow--del .dig-dsrow__cell--old {
-  background: color-mix(in srgb, var(--danger) 18%, transparent) !important;
-}
-.dig-dsrow--rep .dig-dsrow__cell--new,
-.dig-dsrow--add .dig-dsrow__cell--new {
-  background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important;
-}
-.dig-durow--del {
-  background: color-mix(in srgb, var(--danger) 18%, transparent) !important;
-}
-.dig-durow--add {
-  background: color-mix(in srgb, var(--vcs-added) 18%, transparent) !important;
-}
-.dig-word--deleted {
-  background: color-mix(in srgb, var(--danger) 50%, transparent) !important;
-  color: inherit !important;
-}
-.dig-word--inserted {
-  background: color-mix(in srgb, var(--vcs-added) 50%, transparent) !important;
-  color: inherit !important;
-}
-.dig-dsrow--rep .dig-dsrow__no,
-.dig-dsrow--del .dig-dsrow__no {
-  box-shadow: inset 3px 0 0 var(--danger) !important;
-}
-.dig-dsrow--add .dig-dsrow__no:last-of-type {
-  box-shadow: inset -3px 0 0 var(--vcs-added) !important;
-}
-
-/* Fixed 16px tree slot for toggle and icons so folders/branches/favorites align. */
-.dig-tree__toggle {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.dig-branches__folder > svg,
-.dig-branchrow > svg {
-  flex: none;
-}
-
-/* Unified branch tree layout: [depth*16][16 toggle][16 icon][label] */
-.dig-tree-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 22px;
-  padding-left: calc(var(--tree-depth, 0) * 16px + 8px);
-  padding-right: 8px;
-  cursor: pointer;
-  color: var(--fg-secondary);
-  white-space: nowrap;
-  user-select: none;
-}
-.dig-tree-row:hover {
-  background: var(--bg-tree-hover);
-}
-.dig-tree-row[data-current="true"] {
-  color: var(--fg-strong);
-  font-weight: 600;
-}
-.dig-tree-row__toggle {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.dig-tree-row__icon {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.dig-tree-row__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dig-tree-row[data-selected="true"] {
-  background: var(--bg-tree-selected, var(--bg-hover));
-}
-
-/* Bottom status bar: single latest operation message, right-aligned. */
-.dig-statusbar {
-  flex: none;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 10px;
-  border-top: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
   background: var(--bg-app);
-  font-size: var(--fs-tiny);
-  color: var(--fg-subtle);
-}
-.dig-statusbar__msg {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 70%;
-}
-.dig-statusbar[data-kind="error"] .dig-statusbar__msg {
-  color: var(--danger);
-}
-.dig-statusbar__msg {
-  cursor: pointer;
-}
-.dig-statusbar__msg:hover {
-  color: var(--fg-secondary);
-}
-
-/* Three-way merge: Ours | Result | Theirs */
-.dig-merge__cols {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr 1fr;
-}
-.dig-merge__pane--result {
-  border-left: 1px solid var(--border);
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
-  display: flex;
-  flex-direction: column;
-}
-.dig-merge__result {
-  flex: 1;
-  width: 100%;
-  min-height: 48px;
-  resize: vertical;
-  border: 0;
-  outline: none;
-  background: transparent;
   color: var(--fg);
-  font-family: var(--font-mono);
-  font-size: var(--fs-small);
-  line-height: 1.45;
-  padding: 4px 0;
-  box-sizing: border-box;
-}
-.dig-merge__arrow {
-  margin-left: 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-elev);
-  color: var(--fg-secondary);
-  cursor: pointer;
   font-size: var(--fs-tiny);
-  line-height: 1;
-  padding: 2px 5px;
+  cursor: pointer;
 }
-.dig-merge__arrow:hover {
-  color: var(--accent);
+.dig-conflicttable__cell .dig-btn:hover {
+  background: var(--bg-hover);
   border-color: var(--accent);
 }
+.dig-conflicttable__cell .dig-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.dig-conflicttable__cell .dig-btn--primary:hover {
+  filter: brightness(1.05);
+}
 
-/* Large diff: limit initial rendering with show-all control. */
-.dig-diff__more {
-  position: sticky;
-  bottom: 8px;
-  display: flex;
-  justify-content: center;
-  padding: 8px;
-  pointer-events: none;
+/* Give the conflict table a wider dialog than the 380px Modal default. */
+.dig-conflict-dialog {
+  width: min(920px, calc(100vw - 48px)) !important;
+  max-height: calc(100vh - 48px) !important;
 }
-.dig-diff__more .dig-btn {
-  pointer-events: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-}
-/* Image diff click-to-zoom */
-.dig-imgpane__img {
-  cursor: zoom-in;
-}
-.dig-imgdiff[data-zoom="true"] {
-  overflow: auto;
-  align-items: flex-start;
-}
-.dig-imgdiff[data-zoom="true"] .dig-imgpane__img {
-  max-width: none;
-  max-height: none;
-  cursor: zoom-out;
+.dig-conflict-dialog .dig-conflicttable__body {
+  max-height: min(52vh, 420px);
 }
