@@ -2882,3 +2882,10 @@ body.dig-docked #root {
 .dig-conflict-dialog .dig-conflicttable__body {
   max-height: min(52vh, 420px);
 }
+
+.dig-conflicttable__cell .dig-btn--primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  filter: brightness(1.08);
+}
