@@ -2936,3 +2936,57 @@ body.dig-docked #root {
 .dig-conflicttable__toolbar {
   padding: 0 0 10px;
 }
+
+/* IDEA-style inward accept arrows on the inside edge of each source pane. */
+.dig-merge__pane {
+  position: relative;
+}
+.dig-merge__pane--ours {
+  padding-right: 34px;
+}
+.dig-merge__pane--theirs {
+  padding-left: 34px;
+}
+.dig-merge__edges {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+.dig-merge__edges--right {
+  right: 5px;
+}
+.dig-merge__edges--left {
+  left: 5px;
+}
+.dig-merge__edge {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+.dig-merge__edge:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.dig-merge__edge--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.dig-merge__edge--primary:hover {
+  filter: brightness(1.08);
+  color: #fff;
+}

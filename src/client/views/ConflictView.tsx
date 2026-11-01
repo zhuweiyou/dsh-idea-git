@@ -194,18 +194,26 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                   <div key={idx} className="dig-merge__conflict">
                     <div className="dig-merge__cols">
                       <div className="dig-merge__pane dig-merge__pane--ours">
-                        <div className="dig-merge__label">
-                          {t("Ours")}{" "}
+                        <div className="dig-merge__label">{t("Ours")}</div>
+                        <Numbered text={seg.ours} />
+                        <div className="dig-merge__edges dig-merge__edges--right">
                           <button
                             type="button"
-                            className="dig-merge__arrow"
+                            className="dig-merge__edge"
+                            title={t("Ignore")}
+                            onClick={() => push("")}
+                          >
+                            ×
+                          </button>
+                          <button
+                            type="button"
+                            className="dig-merge__edge dig-merge__edge--primary"
                             title={t("Use Ours")}
                             onClick={() => push(seg.ours)}
                           >
                             →
                           </button>
                         </div>
-                        <Numbered text={seg.ours} />
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--result">
                         <div className="dig-merge__label">
@@ -229,18 +237,26 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                         />
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--theirs">
-                        <div className="dig-merge__label">
-                          {t("Theirs")}{" "}
+                        <div className="dig-merge__label">{t("Theirs")}</div>
+                        <Numbered text={seg.theirs} />
+                        <div className="dig-merge__edges dig-merge__edges--left">
                           <button
                             type="button"
-                            className="dig-merge__arrow"
+                            className="dig-merge__edge dig-merge__edge--primary"
                             title={t("Use Theirs")}
                             onClick={() => push(seg.theirs)}
                           >
-                            →
+                            ←
+                          </button>
+                          <button
+                            type="button"
+                            className="dig-merge__edge"
+                            title={t("Ignore")}
+                            onClick={() => push("")}
+                          >
+                            ×
                           </button>
                         </div>
-                        <Numbered text={seg.theirs} />
                       </div>
                     </div>
                   </div>
