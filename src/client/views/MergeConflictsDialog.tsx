@@ -90,8 +90,8 @@ export function MergeConflictsDialog() {
           <span title={`${t("Yours")} (${oursName})`}>
             {t("Yours")} ({oursName})
           </span>
-          <span title={`${t("Theirs")} (${theirsName})`}>
-            {t("Theirs")} ({theirsName})
+          <span title={`${t("Their side")} (${theirsName})`}>
+            {t("Their side")} ({theirsName})
           </span>
           <span>{t("Manual")}</span>
         </div>

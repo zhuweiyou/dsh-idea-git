@@ -174,18 +174,10 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                     <div className="dig-merge__cols">
                       <div className="dig-merge__pane dig-merge__pane--ours">
                         <div className="dig-merge__label">
-                          {t("Ours")} ({oursName})
+                          {t("Yours")} ({oursName})
                         </div>
                         <Numbered text={seg.ours} />
                         <div className="dig-merge__edges dig-merge__edges--right">
-                          <button
-                            type="button"
-                            className="dig-merge__edge"
-                            title={t("Ignore")}
-                            onClick={() => push("")}
-                          >
-                            ×
-                          </button>
                           <button
                             type="button"
                             className="dig-merge__edge dig-merge__edge--primary"
@@ -193,6 +185,14 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                             onClick={() => push(seg.ours)}
                           >
                             →
+                          </button>
+                          <button
+                            type="button"
+                            className="dig-merge__edge"
+                            title={t("Ignore")}
+                            onClick={() => push("")}
+                          >
+                            ×
                           </button>
                         </div>
                       </div>
@@ -207,7 +207,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                       </div>
                       <div className="dig-merge__pane dig-merge__pane--theirs">
                         <div className="dig-merge__label">
-                          {t("Theirs")} ({theirsName})
+                          {t("Their side")} ({theirsName})
                         </div>
                         <Numbered text={seg.theirs} />
                         <div className="dig-merge__edges dig-merge__edges--left">
@@ -239,10 +239,10 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
         {conflictCount ? (
           <div className="dig-merge__bottom">
             <button type="button" className="dig-btn" onClick={() => acceptAll("ours")}>
-              {t("Accept Left")}
+              {t("Accept Ours")}
             </button>
             <button type="button" className="dig-btn" onClick={() => acceptAll("theirs")}>
-              {t("Accept Right")}
+              {t("Accept Theirs")}
             </button>
             <span style={{ flex: 1 }} />
             <button type="button" className="dig-btn" onClick={apply}>
