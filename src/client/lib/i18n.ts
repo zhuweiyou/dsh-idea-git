@@ -406,6 +406,7 @@ const zh: Record<string, string> = {
   'Refreshed': '已刷新',
   'Refreshing…': '刷新中…',
   'Done': '完成',
+  'Apply Current File & Mark Resolved': '应用当前文件并标记已解决',
   'Manual': '手动处理',
   'File': '文件',
   'Opened in browser': '已在浏览器打开',

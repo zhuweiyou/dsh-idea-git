@@ -142,7 +142,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
           disabled={!allChosen && !resultEditing}
           onClick={apply}
         >
-          {t("Apply & Mark Resolved")}
+          {t("Apply Current File & Mark Resolved")}
         </button>
         <IconButton icon="close" title={t("Close")} onClick={() => store.closeConflict()} />
       </div>
@@ -270,7 +270,7 @@ export function ConflictView({ bottom, theme }: { bottom: number; theme: "light"
                 setResultEditing(false)
               }}
             >
-              {t("Apply & Mark Resolved")}
+              {t("Apply Current File & Mark Resolved")}
             </button>
           </div>
           <textarea
