@@ -592,7 +592,14 @@ function Group({
       {collapsed ? null : (
         <div className="dig-group__body">
           {groupByDir ? (
-            <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} />
+            <TreeView
+              nodes={tree}
+              depth={0}
+              expanded={expanded}
+              toggle={toggle}
+              selected={selected}
+              onSelect={onSelect}
+            />
           ) : (
             files
               .slice()

@@ -1328,7 +1328,12 @@ function FilterBar({
       {s.logBranch ? (
         <span className="dig-chip" title={s.logBranch}>
           {t("Branch")}: {s.logBranch}
-          <button type="button" className="dig-chip__x" title={t("Clear filter")} onClick={() => store.clearBranchHistory()}>
+          <button
+            type="button"
+            className="dig-chip__x"
+            title={t("Clear filter")}
+            onClick={() => store.clearBranchHistory()}
+          >
             ✕
           </button>
         </span>
