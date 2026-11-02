@@ -1,6 +1,6 @@
 {
   "name": "dsh-idea-git",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "IDEA-style Git tool window for DeepSeek Harness: changes & commit, commit graph log, console, diff, branches/remotes, stash/worktrees and AI commit messages.",
   "keywords": [
     "blame",
