@@ -55,6 +55,43 @@ function buildTree(files: FileEntry[]): TreeNode[] {
   return root.children!
 }
 
+const TREE_EXPAND_KEY = "dig.changesTreeExpanded"
+
+/** Per-repository/per-changelist expanded directory paths, so collapsing a
+ *  subdirectory survives group collapse, tab switches and panel reopen. */
+function readTreeExpanded(key: string): Set<string> | null {
+  try {
+    const raw = localStorage.getItem(TREE_EXPAND_KEY)
+    if (!raw) return null
+    const map = JSON.parse(raw)
+    return Array.isArray(map?.[key]) ? new Set<string>(map[key]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeTreeExpanded(key: string, expanded: Set<string>) {
+  try {
+    const raw = localStorage.getItem(TREE_EXPAND_KEY)
+    const map = raw ? JSON.parse(raw) : {}
+    map[key] = [...expanded]
+    localStorage.setItem(TREE_EXPAND_KEY, JSON.stringify(map))
+  } catch {}
+}
+
+function collectDirPaths(nodes: TreeNode[]): Set<string> {
+  const all = new Set<string>()
+  const walk = (list: TreeNode[]) =>
+    list.forEach((n) => {
+      if (n.dir) {
+        all.add(n.path)
+        walk(n.children || [])
+      }
+    })
+  walk(nodes)
+  return all
+}
+
 function fileMenuItems(file: FileEntry, root: string, t: (x: string, p?: any) => string) {
   const path = file.path
   const canStage = file.unstaged || (!file.staged && file.kind !== "conflicted")
@@ -349,24 +386,45 @@ function Group({
 }) {
   const gs = useGit()
   const t = useT()
+  const treeKey = `${gs.info?.root || ""}\u0000${listId || "default"}`
+  const cachedExpanded = React.useRef<Set<string> | null | undefined>(undefined)
+  if (cachedExpanded.current === undefined) cachedExpanded.current = readTreeExpanded(treeKey)
   const [collapsed, setCollapsed] = React.useState(false)
-  const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>())
+  const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set<string>(cachedExpanded.current ?? []))
   const fullyOn =
     files.length > 0 && files.every((f) => gs.include[f.path] !== false && !(gs.excludedHunks?.[f.path] || []).length)
   const anyOn = files.some((f) => gs.include[f.path] !== false)
   const tree = React.useMemo(() => buildTree(files), [files])
+  const dirsInitialized = React.useRef(false)
+  const knownDirs = React.useRef<Set<string>>(new Set<string>())
   React.useEffect(() => {
-    const all = new Set<string>()
-    const walk = (nodes: TreeNode[]) =>
-      nodes.forEach((n) => {
-        if (n.dir) {
-          all.add(n.path)
-          walk(n.children || [])
-        }
+    const all = collectDirPaths(tree)
+    const hasCache = cachedExpanded.current != null
+    // Priming pass: remember the current directory set so nothing existing is
+    // mistaken for a "newly appeared" directory. Expand all only when there is
+    // no persisted state; an empty set is a valid user choice (everything
+    // collapsed), not a "not initialized" marker.
+    if (!dirsInitialized.current) {
+      // With persisted state, wait for the file tree to be populated before
+      // priming, otherwise dirs arriving asynchronously would count as new.
+      if (hasCache && all.size === 0) return
+      dirsInitialized.current = true
+      knownDirs.current = all
+      if (!hasCache) setExpanded(all)
+      return
+    }
+    const added = [...all].filter((p) => !knownDirs.current.has(p))
+    knownDirs.current = all
+    if (added.length)
+      setExpanded((prev) => {
+        const next = new Set(prev)
+        for (const p of added) next.add(p)
+        return next
       })
-    walk(tree)
-    setExpanded((prev) => (prev.size === 0 ? all : prev))
   }, [tree])
+  React.useEffect(() => {
+    writeTreeExpanded(treeKey, expanded)
+  }, [treeKey, expanded])
   React.useEffect(() => {
     if (!signal || signal.n === 0) return
     if (signal.mode === "expand") {
@@ -531,17 +589,21 @@ function Group({
         ) : null}
         <span className="dig-group__count">{files.length}</span>
       </div>
-      {collapsed ? null : groupByDir ? (
-        <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} />
-      ) : (
-        files
-          .slice()
-          .sort((a, b) => a.path.localeCompare(b.path))
-          .map((f) => (
-            <div key={f.path} style={{ paddingLeft: 8 }}>
-              <FileRow file={f} selected={selected === f.path} onSelect={onSelect} />
-            </div>
-          ))
+      {collapsed ? null : (
+        <div className="dig-group__body">
+          {groupByDir ? (
+            <TreeView nodes={tree} depth={0} expanded={expanded} toggle={toggle} selected={selected} onSelect={onSelect} />
+          ) : (
+            files
+              .slice()
+              .sort((a, b) => a.path.localeCompare(b.path))
+              .map((f) => (
+                <div key={f.path}>
+                  <FileRow file={f} selected={selected === f.path} onSelect={onSelect} />
+                </div>
+              ))
+          )}
+        </div>
       )}
     </div>
   )

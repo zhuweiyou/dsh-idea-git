@@ -418,6 +418,9 @@
   display: flex;
   flex-direction: column;
 }
+.dig-group__body {
+  padding-left: 14px;
+}
 .dig-group__head {
   position: sticky;
   top: 0;
@@ -707,6 +710,49 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+/* Unified branch tree layout: [depth*16][16 toggle][16 icon][label] */
+.dig-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding-left: calc(var(--tree-depth, 0) * 16px + 8px);
+  padding-right: 8px;
+  cursor: pointer;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  user-select: none;
+}
+.dig-tree-row:hover {
+  background: var(--bg-tree-hover);
+}
+.dig-tree-row[data-current="true"] {
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.dig-tree-row__toggle {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-tree-row__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dig-tree-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dig-tree-row[data-selected="true"] {
+  background: var(--bg-tree-selected, var(--bg-hover));
 }
 .dig-branchrow {
   min-width: 0;

@@ -96,6 +96,7 @@ function TreeRow({
   onClick,
   onDoubleClick,
   onContextMenu,
+  onToggleClick,
   dataRef,
   dataCurrent,
   dataRemote,
@@ -110,6 +111,7 @@ function TreeRow({
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
   onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void
   onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void
+  onToggleClick?: (e: React.MouseEvent<HTMLSpanElement>) => void
   dataRef?: string
   dataCurrent?: boolean
   dataRemote?: boolean
@@ -126,7 +128,20 @@ function TreeRow({
       data-current={dataCurrent ? "true" : undefined}
       data-remote={dataRemote ? "true" : undefined}
     >
-      <span className="dig-tree-row__toggle">{toggle}</span>
+      <span
+        className="dig-tree-row__toggle"
+        onClick={
+          onToggleClick
+            ? (e) => {
+                e.stopPropagation()
+                onToggleClick(e)
+              }
+            : undefined
+        }
+        onDoubleClick={onToggleClick ? (e) => e.stopPropagation() : undefined}
+      >
+        {toggle}
+      </span>
       <span className="dig-tree-row__icon">{icon}</span>
       <span className="dig-tree-row__label">{label}</span>
       {trailing}
@@ -210,7 +225,9 @@ function BranchNodes({
                 toggle={<Icon name={open ? "chevronDown" : "chevronRight"} size={14} />}
                 icon={<Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />}
                 label={n.name}
-                onClick={() => toggle(n.path)}
+                title={n.path}
+                onDoubleClick={() => toggle(n.path)}
+                onToggleClick={() => toggle(n.path)}
               />
               {open && n.children ? (
                 <BranchNodes
@@ -435,7 +452,9 @@ function BranchesPanel({ onHide }: { onHide: () => void }) {
                 toggle={<Icon name={collapsed.has("remote:" + remote) ? "chevronRight" : "chevronDown"} size={14} />}
                 icon={<Icon name="folder" size={16} style={{ color: "var(--fg-subtle)" }} />}
                 label={remote}
-                onClick={() => toggle("remote:" + remote)}
+                title={remote}
+                onDoubleClick={() => toggle("remote:" + remote)}
+                onToggleClick={() => toggle("remote:" + remote)}
                 onContextMenu={(e) => {
                   const url = s.remotes.find((r) => r.name === remote)?.url || ""
                   openContextMenu(e, [
@@ -1306,7 +1325,14 @@ function FilterBar({
           Cc
         </button>
       </div>
-      {s.info?.branch?.head ? (
+      {s.logBranch ? (
+        <span className="dig-chip" title={s.logBranch}>
+          {t("Branch")}: {s.logBranch}
+          <button type="button" className="dig-chip__x" title={t("Clear filter")} onClick={() => store.clearBranchHistory()}>
+            ✕
+          </button>
+        </span>
+      ) : s.info?.branch?.head ? (
         <span className="dig-chip dig-chip--static" title={s.info.branch.head}>
           {t("Branch")}: {s.info.branch.head}
         </span>
@@ -1539,16 +1565,6 @@ export function LogView() {
         dateDays={dateDays}
         setDateDays={setDateDays}
       />
-      {s.logBranch ? (
-        <div className="dig-historybar">
-          <span className="dig-chip">
-            {t("Branch")}: {s.logBranch}
-            <button type="button" className="dig-chip__x" onClick={() => store.clearBranchHistory()}>
-              ✕
-            </button>
-          </span>
-        </div>
-      ) : null}
       {s.logFilterFile ? (
         <div className="dig-historybar">
           <span className="dig-chip">

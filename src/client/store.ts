@@ -377,9 +377,15 @@ async function refreshRemotes() {
   } catch {}
 }
 
+// A branch/tag history switch (double-click, "Show history") must win over an
+// in-flight log request; otherwise the stale response overwrites the filtered
+// list and the click looks like it did nothing.
+let logLoadSeq = 0
+
 export async function loadLog(reset: boolean) {
   if (!state.target) return
-  if (state.logLoading) return
+  if (state.logLoading && !reset) return
+  const seq = ++logLoadSeq
   const skip = reset ? 0 : state.commits.length
   set({ logLoading: true })
   try {
@@ -394,12 +400,14 @@ export async function loadLog(reset: boolean) {
       ...(state.logFirstParent ? { firstParent: true } : {}),
       ...(state.logNoMerges ? { noMerges: true } : {}),
     })
+    if (seq !== logLoadSeq) return
     set({
       commits: reset ? r.commits : [...state.commits, ...r.commits],
       logHasMore: r.hasMore,
       logLoading: false,
     })
   } catch (e: any) {
+    if (seq !== logLoadSeq) return
     set({ logLoading: false, error: e?.message || String(e), errorCode: e?.code || null })
   }
 }
